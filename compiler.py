@@ -28,6 +28,7 @@ placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Place
 Identifier = namedtuple("Identifier", ['value'])
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
-code = "testVar{X}"
+Index = namedtuple("Index", ['value'])
+index = (Suppress('[') + delimitedList(variableName | nums) + Suppress(']')).setParseClass(Index)
 
-print identifier.parseString(code)
+Array = namedtuple("Array", ['value'])
