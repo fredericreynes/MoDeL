@@ -19,7 +19,6 @@ ParserElement.setParseClass = setParseClass
 VariableName = namedtuple("VariableName", ['value'])
 variableName = Word(alphas + '_', alphanums + '_').setParseClass(VariableName, True)
 
-
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
 Placeholder = namedtuple("Placeholder", ['value'])
 placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Placeholder, True)
