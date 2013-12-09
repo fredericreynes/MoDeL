@@ -78,3 +78,9 @@ lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 # e.g. com in 01 02 03 04 05 06 07 08 09
 Iter = namedtuple("Iter", ['variableName', 'lst'])
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
+
+# A Formula is the combination of an equation and of one or more Iter(ators)
+# This is the full form of the code passed from eViews to the compiler
+# e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
+Formula = namedtuple("Formula", ['equation', 'iterators'])
+formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)

@@ -90,3 +90,13 @@ class TestCompiler(object):
         assert isinstance(res, compiler.Iter)
         assert isinstance(res.variableName, compiler.VariableName)
         assert isinstance(res.lst, compiler.Lst)
+
+    def test_parses_Formula(self):
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
+        assert isinstance(res, compiler.Formula)
+        assert isinstance(res.equation, compiler.Equation)
+        assert len(res.iterators) == 2
+        assert reduce(lambda x, y: x and y, [isinstance(e, compiler.Iter) for e in res.iterators])
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com]")[0]
+        assert isinstance(res, compiler.Formula)
+        assert len(res.iterators) == 0
