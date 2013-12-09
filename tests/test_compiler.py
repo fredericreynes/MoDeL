@@ -72,3 +72,9 @@ class TestCompiler(object):
         assert isinstance(res.value[4], compiler.Identifier)
         assert isinstance(res.value[5], compiler.Operator)
         assert isinstance(res.value[6], compiler.Identifier)
+
+    def test_parses_Equation(self):
+        res = compiler.equation.parseString("energy{O}[com] + _test{X}{M}[sec] = log(B[j])")[0]
+        assert isinstance(res, compiler.Equation)
+        assert isinstance(res.lhs, compiler.Expression)
+        assert isinstance(res.rhs, compiler.Expression)

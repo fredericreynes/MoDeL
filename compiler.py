@@ -44,6 +44,8 @@ index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).
 Array = namedtuple("Array", ['identifier', 'index'])
 array = (identifier + index).setParseClass(Array, True)
 
+# An Expression is the building block of an equation
+# Expressions can include operators, functions and any operand (Array, Identifier, or number)
 Expression = namedtuple("Expression", ['value'])
 expression = Forward()
 operand = array | identifier | real | integer
@@ -57,3 +59,7 @@ func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setPars
 atom =  func | '(' + expression + ')' | operand
 expression << atom + ZeroOrMore(operator + atom)
 expression = expression.setParseClass(Expression)
+
+# An Equation is made of two Expressions separated by an equal sign
+Equation = namedtuple("Equation", ['lhs', 'rhs'])
+equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
