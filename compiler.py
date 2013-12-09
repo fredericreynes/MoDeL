@@ -45,6 +45,15 @@ Array = namedtuple("Array", ['identifier', 'index'])
 array = (identifier + index).setParseClass(Array, True)
 
 Expression = namedtuple("Expression", ['value'])
-#expression =
+expression = Forward()
+operand = array | identifier | real | integer
 
-#print array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]
+Operator = namedtuple("Operator", ['value'])
+operator = oneOf('+ - * / ^').setParseClass(Operator)
+
+Func = namedtuple("Func", ['name', 'expression'])
+func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setParseClass(Func, True)
+
+atom =  func | '(' + expression + ')' | operand
+expression << atom + ZeroOrMore(operator + atom)
+expression = expression.setParseClass(Expression)

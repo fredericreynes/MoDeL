@@ -60,3 +60,15 @@ class TestCompiler(object):
         assert len(res.identifier.value) == 4
         assert len(res.index.value) == 3
         assert res.index.value[1].value == 5
+
+    def test_parses_Expression(self):
+        res = compiler.expression.parseString("D{O}[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+        assert isinstance(res, compiler.Expression)
+        assert len(res.value) == 7
+        assert isinstance(res.value[0], compiler.Array)
+        assert isinstance(res.value[1], compiler.Operator)
+        assert isinstance(res.value[2], compiler.Func)
+        assert isinstance(res.value[3], compiler.Operator)
+        assert isinstance(res.value[4], compiler.Identifier)
+        assert isinstance(res.value[5], compiler.Operator)
+        assert isinstance(res.value[6], compiler.Identifier)
