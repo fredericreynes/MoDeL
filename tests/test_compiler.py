@@ -16,6 +16,10 @@ class TestCompiler(object):
         assert isinstance(res, compiler.Placeholder)
         assert res.value == compiler.VariableName("X")
 
+    def test_compiles_Placeholder(self):
+        res = compiler.placeholder.parseString("{V}")[0]
+        assert res.compile({compiler.VariableName('V'): 'X'}) == 'X'
+
     def test_parses_Identifier(self):
         res = compiler.identifier.parseString("test{X}_energy{O}")[0]
         assert isinstance(res, compiler.Identifier)
@@ -24,6 +28,10 @@ class TestCompiler(object):
         assert isinstance(res.value[1], compiler.Placeholder) and isinstance(res.value[3], compiler.Placeholder)
         assert res.value[0].value == "test" and res.value[2].value == "_energy"
         assert res.value[1].value == compiler.VariableName("X") and res.value[3].value == compiler.VariableName("O")
+
+    def test_compiles_Identifier(self):
+        res = compiler.identifier.parseString("test{V}_energy{O}")[0]
+        assert res.compile({compiler.VariableName('V'): 'Q', compiler.VariableName('O'): 'M'}) == "testQ_energyM"
 
     def test_parses_simple_variable_name_as_identifier(self):
         res = compiler.identifier.parseString("testVar")[0]
@@ -61,6 +69,20 @@ class TestCompiler(object):
         assert len(res.index.value) == 3
         assert res.index.value[1].value == 5
 
+    def test_compiles_Array(self):
+        res = compiler.array.parseString("arrayName8[com, 5, sec]")[0]
+        assert res.compile({compiler.VariableName('com'): '24', compiler.VariableName('sec'): '2403'}) == "arrayName8_24_5_2403"
+
+    def test_parses_Func(self):
+        res = compiler.func.parseString("d(log(test))")[0]
+        assert isinstance(res, compiler.Func)
+        assert res.name == 'd' and isinstance(res.expression, compiler.Expression)
+        assert isinstance(res.expression.value[0], compiler.Func)
+
+    def test_compiles_Func(self):
+        res = compiler.func.parseString("d(log(test[j]))")[0]
+        assert res.compile({compiler.VariableName('j'): '24'}) == "d(log(test_24))"
+
     def test_parses_Expression(self):
         res = compiler.expression.parseString("D{O}[com, sec] + d(log(Q[com, sec])) - A / B")[0]
         assert isinstance(res, compiler.Expression)
@@ -73,11 +95,19 @@ class TestCompiler(object):
         assert isinstance(res.value[5], compiler.Operator)
         assert isinstance(res.value[6], compiler.Identifier)
 
+    def test_compiles_Expression(self):
+        res = compiler.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+        assert res.compile({compiler.VariableName('com'): '24', compiler.VariableName('sec'): '2403'}) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
+
     def test_parses_Equation(self):
         res = compiler.equation.parseString("energy{O}[com] + _test{X}{M}[sec] = log(B[j])")[0]
         assert isinstance(res, compiler.Equation)
         assert isinstance(res.lhs, compiler.Expression)
         assert isinstance(res.rhs, compiler.Expression)
+
+    def test_compiles_Equation(self):
+        res = compiler.equation.parseString("energy[com] = log(B[3])")[0]
+        assert res.compile({compiler.VariableName('com'): '24'}) == "energy_24 = log(B_3)"
 
     def test_parses_Lst(self):
         res = compiler.lst.parseString("01 02 03 04 05 06 07")[0]
@@ -100,3 +130,8 @@ class TestCompiler(object):
         res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com]")[0]
         assert isinstance(res, compiler.Formula)
         assert len(res.iterators) == 0
+
+    def test_compiles_Formula(self):
+        expected = "Q_01 = QD_01 + QM_01"
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q, com in 01")[0]
+        assert res == repr(expected)

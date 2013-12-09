@@ -33,33 +33,70 @@ class VariableName(BaseElement): pass
 variableName = Word(alphas + '_', alphanums + '_').setParseClass(VariableName, True)
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
-class Placeholder(BaseElement): pass
+class Placeholder(BaseElement):
+    def compile(self, bindings):
+        return bindings[self.value]
+
 placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Placeholder, True)
+
+class HasIteratedVariables:
+    def getIteratedVariableNames(self): raise NotImplementedError
 
 # An identifier is a combination of one or more VariableNames and Placeholders
 # e.g. {V}_energy, or Price{O}
-class Identifier(BaseElement): pass
+class Identifier(BaseElement, HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return [e.value for e in self.value if isinstance(e, Placeholder)]
+
+    def compile(self, bindings):
+        return ''.join([e.compile(bindings) for e in self.value])
+
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
-class Index(BaseElement): pass
+class Index(BaseElement, HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.value
+
+    def compile(self, bindings):
+        return '_'.join([bindings[v] if isinstance(v, VariableName) else
+                         v.compile(bindings) for v in self.value])
+
 index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
 
 # An Array is a combination of a Identifier and an Index
-Array = namedtuple("Array", ['identifier', 'index'])
+class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
+
+    def compile(self, bindings):
+        return self.identifier.compile(bindings) + '_' + self.index.compile(bindings)
+
 array = (identifier + index).setParseClass(Array, True)
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
-Expression = namedtuple("Expression", ['value'])
+class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return list(itertools.chain(*[e.getIteratedVariableNames() for e in self.value if isinstance(e, HasIteratedVariables)]))
+
+    def compile(self, bindings):
+        return ' '.join([e.compile(bindings) for e in self.value])
+
 expression = Forward()
 operand = array | identifier | real | integer
 
-Operator = namedtuple("Operator", ['value'])
-operator = oneOf('+ - * / ^').setParseClass(Operator)
+class Operator(BaseElement): pass
+operator = oneOf('+ - * / ^').setParseClass(Operator, True)
 
-Func = namedtuple("Func", ['name', 'expression'])
+class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.expression.getIteratedVariableNames()
+
+    def compile(self, bindings):
+        return self.name + '(' + self.expression.compile(bindings) + ')'
+
 func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setParseClass(Func, True)
 
 atom =  func | '(' + expression + ')' | operand
@@ -67,7 +104,13 @@ expression << atom + ZeroOrMore(operator + atom)
 expression = expression.setParseClass(Expression)
 
 # An Equation is made of two Expressions separated by an equal sign
-Equation = namedtuple("Equation", ['lhs', 'rhs'])
+class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.lhs.getIteratedVariableNames() + self.rhs.getIteratedVariableNames()
+
+    def compile(self, bindings):
+        return self.lhs.compile(bindings) + ' = ' + self.rhs.compile(bindings)
+
 equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
 
 # A Lst is a sequence of space-delimited strings (usually numbers), used for an iterator
@@ -79,11 +122,46 @@ lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 # Each occurence of the VariableName inside an Index or a Placeholder will be replaced
 # with each value in the Lst, sequentially, at the compile stage
 # e.g. com in 01 02 03 04 05 06 07 08 09
-Iter = namedtuple("Iter", ['variableName', 'lst'])
+class Iter(namedtuple("Iter", ['variableName', 'lst'])):
+    # Return lst
+    def compile(self):
+        return {self.variableName: self.lst.value}
+
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
 # A Formula is the combination of an equation and of one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
-Formula = namedtuple("Formula", ['equation', 'iterators'])
+class Formula(namedtuple("Formula", ['equation', 'iterators'])):
+    def compile(self):
+        # Find the unique variableNames used as Placeholders or Indexes
+        uniqueVars = set(self.equation.getIteratedVariableNames())
+        # Compile each iterator to get a dict of {VariableNames: Iter}
+        iterators = dict(itertools.chain(*[i.compile().items() for i in self.iterators]))
+
+        # Check that each iterator is defined only once
+        iterVariables = [i.variableName for i in self.iterators]
+        if len(iterVariables) > len(set(iterVariables)):
+            raise NameError("Some iterated variables are defined multiple times")
+
+        # Check that all VariableNames used as iterators in the equation are defined
+        # in the iterators section of the Formula
+        missingVars = uniqueVars - set(iterators.keys())
+        if len(missingVars) > 0:
+            raise IndexError("This iterated variables are not defined: " + ", ".join([e.value for e in missingVars]))
+
+        # Cartesian product of all iterators, returned as dicts
+        # Turns {'V': ['Q', 'X'], 'com': ['01', '02', '03']}
+        # into [{'V': 'Q', 'com': '01'}, {'V': 'Q', 'com': '02'}, {'V': 'Q', 'com': '03'},
+        #       {'X': 'Q', 'com': '01'}, {'X': 'Q', 'com': '02'}, {'X': 'Q', 'com': '03'} ]
+        cartesianProduct = [l for l in apply(itertools.product, iterators.values())]
+        iteratorDicts = [dict(zip(iterators.keys(), p)) for p in cartesianProduct]
+
+        return "\n".join([self.equation.compile(bindings) for bindings in iteratorDicts])
+
+
 formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
+
+res = formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q, com in 01")[0]
+
+print repr(res.compile())
