@@ -72,6 +72,9 @@ equation = (expression + Suppress('=') + expression).setParseClass(Equation, Tru
 Lst = namedtuple("Lst", ['value'])
 lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 
-# An Iterator
+# An Iterator is the combination of a VariableName and a Lst
+# Each occurence of the VariableName inside an Index or a Placeholder will be replaced
+# with each value in the Lst, sequentially, at the compile stage
+# e.g. com in 01 02 03 04 05 06 07 08 09
 Iter = namedtuple("Iter", ['variableName', 'lst'])
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)

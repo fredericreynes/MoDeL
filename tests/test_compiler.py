@@ -84,3 +84,9 @@ class TestCompiler(object):
         assert isinstance(res, compiler.Lst)
         assert len(res.value) == 7
         assert res.value[3] == "04"
+
+    def test_parses_Iter(self):
+        res = compiler.iter.parseString("com in 01 02 03 04 05 06 07")[0]
+        assert isinstance(res, compiler.Iter)
+        assert isinstance(res.variableName, compiler.VariableName)
+        assert isinstance(res.lst, compiler.Lst)
