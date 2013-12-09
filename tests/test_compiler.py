@@ -40,6 +40,17 @@ class TestCompiler(object):
         res = compiler.integer.parseString("42")[0]
         assert isinstance(res, compiler.Integer)
         assert res.value == 42
+        res = compiler.integer.parseString("-42")[0]
+        assert isinstance(res, compiler.Integer)
+        assert res.value == -42
+
+    def test_parses_Real(self):
+        res = compiler.real.parseString("3.14159")[0]
+        assert isinstance(res, compiler.Real)
+        assert res.value == 3.14159
+        res = compiler.real.parseString("-3.14159")[0]
+        assert isinstance(res, compiler.Real)
+        assert res.value == -3.14159
 
     def test_parses_Array(self):
         res = compiler.array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]

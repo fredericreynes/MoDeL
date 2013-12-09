@@ -14,6 +14,13 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
+# Numerical types
+Integer = namedtuple("Integer", ['value'])
+integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
+
+Real = namedtuple("Real", ['value'])
+real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
+
 # A VariableName must start with an alphabetical character or an underscore,
 # and can contain any number of alphanumerical characters or underscores
 VariableName = namedtuple("VariableName", ['value'])
@@ -28,9 +35,6 @@ placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Place
 Identifier = namedtuple("Identifier", ['value'])
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
-Integer = namedtuple("Integer", ['value'])
-integer = Word(nums).setParseAction(lambda toks: Integer(int(toks[0])))
-
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
 Index = namedtuple("Index", ['value'])
@@ -41,5 +45,6 @@ Array = namedtuple("Array", ['identifier', 'index'])
 array = (identifier + index).setParseClass(Array, True)
 
 Expression = namedtuple("Expression", ['value'])
+#expression =
 
-print array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]
+#print array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]
