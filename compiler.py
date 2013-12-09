@@ -14,30 +14,33 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
+BaseElement = namedtuple("BaseElement", ['value'])
+BaseElement.compile = lambda self: self.value
+
 # Numerical types
-Integer = namedtuple("Integer", ['value'])
+class Integer(BaseElement): pass
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
 
-Real = namedtuple("Real", ['value'])
+class Real(BaseElement): pass
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
 
 # A VariableName must start with an alphabetical character or an underscore,
 # and can contain any number of alphanumerical characters or underscores
-VariableName = namedtuple("VariableName", ['value'])
+class VariableName(BaseElement): pass
 variableName = Word(alphas + '_', alphanums + '_').setParseClass(VariableName, True)
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
-Placeholder = namedtuple("Placeholder", ['value'])
+class Placeholder(BaseElement): pass
 placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Placeholder, True)
 
 # An identifier is a combination of one or more VariableNames and Placeholders
 # e.g. {V}_energy, or Price{O}
-Identifier = namedtuple("Identifier", ['value'])
+class Identifier(BaseElement): pass
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
-Index = namedtuple("Index", ['value'])
+class Index(BaseElement): pass
 index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
 
 # An Array is a combination of a Identifier and an Index
@@ -63,3 +66,12 @@ expression = expression.setParseClass(Expression)
 # An Equation is made of two Expressions separated by an equal sign
 Equation = namedtuple("Equation", ['lhs', 'rhs'])
 equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
+
+# A Lst is a sequence of space-delimited strings (usually numbers), used for an iterator
+# e.g. 01 02 03 04 05 06
+Lst = namedtuple("Lst", ['value'])
+lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
+
+# An Iterator
+Iter = namedtuple("Iter", ['variableName', 'lst'])
+iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)

@@ -78,3 +78,9 @@ class TestCompiler(object):
         assert isinstance(res, compiler.Equation)
         assert isinstance(res.lhs, compiler.Expression)
         assert isinstance(res.rhs, compiler.Expression)
+
+    def test_parses_Lst(self):
+        res = compiler.lst.parseString("01 02 03 04 05 06 07")[0]
+        assert isinstance(res, compiler.Lst)
+        assert len(res.value) == 7
+        assert res.value[3] == "04"
