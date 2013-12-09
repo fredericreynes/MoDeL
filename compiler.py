@@ -28,7 +28,18 @@ placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Place
 Identifier = namedtuple("Identifier", ['value'])
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
-Index = namedtuple("Index", ['value'])
-index = (Suppress('[') + delimitedList(variableName | nums) + Suppress(']')).setParseClass(Index)
+Integer = namedtuple("Integer", ['value'])
+integer = Word(nums).setParseAction(lambda toks: Integer(int(toks[0])))
 
-Array = namedtuple("Array", ['value'])
+# An Index is used in an Array to address its individual elements
+# It can have multiple dimensions, e.g. [com, sec]
+Index = namedtuple("Index", ['value'])
+index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
+
+# An Array is a combination of a Identifier and an Index
+Array = namedtuple("Array", ['identifier', 'index'])
+array = (identifier + index).setParseClass(Array, True)
+
+Expression = namedtuple("Expression", ['value'])
+
+print array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]

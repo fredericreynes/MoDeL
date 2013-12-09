@@ -35,3 +35,17 @@ class TestCompiler(object):
         assert isinstance(res, compiler.Index)
         assert len(res.value) == 2
         assert res.value[0] == compiler.VariableName("com") and res.value[1] == compiler.VariableName("sec")
+
+    def test_parses_Integer(self):
+        res = compiler.integer.parseString("42")[0]
+        assert isinstance(res, compiler.Integer)
+        assert res.value == 42
+
+    def test_parses_Array(self):
+        res = compiler.array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]
+        assert isinstance(res, compiler.Array)
+        assert isinstance(res.identifier, compiler.Identifier)
+        assert isinstance(res.index, compiler.Index)
+        assert len(res.identifier.value) == 4
+        assert len(res.index.value) == 3
+        assert res.index.value[1].value == 5
