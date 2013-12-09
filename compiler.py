@@ -2,6 +2,8 @@ from collections import *
 from pyparsing import *
 from funcy import *
 
+import itertools
+
 def tokensAsList(kls, tokens):
     return kls(tokens.asList())
 
@@ -14,8 +16,9 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
-BaseElement = namedtuple("BaseElement", ['value'])
-BaseElement.compile = lambda self: self.value
+class BaseElement(namedtuple("BaseElement", ['value'])):
+    def compile(self, bindings):
+        return str(self.value)
 
 # Numerical types
 class Integer(BaseElement): pass
