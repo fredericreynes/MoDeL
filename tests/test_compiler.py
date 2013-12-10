@@ -108,6 +108,14 @@ class TestCompiler(object):
         res = compiler.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
         assert res.compile({compiler.VariableName('com'): '24', compiler.VariableName('sec'): '2403'}) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
 
+    def test_evaluates_Expression(self):
+        res = compiler.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]
+        assert res.evaluate({compiler.VariableName('com'): '24', compiler.VariableName('sec'): '2403'},
+                            {'Q_24_2403': 1, 'X_24_2403': 10}) == 42
+        res = compiler.expression.parseString("2 * Q[com, sec] - X[com, sec] ^ 2 < 0")[0]
+        assert res.evaluate({compiler.VariableName('com'): '24', compiler.VariableName('sec'): '2403'},
+                            {'Q_24_2403': 1, 'X_24_2403': 10}) == True
+
     def test_parses_Equation(self):
         res = compiler.equation.parseString("energy{O}[com] + _test{X}{M}[sec] = log(B[j])")[0]
         assert isinstance(res, compiler.Equation)

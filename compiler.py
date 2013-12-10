@@ -21,11 +21,14 @@ class BaseElement(namedtuple("BaseElement", ['value'])):
     def compile(self, bindings):
         return str(self.value)
 
+# Used to mark parsed elements that contain immediate (ie constant) values
+class Immediate: pass
+
 # Numerical types
-class Integer(BaseElement): pass
+class Integer(BaseElement, Immediate): pass
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
 
-class Real(BaseElement): pass
+class Real(BaseElement, Immediate): pass
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
 
 # A VariableName must start with an alphabetical character or an underscore,
@@ -85,16 +88,20 @@ class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
     def compile(self, bindings):
         return ' '.join([e.compile(bindings) for e in self.value])
 
+    def evaluate(self, bindings, heap):
+        return eval(' '.join([e.compile(bindings) if isinstance(e, Immediate) else
+                              str(heap[e.compile(bindings)]) for e in self.value]))
+
 expression = Forward()
 operand = array | identifier | real | integer
 
-class Operator(BaseElement): pass
+class Operator(BaseElement, Immediate): pass
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)
 
-class ComparisonOperator(BaseElement): pass
+class ComparisonOperator(BaseElement, Immediate): pass
 comparisonOperator = oneOf('< <= > >= ==').setParseClass(ComparisonOperator, True)
 
-class BooleanOperator(BaseElement): pass
+class BooleanOperator(BaseElement, Immediate): pass
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
@@ -122,7 +129,10 @@ equation = (expression + Suppress('=') + expression).setParseClass(Equation, Tru
 
 class Condition(namedtuple("Condition", ["expression"]), HasIteratedVariables):
     def getIteratedVariableNames(self):
-        return self.value.getIteratedVariableNames()
+        return self.expression.getIteratedVariableNames()
+
+    def evaluates(self, heap):
+        return self.expression.evaluates(heap)
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
