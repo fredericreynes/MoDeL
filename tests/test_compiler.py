@@ -109,6 +109,12 @@ class TestCompiler(object):
         res = compiler.equation.parseString("energy[com] = log(B[3])")[0]
         assert res.compile({compiler.VariableName('com'): '24'}) == "energy_24 = log(B_3)"
 
+    def test_parses_Condition(self):
+        res = compiler.condition.parseString("if energy[com, sec] > 0")[0]
+        assert isinstance(res, compiler.Condition)
+        assert isinstance(res.expression, compiler.Expression)
+        assert len(res.expression.value) == 3
+
     def test_parses_Lst(self):
         res = compiler.lst.parseString("01 02 03 04 05 06 07")[0]
         assert isinstance(res, compiler.Lst)

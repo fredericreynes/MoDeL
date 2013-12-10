@@ -91,6 +91,12 @@ operand = array | identifier | real | integer
 class Operator(BaseElement): pass
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)
 
+class ComparisonOperator(BaseElement): pass
+comparisonOperator = oneOf('< <= > >= ==').setParseClass(ComparisonOperator, True)
+
+class BooleanOperator(BaseElement): pass
+booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
+
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.expression.getIteratedVariableNames()
@@ -101,7 +107,7 @@ class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
 func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setParseClass(Func, True)
 
 atom =  func | '(' + expression + ')' | operand
-expression << atom + ZeroOrMore(operator + atom)
+expression << atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.setParseClass(Expression)
 
 # An Equation is made of two Expressions separated by an equal sign
@@ -113,6 +119,12 @@ class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
         return self.lhs.compile(bindings) + ' = ' + self.rhs.compile(bindings)
 
 equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
+
+class Condition(namedtuple("Condition", ["expression"]), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.value.getIteratedVariableNames()
+
+condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
 # A Lst is a sequence of space-delimited strings (usually numbers), used for an iterator
 # e.g. 01 02 03 04 05 06
@@ -162,11 +174,8 @@ class Formula(namedtuple("Formula", ['equation', 'iterators'])):
 
 formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
 
-with open('tmp_all_vars.csv', 'rb') as csvfile:
-    rows = list(csv.reader(csvfile))
-    vars = dict(zip(rows[0],
-                    [float(e) if e != 'NA' else
-                     None for e in rows[2]]))
-
-print vars
-
+# with open('tmp_all_vars.csv', 'rb') as csvfile:
+#     rows = list(csv.reader(csvfile))
+#     vars = dict(zip(rows[0],
+#                     [float(e) if e != 'NA' else
+#                      None for e in rows[2]]))
