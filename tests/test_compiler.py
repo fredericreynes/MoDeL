@@ -132,6 +132,9 @@ class TestCompiler(object):
         assert len(res.iterators) == 0
 
     def test_compiles_Formula(self):
-        expected = "Q_01 = QD_01 + QM_01"
-        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q, com in 01")[0]
-        assert res == repr(expected)
+        expected = ("Q_01 = QD_01 + QM_01\n"
+                    "Q_02 = QD_02 + QM_02\n"
+                    "CH_01 = CHD_01 + CHM_01\n"
+                    "CH_02 = CHD_02 + CHM_02")
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q CH, com in 01 02")[0]
+        assert res.compile() == expected

@@ -3,6 +3,7 @@ from pyparsing import *
 from funcy import *
 
 import itertools
+import csv
 
 def tokensAsList(kls, tokens):
     return kls(tokens.asList())
@@ -159,9 +160,13 @@ class Formula(namedtuple("Formula", ['equation', 'iterators'])):
 
         return "\n".join([self.equation.compile(bindings) for bindings in iteratorDicts])
 
-
 formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
 
-res = formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q, com in 01")[0]
+with open('tmp_all_vars.csv', 'rb') as csvfile:
+    rows = list(csv.reader(csvfile))
+    vars = dict(zip(rows[0],
+                    [float(e) if e != 'NA' else
+                     None for e in rows[2]]))
 
-print repr(res.compile())
+print vars
+
