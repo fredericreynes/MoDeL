@@ -173,9 +173,3 @@ class Formula(namedtuple("Formula", ['equation', 'iterators'])):
         return "\n".join([self.equation.compile(bindings) for bindings in iteratorDicts])
 
 formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
-
-# with open('tmp_all_vars.csv', 'rb') as csvfile:
-#     rows = list(csv.reader(csvfile))
-#     vars = dict(zip(rows[0],
-#                     [float(e) if e != 'NA' else
-#                      None for e in rows[2]]))

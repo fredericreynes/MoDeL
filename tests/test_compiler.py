@@ -1,6 +1,15 @@
 from .. import compiler
+import csv
 
 class TestCompiler(object):
+    @classmethod
+    def setup_class(cls):
+        with open('../tmp_all_vars.csv', 'rb') as csvfile:
+            rows = list(csv.reader(csvfile))
+            cls.heap = dict(zip(rows[0],
+                                [float(e) if e != 'NA' else
+                                 None for e in rows[2]]))
+
     def test_parses_VariableName_with_alphas(self):
         res = compiler.variableName.parseString("testVariable")[0]
         assert isinstance(res, compiler.VariableName)
