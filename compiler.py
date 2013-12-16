@@ -155,7 +155,7 @@ iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseC
 # A Formula is the combination of an equation and of one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
-class Formula(namedtuple("Formula", ['equation', 'iterators'])):
+class Formula(namedtuple("Formula", ['equation', 'condition', 'iterators'])):
     def compile(self):
         # Find the unique variableNames used as Placeholders or Indexes
         uniqueVars = set(self.equation.getIteratedVariableNames())
@@ -182,4 +182,6 @@ class Formula(namedtuple("Formula", ['equation', 'iterators'])):
 
         return "\n".join([self.equation.compile(bindings) for bindings in iteratorDicts])
 
-formula = (equation + Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
+formula = (equation +
+           Group(Optional(condition)) +
+           Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)

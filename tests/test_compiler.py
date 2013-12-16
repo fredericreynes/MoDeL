@@ -150,9 +150,14 @@ class TestCompiler(object):
         assert isinstance(res.equation, compiler.Equation)
         assert len(res.iterators) == 2
         assert reduce(lambda x, y: x and y, [isinstance(e, compiler.Iter) for e in res.iterators])
-        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com]")[0]
+        res = compiler.formula.parseString("Q = QD + QM")[0]
         assert isinstance(res, compiler.Formula)
         assert len(res.iterators) == 0
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if {V}[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
+        assert isinstance(res, compiler.Formula)
+        assert len(res.condition) == 1
+        assert isinstance(res.condition[0], compiler.Condition)
+        assert len(res.iterators) == 2
 
     def test_compiles_Formula(self):
         expected = ("Q_01 = QD_01 + QM_01\n"
