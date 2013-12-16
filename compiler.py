@@ -131,8 +131,8 @@ class Condition(namedtuple("Condition", ["expression"]), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.expression.getIteratedVariableNames()
 
-    def evaluates(self, heap):
-        return self.expression.evaluates(heap)
+    def evaluate(self, bindings, heap):
+        return self.expression.evaluate(bindings, heap)
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
@@ -155,8 +155,8 @@ iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseC
 # A Formula is the combination of an equation and of one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
-class Formula(namedtuple("Formula", ['equation', 'condition', 'iterators'])):
-    def compile(self):
+class Formula(namedtuple("Formula", ['equation', 'conditions', 'iterators'])):
+    def compile(self, heap):
         # Find the unique variableNames used as Placeholders or Indexes
         uniqueVars = set(self.equation.getIteratedVariableNames())
         # Compile each iterator to get a dict of {VariableNames: Iter}
@@ -180,7 +180,19 @@ class Formula(namedtuple("Formula", ['equation', 'condition', 'iterators'])):
         cartesianProduct = [l for l in apply(itertools.product, iterators.values())]
         iteratorDicts = [dict(zip(iterators.keys(), p)) for p in cartesianProduct]
 
-        return "\n".join([self.equation.compile(bindings) for bindings in iteratorDicts])
+        # Evaluate the condition for each iterator binding
+        if len(self.conditions) > 0:
+            if len(self.iterators) > 0:
+                conditions = [self.conditions[0].evaluate(bindings, heap) for bindings in iteratorDicts]
+            else:
+                conditions = [self.conditions[0].evaluate({}, heap)]
+        else:
+            if len(self.iterators) > 0:
+                conditions = [True] * len(iteratorDicts)
+            else:
+                conditions = [True]
+
+        return "\n".join([self.equation.compile(bindings) for condition, bindings in zip(conditions, iteratorDicts) if condition])
 
 formula = (equation +
            Group(Optional(condition)) +

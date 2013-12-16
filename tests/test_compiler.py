@@ -155,8 +155,8 @@ class TestCompiler(object):
         assert len(res.iterators) == 0
         res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if {V}[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
         assert isinstance(res, compiler.Formula)
-        assert len(res.condition) == 1
-        assert isinstance(res.condition[0], compiler.Condition)
+        assert len(res.conditions) == 1
+        assert isinstance(res.conditions[0], compiler.Condition)
         assert len(res.iterators) == 2
 
     def test_compiles_Formula(self):
@@ -165,4 +165,8 @@ class TestCompiler(object):
                     "CH_01 = CHD_01 + CHM_01\n"
                     "CH_02 = CHD_02 + CHM_02")
         res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q CH, com in 01 02")[0]
-        assert res.compile() == expected
+        assert res.compile({}) == expected
+        expected = ("Q_02 = QD_02 + QM_02\n"
+                    "CH_02 = CHD_02 + CHM_02")
+        res = compiler.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
