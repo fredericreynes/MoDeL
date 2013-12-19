@@ -1,10 +1,11 @@
-import os
+import os, sys
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
 
-import ntpath
+import pyparsing
 import grammar
+import ntpath
 import csv
 
 with open('tmp_all_vars.csv', 'rb') as csvfile:
@@ -23,11 +24,23 @@ class CompilerHandler(FileSystemEventHandler):
             os._exit(1)
 
         else:
-            print filename
+            print "Compiling " + filename
+            try:
+                code = open(event.src_path, 'r').readline().strip()
+                compiled = grammar.formula.parseString(code)[0].compile(heap)
+                print "Compilation successful"
+                print compiled
+            except pyparsing.ParseException as e:
+                print str(e)
+            except:
+                print str(sys.exc_info()[0])
+            print
 
 observer = Observer()
 observer.schedule(CompilerHandler(), path = '.')
 observer.start()
+
+print "Ready to compile\n"
 
 try:
     while True:
