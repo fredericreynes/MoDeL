@@ -1,4 +1,4 @@
-import sys
+import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -15,22 +15,18 @@ with open('tmp_all_vars.csv', 'rb') as csvfile:
 
 
 class CompilerHandler(FileSystemEventHandler):
-    def __init__(self, observer):
-        super(CompilerHandler, self).__init__()
-        self.observer = observer
-
     def on_modified(self, event):
         filename = ntpath.basename(event.src_path)
 
         if filename == "shutdown.txt":
             print "Shutting down"
-            self.observer.stop()
+            os._exit(1)
 
         else:
             print filename
 
 observer = Observer()
-observer.schedule(CompilerHandler(observer), path = '.')
+observer.schedule(CompilerHandler(), path = '.')
 observer.start()
 
 try:
