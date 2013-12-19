@@ -4,7 +4,7 @@ from watchdog.events import FileSystemEventHandler
 import time
 
 import ntpath
-import parser
+import grammar
 import csv
 
 with open('tmp_all_vars.csv', 'rb') as csvfile:
