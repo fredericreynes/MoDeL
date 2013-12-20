@@ -7,6 +7,7 @@ import pyparsing
 import grammar
 import ntpath
 import csv
+import os
 
 with open('tmp_all_vars.csv', 'rb') as csvfile:
     rows = list(csv.reader(csvfile))
@@ -14,6 +15,15 @@ with open('tmp_all_vars.csv', 'rb') as csvfile:
                     [float(e) if e != 'NA' else
                      None for e in rows[2]]))
 
+compiler_in = "_compiler_in"
+compiler_out = "_compiler_out"
+
+def ensure_directory(_path):
+     if not os.path.exists(_path):
+        os.makedirs(_path)
+
+ensure_directory(compiler_in)
+ensure_directory(compiler_out)
 
 class CompilerHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -30,6 +40,9 @@ class CompilerHandler(FileSystemEventHandler):
                 compiled = grammar.formula.parseString(code)[0].compile(heap)
                 print "Compilation successful"
                 print compiled
+                with open(compiler_out + "\compiled " + filename, 'w') as f:
+                    f.write(compiled)
+
             except pyparsing.ParseException as e:
                 print str(e)
             except:
@@ -37,7 +50,7 @@ class CompilerHandler(FileSystemEventHandler):
             print
 
 observer = Observer()
-observer.schedule(CompilerHandler(), path = '.')
+observer.schedule(CompilerHandler(), path = compiler_in)
 observer.start()
 
 print "Ready to compile\n"
