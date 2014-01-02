@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, shutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -31,6 +31,8 @@ class CompilerHandler(FileSystemEventHandler):
 
         if filename == "shutdown.txt":
             print "Shutting down"
+            shutil.rmtree(compiler_in)
+            shutil.rmtree(compiler_out)
             os._exit(1)
 
         else:
@@ -40,7 +42,7 @@ class CompilerHandler(FileSystemEventHandler):
                 compiled = grammar.formula.parseString(code)[0].compile(heap)
                 print "Compilation successful"
                 print compiled
-                with open(compiler_out + "\compiled " + filename, 'w') as f:
+                with open(compiler_out + "\\" + filename, 'w') as f:
                     f.write(compiled)
 
             except pyparsing.ParseException as e:
