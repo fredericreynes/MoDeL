@@ -1,4 +1,5 @@
 import os, sys, shutil
+import atexit
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -22,26 +23,37 @@ compiler_in = "_compiler_in"
 compiler_out = "_compiler_out"
 
 def ensure_directory(_path):
-     if not os.path.exists(_path):
+    if not os.path.exists(_path):
         os.makedirs(_path)
+
+def safe_delete(_path):
+    if os.path.exists(_path):
+        shutil.rmtree(_path)
 
 ensure_directory(compiler_in)
 ensure_directory(compiler_out)
+
+def shutdown():
+    print "Shutting down"
+    safe_delete(compiler_in)
+    safe_delete(compiler_out)
+
+atexit.register(shutdown)
 
 class CompilerHandler(FileSystemEventHandler):
     def on_modified(self, event):
         filename = ntpath.basename(event.src_path)
 
         if filename == "shutdown.txt":
-            print "Shutting down"
-            shutil.rmtree(compiler_in)
-            shutil.rmtree(compiler_out)
-            os._exit(1)
+            shutdown()
+            os._exit(0)
 
         else:
             print "Compiling " + filename
             try:
                 code = open(event.src_path, 'r').readline().strip()
+                if code[0] == '"':
+                    code = code[1:-1]
                 compiled = grammar.formula.parseString(code)[0].compile(heap)
                 print "Compilation successful"
                 print compiled
@@ -52,7 +64,7 @@ class CompilerHandler(FileSystemEventHandler):
                 print str(e)
             except:
                 print str(sys.exc_info()[0])
-            print
+                print
 
 observer = Observer()
 observer.schedule(CompilerHandler(), path = compiler_in)
