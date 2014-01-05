@@ -6,3 +6,5 @@ build/*
 *.spec
 _compiler_in/*
 _compiler_out/*
+in.txt
+out.txt
