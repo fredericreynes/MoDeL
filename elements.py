@@ -3,6 +3,11 @@ from funcy import *
 
 import itertools
 
+def priceVolume(base, option):
+    if option == '!pv':
+        return 'P' + base + ' * ' + base
+    else:
+        return base
 
 class BaseElement(namedtuple("BaseElement", ['value'])):
     def compile(self, bindings, option):
@@ -17,7 +22,9 @@ class Real(BaseElement, Immediate): pass
 
 # A VariableName must start with an alphabetical character or an underscore,
 # and can contain any number of alphanumerical characters or underscores
-class VariableName(BaseElement): pass
+class VariableName(BaseElement):
+    def compile(self, bindings, option):
+        return priceVolume(str(self.value), option)
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
 class Placeholder(BaseElement):
@@ -34,7 +41,7 @@ class Identifier(BaseElement, HasIteratedVariables):
         return [e.value for e in self.value if isinstance(e, Placeholder)]
 
     def compile(self, bindings, option):
-        return ''.join([e.compile(bindings, option) for e in self.value])
+        return priceVolume(''.join([e.compile(bindings, option) for e in self.value]), option)
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
@@ -52,7 +59,7 @@ class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
         return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
 
     def compile(self, bindings, option):
-        return self.identifier.compile(bindings, option) + '_' + self.index.compile(bindings, option)
+        return priceVolume(self.identifier.compile(bindings, option) + '_' + self.index.compile(bindings, option), option)
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
