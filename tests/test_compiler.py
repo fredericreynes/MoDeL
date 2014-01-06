@@ -211,3 +211,10 @@ class TestCompiler(object):
         assert res.compile({'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
                             'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20,
                             'Q_01_12': 15, 'Q_02_12': 13, 'Q_03_12': 0}) == expected
+        expected = ("PQ_10 * Q_10 = 0 + PQ_01_10 * Q_01_10 + PQ_03_10 * Q_03_10\n"
+                    "Q_10 = 0 + Q_01_10 + Q_03_10\n"
+                    "PQ_11 * Q_11 = 0 + PQ_01_11 * Q_01_11 + PQ_02_11 * Q_02_11 + PQ_03_11 * Q_03_11\n"
+                    "Q_11 = 0 + Q_01_11 + Q_02_11 + Q_03_11")
+        res = grammar.formula.parseString("!pv Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11")[0]
+        assert res.compile({'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
+                            'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20}) == expected

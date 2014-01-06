@@ -89,7 +89,7 @@ class SumFunc(namedtuple("SumFunc", ['formula']), HasIteratedVariables):
         return set(self.formula.iterated_variables()) - set(self.formula.iterator_variables())
 
     def compile(self, bindings, heap, option):
-        return "0 + " + self.formula.compile_sum(bindings, heap)
+        return "0 + " + self.formula.compile_sum(bindings, heap, option)
 
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
@@ -183,8 +183,8 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
         option = self.options[0].lower() if len(self.options) > 0 else ''
         return iteratorDicts, conditions, option
 
-    def compile_sum(self, bindings, heap):
-        iteratorDicts, conditions, option = self.init_compilation(bindings, heap)
+    def compile_sum(self, bindings, heap, option):
+        iteratorDicts, conditions, _ = self.init_compilation(bindings, heap)
         return " + ".join([self.equation.compile(dict(local_bindings.items() + bindings.items()), heap, option)
                            for condition, local_bindings in zip(conditions, iteratorDicts) if condition])
 
