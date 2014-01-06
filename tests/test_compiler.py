@@ -155,8 +155,20 @@ class TestCompiler(object):
     def test_parses_Lst(self):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
         assert isinstance(res, grammar.Lst)
-        assert len(res.value) == 7
-        assert res.value[3] == "04"
+        assert len(res.base) == 7
+        assert res.base[3] == "04"
+        res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
+        assert isinstance(res, grammar.Lst)
+        assert len(res.base) == 7
+        assert len(res.remove) == 2
+        assert res.base[3] == "04"
+        assert res.remove[1] == "06"
+
+    def test_compiles_Lst(self):
+        res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
+        assert res.compile() == ['01', '02', '03', '04', '05', '06', '07']
+        res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
+        assert res.compile() == ['01', '02', '03', '05', '07']
 
     def test_parses_Iter(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]

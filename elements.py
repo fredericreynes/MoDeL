@@ -127,7 +127,9 @@ class Condition(namedtuple("Condition", ["expression"]), HasIteratedVariables):
 
 # A Lst is a sequence of space-delimited strings (usually numbers), used for an iterator
 # e.g. 01 02 03 04 05 06
-Lst = namedtuple("Lst", ['value'])
+class Lst(namedtuple("LstBase", ['base', 'remove'])):
+    def compile(self):
+        return [e for e in self.base if e not in self.remove]
 
 # An Iterator is the combination of a VariableName and a Lst
 # Each occurence of the VariableName inside an Index or a Placeholder will be replaced
@@ -136,7 +138,7 @@ Lst = namedtuple("Lst", ['value'])
 class Iter(namedtuple("Iter", ['variableName', 'lst'])):
     # Return lst
     def compile(self):
-        return {self.variableName: self.lst.value}
+        return {self.variableName: self.lst.compile()}
 
 # A Formula is the combination of an Equation, zero or one Condition, and one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler

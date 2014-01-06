@@ -53,7 +53,8 @@ equation = (expression + Suppress('=') + expression).setParseClass(Equation, Tru
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
-lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
+lstRaw  = OneOrMore(Word(alphanums))
+lst = (Group(lstRaw) + Group(Optional(Suppress('\\') + lstRaw))).setParseClass(Lst, True)
 
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
