@@ -167,6 +167,6 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
             else:
                 conditions = [True]
 
-        option = self.options[0] if len(self.options) > 0 else ''
+        option = self.options[0].lower() if len(self.options) > 0 else ''
 
         return "\n".join([self.equation.compile(bindings, option) for condition, bindings in zip(conditions, iteratorDicts) if condition])

@@ -190,5 +190,5 @@ class TestCompiler(object):
                     "Q_02 = QD_02 + QM_02\n"
                     "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02\n"
                     "CH_02 = CHD_02 + CHM_02")
-        res = grammar.formula.parseString("!pv {V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        res = grammar.formula.parseString("!Pv {V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
