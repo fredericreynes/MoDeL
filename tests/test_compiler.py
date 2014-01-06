@@ -20,6 +20,10 @@ class TestCompiler(object):
         assert isinstance(res, grammar.VariableName)
         assert res.value == "_test9_Variable"
 
+    def test_compiles_VariableName_Price_Volume(self):
+        res = grammar.variableName.parseString("M")[0]
+        assert res.compile({}, '!pv') == 'PM * M'
+
     def test_parses_Placeholder(self):
         res = grammar.placeholder.parseString("{X}")[0]
         assert isinstance(res, grammar.Placeholder)
