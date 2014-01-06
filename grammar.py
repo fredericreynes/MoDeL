@@ -20,7 +20,7 @@ real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(la
 
 variableName = Word(alphas + '_', alphanums + '_').setParseClass(VariableName, True)
 
-placeholder = (Suppress('{') + variableName + Suppress('}')).setParseClass(Placeholder, True)
+placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Placeholder, True)
 
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 

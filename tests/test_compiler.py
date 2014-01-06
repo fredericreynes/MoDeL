@@ -25,16 +25,16 @@ class TestCompiler(object):
         assert res.compile({}, '!pv') == 'PM * M'
 
     def test_parses_Placeholder(self):
-        res = grammar.placeholder.parseString("{X}")[0]
+        res = grammar.placeholder.parseString("|X|")[0]
         assert isinstance(res, grammar.Placeholder)
         assert res.value == grammar.VariableName("X")
 
     def test_compiles_Placeholder(self):
-        res = grammar.placeholder.parseString("{V}")[0]
+        res = grammar.placeholder.parseString("|V|")[0]
         assert res.compile({grammar.VariableName('V'): 'X'}, '') == 'X'
 
     def test_parses_Identifier(self):
-        res = grammar.identifier.parseString("test{X}_energy{O}")[0]
+        res = grammar.identifier.parseString("test|X|_energy|O|")[0]
         assert isinstance(res, grammar.Identifier)
         assert len(res.value) == 4
         assert isinstance(res.value[0], grammar.VariableName) and isinstance(res.value[2], grammar.VariableName)
@@ -43,11 +43,11 @@ class TestCompiler(object):
         assert res.value[1].value == grammar.VariableName("X") and res.value[3].value == grammar.VariableName("O")
 
     def test_compiles_Identifier(self):
-        res = grammar.identifier.parseString("test{V}_energy{O}")[0]
+        res = grammar.identifier.parseString("test|V|_energy|O|")[0]
         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, '') == "testQ_energyM"
 
     def test_compiles_Identifier_Price_Volume(self):
-        res = grammar.identifier.parseString("test{V}_energy{O}")[0]
+        res = grammar.identifier.parseString("test|V|_energy|O|")[0]
         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, '!pv') == "PtestQ_energyM * testQ_energyM"
 
     def test_parses_Simple_VariableName_as_Identifier(self):
@@ -78,7 +78,7 @@ class TestCompiler(object):
         assert res.value == -3.14159
 
     def test_parses_Array(self):
-        res = grammar.array.parseString("{X}tes{M}_arrayName8[com, 5, sec]")[0]
+        res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
         assert isinstance(res, grammar.Array)
         assert isinstance(res.identifier, grammar.Identifier)
         assert isinstance(res.index, grammar.Index)
@@ -105,7 +105,7 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('j'): '24'}, '') == "d(log(test_24))"
 
     def test_parses_Expression(self):
-        res = grammar.expression.parseString("D{O}[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+        res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
         assert isinstance(res, grammar.Expression)
         assert len(res.value) == 7
         assert isinstance(res.value[0], grammar.Array)
@@ -131,7 +131,7 @@ class TestCompiler(object):
                             {'Q_24_2403': 1, 'X_24_2403': 10}) == True
 
     def test_parses_Equation(self):
-        res = grammar.equation.parseString("energy{O}[com] + _test{X}{M}[sec] = log(B[j])")[0]
+        res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
         assert isinstance(res, grammar.Equation)
         assert isinstance(res.lhs, grammar.Expression)
         assert isinstance(res.rhs, grammar.Expression)
@@ -161,7 +161,7 @@ class TestCompiler(object):
         assert isinstance(res.lst, grammar.Lst)
 
     def test_parses_Formula(self):
-        res = grammar.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         assert isinstance(res, grammar.Formula)
         assert isinstance(res.equation, grammar.Equation)
         assert len(res.iterators) == 2
@@ -169,7 +169,7 @@ class TestCompiler(object):
         res = grammar.formula.parseString("Q = QD + QM")[0]
         assert isinstance(res, grammar.Formula)
         assert len(res.iterators) == 0
-        res = grammar.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if {V}[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
         assert isinstance(res, grammar.Formula)
         assert len(res.conditions) == 1
         assert isinstance(res.conditions[0], grammar.Condition)
@@ -180,15 +180,15 @@ class TestCompiler(object):
                     "Q_02 = QD_02 + QM_02\n"
                     "CH_01 = CHD_01 + CHM_01\n"
                     "CH_02 = CHD_02 + CHM_02")
-        res = grammar.formula.parseString("{V}[com] = {V}D[com] + {V}M[com], V in Q CH, com in 01 02")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH, com in 01 02")[0]
         assert res.compile({}) == expected
         expected = ("Q_02 = QD_02 + QM_02\n"
                     "CH_02 = CHD_02 + CHM_02")
-        res = grammar.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
         expected = ("PQ_02 * Q_02 = PQD_02 * QD_02 + PQM_02 * QM_02\n"
                     "Q_02 = QD_02 + QM_02\n"
                     "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02\n"
                     "CH_02 = CHD_02 + CHM_02")
-        res = grammar.formula.parseString("!Pv {V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        res = grammar.formula.parseString("!Pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
