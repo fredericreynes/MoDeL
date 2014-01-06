@@ -33,7 +33,7 @@ operand = array | identifier | real | integer
 
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)
 
-comparisonOperator = oneOf('< <= > >= ==').setParseClass(ComparisonOperator, True)
+comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, True)
 
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
