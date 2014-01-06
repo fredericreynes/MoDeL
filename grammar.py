@@ -51,6 +51,9 @@ lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
-formula = (equation +
+options = oneOf('!pv !p').setParseAction(lambda toks: toks[0])
+
+formula = (Group(Optional(options)) +
+           equation +
            Group(Optional(condition)) +
            Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)

@@ -5,7 +5,7 @@ import itertools
 
 
 class BaseElement(namedtuple("BaseElement", ['value'])):
-    def compile(self, bindings):
+    def compile(self, bindings, option):
         return str(self.value)
 
 # Used to mark parsed elements that contain immediate (ie constant) values
@@ -21,7 +21,7 @@ class VariableName(BaseElement): pass
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
 class Placeholder(BaseElement):
-    def compile(self, bindings):
+    def compile(self, bindings, option):
         return bindings[self.value]
 
 class HasIteratedVariables:
@@ -33,8 +33,8 @@ class Identifier(BaseElement, HasIteratedVariables):
     def getIteratedVariableNames(self):
         return [e.value for e in self.value if isinstance(e, Placeholder)]
 
-    def compile(self, bindings):
-        return ''.join([e.compile(bindings) for e in self.value])
+    def compile(self, bindings, option):
+        return ''.join([e.compile(bindings, option) for e in self.value])
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
@@ -42,17 +42,17 @@ class Index(BaseElement, HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.value
 
-    def compile(self, bindings):
+    def compile(self, bindings, option):
         return '_'.join([bindings[v] if isinstance(v, VariableName) else
-                         v.compile(bindings) for v in self.value])
+                         v.compile(bindings, option) for v in self.value])
 
 # An Array is a combination of a Identifier and an Index
 class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
 
-    def compile(self, bindings):
-        return self.identifier.compile(bindings) + '_' + self.index.compile(bindings)
+    def compile(self, bindings, option):
+        return self.identifier.compile(bindings, option) + '_' + self.index.compile(bindings, option)
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
@@ -60,12 +60,12 @@ class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return list(itertools.chain(*[e.getIteratedVariableNames() for e in self.value if isinstance(e, HasIteratedVariables)]))
 
-    def compile(self, bindings):
-        return ' '.join([e.compile(bindings) for e in self.value])
+    def compile(self, bindings, option):
+        return ' '.join([e.compile(bindings, option) for e in self.value])
 
     def evaluate(self, bindings, heap):
-        return eval(' '.join([e.compile(bindings) if isinstance(e, Immediate) else
-                              str(heap[e.compile(bindings)]) for e in self.value]))
+        return eval(' '.join([e.compile(bindings, '') if isinstance(e, Immediate) else
+                              str(heap[e.compile(bindings, '')]) for e in self.value]))
 
 class Operator(BaseElement, Immediate): pass
 
@@ -77,16 +77,22 @@ class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.expression.getIteratedVariableNames()
 
-    def compile(self, bindings):
-        return self.name + '(' + self.expression.compile(bindings) + ')'
+    def compile(self, bindings, option):
+        return self.name + '(' + self.expression.compile(bindings, option) + ')'
 
 # An Equation is made of two Expressions separated by an equal sign
 class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.lhs.getIteratedVariableNames() + self.rhs.getIteratedVariableNames()
 
-    def compile(self, bindings):
-        return self.lhs.compile(bindings) + ' = ' + self.rhs.compile(bindings)
+    def compile(self, bindings, option):
+        volumeEquation = self.lhs.compile(bindings, option) + ' = ' + self.rhs.compile(bindings, option)
+        if option == '!pv':
+            priceEquation = self.lhs.compile(bindings, option) + ' = ' + self.rhs.compile(bindings, option)
+            return priceEquation + '\n' + volumeEquation
+        # If no options have been specified
+        else:
+            return volumeEquation
 
 class Condition(namedtuple("Condition", ["expression"]), HasIteratedVariables):
     def getIteratedVariableNames(self):
@@ -111,7 +117,7 @@ class Iter(namedtuple("Iter", ['variableName', 'lst'])):
 # A Formula is the combination of an Equation, zero or one Condition, and one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
-class Formula(namedtuple("Formula", ['equation', 'conditions', 'iterators'])):
+class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'iterators'])):
     def compile(self, heap):
         # Find the unique variableNames used as Placeholders or Indexes
         uniqueVars = set(self.equation.getIteratedVariableNames())
@@ -148,4 +154,6 @@ class Formula(namedtuple("Formula", ['equation', 'conditions', 'iterators'])):
             else:
                 conditions = [True]
 
-        return "\n".join([self.equation.compile(bindings) for condition, bindings in zip(conditions, iteratorDicts) if condition])
+        option = self.options[0] if len(self.options) > 0 else ''
+
+        return "\n".join([self.equation.compile(bindings, option) for condition, bindings in zip(conditions, iteratorDicts) if condition])

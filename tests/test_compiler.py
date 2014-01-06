@@ -27,7 +27,7 @@ class TestCompiler(object):
 
     def test_compiles_Placeholder(self):
         res = grammar.placeholder.parseString("{V}")[0]
-        assert res.compile({grammar.VariableName('V'): 'X'}) == 'X'
+        assert res.compile({grammar.VariableName('V'): 'X'}, '') == 'X'
 
     def test_parses_Identifier(self):
         res = grammar.identifier.parseString("test{X}_energy{O}")[0]
@@ -40,7 +40,7 @@ class TestCompiler(object):
 
     def test_compiles_Identifier(self):
         res = grammar.identifier.parseString("test{V}_energy{O}")[0]
-        assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}) == "testQ_energyM"
+        assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, '') == "testQ_energyM"
 
     def test_parses_simple_variable_name_as_identifier(self):
         res = grammar.identifier.parseString("testVar")[0]
@@ -80,7 +80,7 @@ class TestCompiler(object):
 
     def test_compiles_Array(self):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
-        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}) == "arrayName8_24_5_2403"
+        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '') == "arrayName8_24_5_2403"
 
     def test_parses_Func(self):
         res = grammar.func.parseString("d(log(test))")[0]
@@ -90,7 +90,7 @@ class TestCompiler(object):
 
     def test_compiles_Func(self):
         res = grammar.func.parseString("d(log(test[j]))")[0]
-        assert res.compile({grammar.VariableName('j'): '24'}) == "d(log(test_24))"
+        assert res.compile({grammar.VariableName('j'): '24'}, '') == "d(log(test_24))"
 
     def test_parses_Expression(self):
         res = grammar.expression.parseString("D{O}[com, sec] + d(log(Q[com, sec])) - A / B")[0]
@@ -106,7 +106,7 @@ class TestCompiler(object):
 
     def test_compiles_Expression(self):
         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
+        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '') == "D_24_2403 + d(log(Q_24_2403)) - A / B"
 
     def test_evaluates_Expression(self):
         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]
@@ -124,7 +124,7 @@ class TestCompiler(object):
 
     def test_compiles_Equation(self):
         res = grammar.equation.parseString("energy[com] = log(B[3])")[0]
-        assert res.compile({grammar.VariableName('com'): '24'}) == "energy_24 = log(B_3)"
+        assert res.compile({grammar.VariableName('com'): '24'}, '') == "energy_24 = log(B_3)"
 
     def test_parses_Condition(self):
         res = grammar.condition.parseString("if energy[com, sec] > 0")[0]
