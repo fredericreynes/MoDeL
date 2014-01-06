@@ -41,7 +41,9 @@ class Identifier(BaseElement, HasIteratedVariables):
         return [e.value for e in self.value if isinstance(e, Placeholder)]
 
     def compile(self, bindings, option):
-        return priceVolume(''.join([e.compile(bindings, option) for e in self.value]), option)
+        # VariableNames and Placeholders composing the Identifier must be compiled
+        # without the price-volume option, if any
+        return priceVolume(''.join([e.compile(bindings, '') for e in self.value]), option)
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
@@ -59,7 +61,9 @@ class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
         return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
 
     def compile(self, bindings, option):
-        return priceVolume(self.identifier.compile(bindings, option) + '_' + self.index.compile(bindings, option), option)
+        # Components of the Array must be compiled
+        # without the price-volume option, if any
+        return priceVolume(self.identifier.compile(bindings, '') + '_' + self.index.compile(bindings, ''), option)
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
@@ -85,7 +89,9 @@ class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
         return self.expression.getIteratedVariableNames()
 
     def compile(self, bindings, option):
-        return self.name + '(' + self.expression.compile(bindings, option) + ')'
+        # Expressions inside a function (such as, e.g. a dlog) mustn't be compiled
+        # with the price-value option, if any
+        return self.name + '(' + self.expression.compile(bindings, '') + ')'
 
 # An Equation is made of two Expressions separated by an equal sign
 class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
@@ -93,7 +99,7 @@ class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
         return self.lhs.getIteratedVariableNames() + self.rhs.getIteratedVariableNames()
 
     def compile(self, bindings, option):
-        volumeEquation = self.lhs.compile(bindings, option) + ' = ' + self.rhs.compile(bindings, option)
+        volumeEquation = self.lhs.compile(bindings, '') + ' = ' + self.rhs.compile(bindings, '')
         if option == '!pv':
             priceEquation = self.lhs.compile(bindings, option) + ' = ' + self.rhs.compile(bindings, option)
             return priceEquation + '\n' + volumeEquation

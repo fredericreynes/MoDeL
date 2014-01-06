@@ -46,7 +46,11 @@ class TestCompiler(object):
         res = grammar.identifier.parseString("test{V}_energy{O}")[0]
         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, '') == "testQ_energyM"
 
-    def test_parses_simple_variable_name_as_identifier(self):
+    def test_compiles_Identifier_Price_Volume(self):
+        res = grammar.identifier.parseString("test{V}_energy{O}")[0]
+        assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, '!pv') == "PtestQ_energyM * testQ_energyM"
+
+    def test_parses_Simple_VariableName_as_Identifier(self):
         res = grammar.identifier.parseString("testVar")[0]
         assert isinstance(res, grammar.Identifier)
         assert len(res.value) == 1 and isinstance(res.value[0], grammar.VariableName)
@@ -86,6 +90,10 @@ class TestCompiler(object):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '') == "arrayName8_24_5_2403"
 
+    def test_compiles_Array_Price_Volume(self):
+        res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
+        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '!pv') == "ParrayName8_24_5_2403 * arrayName8_24_5_2403"
+
     def test_parses_Func(self):
         res = grammar.func.parseString("d(log(test))")[0]
         assert isinstance(res, grammar.Func)
@@ -111,6 +119,8 @@ class TestCompiler(object):
     def test_compiles_Expression(self):
         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '') == "D_24_2403 + d(log(Q_24_2403)) - A / B"
+        res = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
+        assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
 
     def test_evaluates_Expression(self):
         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]
@@ -129,6 +139,8 @@ class TestCompiler(object):
     def test_compiles_Equation(self):
         res = grammar.equation.parseString("energy[com] = log(B[3])")[0]
         assert res.compile({grammar.VariableName('com'): '24'}, '') == "energy_24 = log(B_3)"
+        res = grammar.equation.parseString("energy[com] = B[3]")[0]
+        assert res.compile({grammar.VariableName('com'): '24'}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
     def test_parses_Condition(self):
         res = grammar.condition.parseString("if energy[com, sec] > 0")[0]
@@ -173,4 +185,10 @@ class TestCompiler(object):
         expected = ("Q_02 = QD_02 + QM_02\n"
                     "CH_02 = CHD_02 + CHM_02")
         res = grammar.formula.parseString("{V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
+        expected = ("PQ_02 * Q_02 = PQD_02 * QD_02 + PQM_02 * QM_02\n"
+                    "Q_02 = QD_02 + QM_02\n"
+                    "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02\n"
+                    "CH_02 = CHD_02 + CHM_02")
+        res = grammar.formula.parseString("!pv {V}[com] = {V}D[com] + {V}M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
