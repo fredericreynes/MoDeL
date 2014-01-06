@@ -42,7 +42,10 @@ func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setPars
 formula = Forward()
 sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)
 
-atom =  sumFunc | func | '(' + expression + ')' | operand
+openParen = Literal('(').setParseClass(BaseElement, True)
+closeParen = Literal(')').setParseClass(BaseElement, True)
+
+atom =  sumFunc | func | openParen + expression + closeParen | operand
 expression << atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.setParseClass(Expression)
 

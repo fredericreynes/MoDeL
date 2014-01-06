@@ -115,12 +115,16 @@ class TestCompiler(object):
         assert isinstance(res.value[4], grammar.Identifier)
         assert isinstance(res.value[5], grammar.Operator)
         assert isinstance(res.value[6], grammar.Identifier)
+        res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+        assert isinstance(res, grammar.Expression)
 
     def test_compiles_Expression(self):
         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "D_24_2403 + d(log(Q_24_2403)) - A / B"
         res = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
+        res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+        assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
 
     def test_evaluates_Expression(self):
         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]

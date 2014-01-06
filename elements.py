@@ -89,7 +89,11 @@ class SumFunc(namedtuple("SumFunc", ['formula']), HasIteratedVariables):
         return set(self.formula.iterated_variables()) - set(self.formula.iterator_variables())
 
     def compile(self, bindings, heap, option):
-        return "0 + " + self.formula.compile_sum(bindings, heap, option)
+        compiled_sum = self.formula.compile_sum(bindings, heap, option)
+        if len(compiled_sum) > 0:
+            return "0 + " + compiled_sum
+        else:
+            return "0"
 
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
