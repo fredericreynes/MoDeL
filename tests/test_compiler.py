@@ -160,6 +160,15 @@ class TestCompiler(object):
         assert isinstance(res.variableName, grammar.VariableName)
         assert isinstance(res.lst, grammar.Lst)
 
+    def test_parses_SumFunc(self):
+        res = grammar.sumFunc.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
+        assert isinstance(res, grammar.SumFunc)
+        assert isinstance(res.formula, grammar.Formula)
+
+    def test_compiles_SumFunc(self):
+        res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
+        assert res.compile({grammar.VariableName('s'): '10'}, {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20}, '') == "0 + Q_01_10 + Q_03_10"
+
     def test_parses_Formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         assert isinstance(res, grammar.Formula)
@@ -174,6 +183,9 @@ class TestCompiler(object):
         assert len(res.conditions) == 1
         assert isinstance(res.conditions[0], grammar.Condition)
         assert len(res.iterators) == 2
+        res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        assert isinstance(res, grammar.Formula)
+        assert len(res.iterators)
 
     def test_compiles_Formula(self):
         expected = ("Q_01 = QD_01 + QM_01\n"
@@ -192,3 +204,10 @@ class TestCompiler(object):
                     "CH_02 = CHD_02 + CHM_02")
         res = grammar.formula.parseString("!Pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
+        expected = ("Q_10 = 0 + Q_01_10 + Q_03_10\n"
+                    "Q_11 = 0 + Q_01_11 + Q_02_11 + Q_03_11\n"
+                    "Q_12 = 0 + Q_01_12 + Q_02_12")
+        res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        assert res.compile({'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
+                            'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20,
+                            'Q_01_12': 15, 'Q_02_12': 13, 'Q_03_12': 0}) == expected

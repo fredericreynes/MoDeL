@@ -84,12 +84,12 @@ class ComparisonOperator(BaseElement, Immediate): pass
 
 class BooleanOperator(BaseElement, Immediate): pass
 
-class SumFunc(namedtuple("SumFunc", ['expression', 'condition']), HasIteratedVariables):
+class SumFunc(namedtuple("SumFunc", ['formula']), HasIteratedVariables):
     def getIteratedVariableNames(self):
-        return self.expression.getIteratedVariableNames()
+        return set(self.formula.iterated_variables()) - set(self.formula.iterator_variables())
 
     def compile(self, bindings, heap, option):
-        return self.name + '(' + self.expression.compile(bindings, heap, '') + ')'
+        return "0 + " + self.formula.compile_sum(bindings, heap)
 
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
@@ -138,42 +138,64 @@ class Iter(namedtuple("Iter", ['variableName', 'lst'])):
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
 class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'iterators'])):
-    def compile(self, heap):
+    def iterator_variables(self):
+        return [i.variableName for i in self.iterators]
+
+    def iterated_variables(self):
+        return self.equation.getIteratedVariableNames()
+
+    def build_iterator_dicts(self):
         # Find the unique variableNames used as Placeholders or Indexes
         uniqueVars = set(self.equation.getIteratedVariableNames())
         # Compile each iterator to get a dict of {VariableNames: Iter}
         iterators = dict(itertools.chain(*[i.compile().items() for i in self.iterators]))
 
         # Check that each iterator is defined only once
-        iterVariables = [i.variableName for i in self.iterators]
-        if len(iterVariables) > len(set(iterVariables)):
+        if len(self.iterator_variables()) > len(set(self.iterator_variables())):
             raise NameError("Some iterated variables are defined multiple times")
 
-        # Check that all VariableNames used as iterators in the equation are defined
-        # in the iterators section of the Formula
-        missingVars = uniqueVars - set(iterators.keys())
-        if len(missingVars) > 0:
-            raise IndexError("This iterated variables are not defined: " + ", ".join([e.value for e in missingVars]))
 
         # Cartesian product of all iterators, returned as dicts
         # Turns {'V': ['Q', 'X'], 'com': ['01', '02', '03']}
         # into [{'V': 'Q', 'com': '01'}, {'V': 'Q', 'com': '02'}, {'V': 'Q', 'com': '03'},
         #       {'X': 'Q', 'com': '01'}, {'X': 'Q', 'com': '02'}, {'X': 'Q', 'com': '03'} ]
         cartesianProduct = [l for l in apply(itertools.product, iterators.values())]
-        iteratorDicts = [dict(zip(iterators.keys(), p)) for p in cartesianProduct]
+        return [dict(zip(iterators.keys(), p)) for p in cartesianProduct]
 
+    def evaluate_conditions(self, bindings, heap, iteratorDicts):
         # Evaluate the condition for each iterator binding
         if len(self.conditions) > 0:
             if len(self.iterators) > 0:
-                conditions = [self.conditions[0].evaluate(bindings, heap) for bindings in iteratorDicts]
+                conditions = [self.conditions[0].evaluate(dict(bindings.items() + local_bindings.items()), heap)
+                              for local_bindings in iteratorDicts]
             else:
-                conditions = [self.conditions[0].evaluate({}, heap)]
+                conditions = [self.conditions[0].evaluate(bindings, heap)]
         else:
             if len(self.iterators) > 0:
                 conditions = [True] * len(iteratorDicts)
             else:
                 conditions = [True]
+        return conditions
 
+    def init_compilation(self, bindings, heap):
+        iteratorDicts = self.build_iterator_dicts()
+        conditions = self.evaluate_conditions(bindings, heap, iteratorDicts)
         option = self.options[0].lower() if len(self.options) > 0 else ''
+        return iteratorDicts, conditions, option
 
-        return "\n".join([self.equation.compile(bindings, heap, option) for condition, bindings in zip(conditions, iteratorDicts) if condition])
+    def compile_sum(self, bindings, heap):
+        iteratorDicts, conditions, option = self.init_compilation(bindings, heap)
+        return " + ".join([self.equation.compile(dict(local_bindings.items() + bindings.items()), heap, option)
+                           for condition, local_bindings in zip(conditions, iteratorDicts) if condition])
+
+    def compile(self, heap):
+        iteratorDicts, conditions, option = self.init_compilation({}, heap)
+
+        # Check that all VariableNames used as iterators in the equation are defined
+        # in the iterators section of the Formula
+        missingVars = set(self.iterated_variables()) - set(self.iterator_variables())
+        if len(missingVars) > 0:
+            raise IndexError("These iterated variables are not defined: " + ", ".join([e.value for e in missingVars]))
+
+        return "\n".join([self.equation.compile(bindings, heap, option)
+                          for condition, bindings in zip(conditions, iteratorDicts) if condition])

@@ -39,7 +39,10 @@ booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
 func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setParseClass(Func, True)
 
-atom =  func | '(' + expression + ')' | operand
+formula = Forward()
+sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)
+
+atom =  sumFunc | func | '(' + expression + ')' | operand
 expression << atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.setParseClass(Expression)
 
@@ -47,15 +50,13 @@ equation = (expression + Suppress('=') + expression).setParseClass(Equation, Tru
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
-sumFunc = (Suppress('sum') + Suppress('(') + expression + Group(Optional(condition)) + Suppress(')')).setParseClass(SumFunc)
-
 lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
-formula = (Group(Optional(options)) +
-           equation +
-           Group(Optional(condition)) +
-           Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
+formula << (Group(Optional(options)) +
+            (equation | expression) +
+            Group(Optional(condition)) +
+            Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
