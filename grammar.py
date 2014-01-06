@@ -47,6 +47,8 @@ equation = (expression + Suppress('=') + expression).setParseClass(Equation, Tru
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
+sumFunc = (Suppress('sum') + Suppress('(') + expression + Group(Optional(condition)) + Suppress(')')).setParseClass(SumFunc)
+
 lst = OneOrMore(Word(alphanums)).setParseClass(Lst)
 
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)

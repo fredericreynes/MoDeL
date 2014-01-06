@@ -10,7 +10,7 @@ def priceVolume(base, option):
         return base
 
 class BaseElement(namedtuple("BaseElement", ['value'])):
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         return str(self.value)
 
 # Used to mark parsed elements that contain immediate (ie constant) values
@@ -23,12 +23,12 @@ class Real(BaseElement, Immediate): pass
 # A VariableName must start with an alphabetical character or an underscore,
 # and can contain any number of alphanumerical characters or underscores
 class VariableName(BaseElement):
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         return priceVolume(str(self.value), option)
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
 class Placeholder(BaseElement):
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         return bindings[self.value]
 
 class HasIteratedVariables:
@@ -40,10 +40,10 @@ class Identifier(BaseElement, HasIteratedVariables):
     def getIteratedVariableNames(self):
         return [e.value for e in self.value if isinstance(e, Placeholder)]
 
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         # VariableNames and Placeholders composing the Identifier must be compiled
         # without the price-volume option, if any
-        return priceVolume(''.join([e.compile(bindings, '') for e in self.value]), option)
+        return priceVolume(''.join([e.compile(bindings, heap, '') for e in self.value]), option)
 
 # An Index is used in an Array to address its individual elements
 # It can have multiple dimensions, e.g. [com, sec]
@@ -51,19 +51,19 @@ class Index(BaseElement, HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.value
 
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         return '_'.join([bindings[v] if isinstance(v, VariableName) else
-                         v.compile(bindings, option) for v in self.value])
+                         v.compile(bindings, heap, option) for v in self.value])
 
 # An Array is a combination of a Identifier and an Index
 class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
 
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         # Components of the Array must be compiled
         # without the price-volume option, if any
-        return priceVolume(self.identifier.compile(bindings, '') + '_' + self.index.compile(bindings, ''), option)
+        return priceVolume(self.identifier.compile(bindings, heap, '') + '_' + self.index.compile(bindings, heap, ''), option)
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
@@ -71,12 +71,12 @@ class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return list(itertools.chain(*[e.getIteratedVariableNames() for e in self.value if isinstance(e, HasIteratedVariables)]))
 
-    def compile(self, bindings, option):
-        return ' '.join([e.compile(bindings, option) for e in self.value])
+    def compile(self, bindings, heap, option):
+        return ' '.join([e.compile(bindings, heap, option) for e in self.value])
 
     def evaluate(self, bindings, heap):
-        return eval(' '.join([e.compile(bindings, '') if isinstance(e, Immediate) else
-                              str(heap[e.compile(bindings, '')]) for e in self.value]))
+        return eval(' '.join([e.compile(bindings, heap, '') if isinstance(e, Immediate) else
+                              str(heap[e.compile(bindings, heap, '')]) for e in self.value]))
 
 class Operator(BaseElement, Immediate): pass
 
@@ -84,24 +84,31 @@ class ComparisonOperator(BaseElement, Immediate): pass
 
 class BooleanOperator(BaseElement, Immediate): pass
 
+class SumFunc(namedtuple("SumFunc", ['expression', 'condition']), HasIteratedVariables):
+    def getIteratedVariableNames(self):
+        return self.expression.getIteratedVariableNames()
+
+    def compile(self, bindings, heap, option):
+        return self.name + '(' + self.expression.compile(bindings, heap, '') + ')'
+
 class Func(namedtuple("Func", ['name', 'expression']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.expression.getIteratedVariableNames()
 
-    def compile(self, bindings, option):
+    def compile(self, bindings, heap, option):
         # Expressions inside a function (such as, e.g. a dlog) mustn't be compiled
         # with the price-value option, if any
-        return self.name + '(' + self.expression.compile(bindings, '') + ')'
+        return self.name + '(' + self.expression.compile(bindings, heap, '') + ')'
 
 # An Equation is made of two Expressions separated by an equal sign
 class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.lhs.getIteratedVariableNames() + self.rhs.getIteratedVariableNames()
 
-    def compile(self, bindings, option):
-        volumeEquation = self.lhs.compile(bindings, '') + ' = ' + self.rhs.compile(bindings, '')
+    def compile(self, bindings, heap, option):
+        volumeEquation = self.lhs.compile(bindings, heap, '') + ' = ' + self.rhs.compile(bindings, heap, '')
         if option == '!pv':
-            priceEquation = self.lhs.compile(bindings, option) + ' = ' + self.rhs.compile(bindings, option)
+            priceEquation = self.lhs.compile(bindings, heap, option) + ' = ' + self.rhs.compile(bindings, heap, option)
             return priceEquation + '\n' + volumeEquation
         # If no options have been specified
         else:
@@ -169,4 +176,4 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
 
         option = self.options[0].lower() if len(self.options) > 0 else ''
 
-        return "\n".join([self.equation.compile(bindings, option) for condition, bindings in zip(conditions, iteratorDicts) if condition])
+        return "\n".join([self.equation.compile(bindings, heap, option) for condition, bindings in zip(conditions, iteratorDicts) if condition])
