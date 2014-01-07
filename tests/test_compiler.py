@@ -61,6 +61,15 @@ class TestCompiler(object):
         assert len(res.value) == 2
         assert res.value[0] == grammar.VariableName("com") and res.value[1] == grammar.VariableName("sec")
 
+    def test_parses_TimeOffset(self):
+        res = grammar.timeOffset.parseString("(-1)")[0]
+        assert isinstance(res, grammar.TimeOffset)
+        assert res.value.value == -1
+        res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
+        assert isinstance(res, grammar.TimeOffset)
+        assert isinstance(res.value, grammar.VariableName)
+        assert res.value.value == "outOfTimeMan"
+
     def test_parses_Integer(self):
         res = grammar.integer.parseString("42")[0]
         assert isinstance(res, grammar.Integer)
@@ -85,10 +94,19 @@ class TestCompiler(object):
         assert len(res.identifier.value) == 4
         assert len(res.index.value) == 3
         assert res.index.value[1].value == 5
+        assert len(res.timeOffset) == 0
+        res = grammar.array.parseString("timeAry[5](-1)")[0]
+        assert isinstance(res, grammar.Array)
+        assert isinstance(res.identifier, grammar.Identifier)
+        assert isinstance(res.index, grammar.Index)
+        assert len(res.timeOffset) == 1
 
     def test_compiles_Array(self):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "arrayName8_24_5_2403"
+        res = grammar.array.parseString("timeAry[5](-1)")[0]
+        print res.compile({}, {}, '')
+        assert res.compile({}, {}, '') == "timeAry_5(-1)"
 
     def test_compiles_Array_Price_Volume(self):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
@@ -104,12 +122,13 @@ class TestCompiler(object):
         assert res.name == '@elem'
         assert len(res.expressions) == 2
 
-
     def test_compiles_Func(self):
         res = grammar.func.parseString("d(log(test[j]))")[0]
         assert res.compile({grammar.VariableName('j'): '24'}, {}, '') == "d(log(test_24))"
         res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13, %baseyear)"
+        res = grammar.func.parseString("@elem(PK[s](-1), %baseyear)")[0]
+        assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13(-1), %baseyear)"
 
     def test_parses_Expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]

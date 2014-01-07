@@ -26,7 +26,9 @@ identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placehol
 
 index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
 
-array = (identifier + index).setParseClass(Array, True)
+timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).setParseClass(TimeOffset, True)
+
+array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
 expression = Forward()
 operand = array | identifier | real | integer

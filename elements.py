@@ -55,15 +55,20 @@ class Index(BaseElement, HasIteratedVariables):
         return '_'.join([bindings[v] if isinstance(v, VariableName) else
                          v.compile(bindings, heap, option) for v in self.value])
 
+class TimeOffset(BaseElement):
+    def compile(self, bindings, heap, option):
+        return '(' + self.value.compile(bindings, heap, option) + ')'
+
 # An Array is a combination of a Identifier and an Index
-class Array(namedtuple("Array", ['identifier', 'index']), HasIteratedVariables):
+class Array(namedtuple("Array", ['identifier', 'index', 'timeOffset']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return self.identifier.getIteratedVariableNames() + self.index.getIteratedVariableNames()
 
     def compile(self, bindings, heap, option):
         # Components of the Array must be compiled
         # without the price-volume option, if any
-        return priceVolume(self.identifier.compile(bindings, heap, '') + '_' + self.index.compile(bindings, heap, ''), option)
+        timeOffset = self.timeOffset[0].compile(bindings, heap, option) if len(self.timeOffset) > 0 else ''
+        return priceVolume(self.identifier.compile(bindings, heap, '') + '_' + self.index.compile(bindings, heap, ''), option) + timeOffset
 
 # An Expression is the building block of an equation
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
