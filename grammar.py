@@ -37,7 +37,7 @@ comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, 
 
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
-func = (oneOf('exp log d') + Suppress('(') + expression + Suppress(')')).setParseClass(Func, True)
+func = (oneOf('exp log d @elem') + Suppress('(') + Group(delimitedList(expression)) + Suppress(')')).setParseClass(Func, True)
 
 formula = Forward()
 sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)

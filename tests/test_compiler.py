@@ -97,12 +97,19 @@ class TestCompiler(object):
     def test_parses_Func(self):
         res = grammar.func.parseString("d(log(test))")[0]
         assert isinstance(res, grammar.Func)
-        assert res.name == 'd' and isinstance(res.expression, grammar.Expression)
-        assert isinstance(res.expression.value[0], grammar.Func)
+        assert res.name == 'd' and isinstance(res.expressions[0], grammar.Expression)
+        assert isinstance(res.expressions[0].value[0], grammar.Func)
+        res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
+        assert isinstance(res, grammar.Func)
+        assert res.name == '@elem'
+        assert len(res.expressions) == 2
+
 
     def test_compiles_Func(self):
         res = grammar.func.parseString("d(log(test[j]))")[0]
         assert res.compile({grammar.VariableName('j'): '24'}, {}, '') == "d(log(test_24))"
+        res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
+        assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13, %baseyear)"
 
     def test_parses_Expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
