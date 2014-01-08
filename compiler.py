@@ -22,8 +22,8 @@ try:
     output = grammar.formula.parseString(code)[0].compile(heap)
 except pyparsing.ParseException as e:
     output = "Error\r\n" + str(e)
-except:
-    output = "Error\r\n" + str(sys.exc_info()[0])
+except Exception as e:
+    output = "Error\r\n" + repr(e)
 
 # Writes the output, compiled code or error message to file out.txt
 with open("out.txt", 'w') as f:
