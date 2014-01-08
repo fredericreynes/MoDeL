@@ -76,7 +76,7 @@ class Array(namedtuple("Array", ['identifier', 'index', 'timeOffset']), HasItera
 # Expressions can include operators, functions and any operand (Array, Identifier, or number)
 class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
     def getIteratedVariableNames(self):
-        return list(itertools.chain(*[e.getIteratedVariableNames() for e in self.value if isinstance(e, HasIteratedVariables)]))
+        return cat([e.getIteratedVariableNames() for e in self.value if isinstance(e, HasIteratedVariables)])
 
     def compile(self, bindings, heap, option):
         return ' '.join([e.compile(bindings, heap, option) for e in self.value])
@@ -104,7 +104,7 @@ class SumFunc(namedtuple("SumFunc", ['formula']), HasIteratedVariables):
 
 class Func(namedtuple("Func", ['name', 'expressions']), HasIteratedVariables):
     def getIteratedVariableNames(self):
-        return itertools.chain(*[e.getIteratedVariableNames() for e in self.expressions])
+        return cat([e.getIteratedVariableNames() for e in self.expressions])
 
     def compile(self, bindings, heap, option):
         # Expressions inside a function (such as, e.g. a dlog) mustn't be compiled
@@ -161,12 +161,11 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
         # Find the unique variableNames used as Placeholders or Indexes
         uniqueVars = set(self.equation.getIteratedVariableNames())
         # Compile each iterator to get a dict of {VariableNames: Iter}
-        iterators = dict(itertools.chain(*[i.compile().items() for i in self.iterators]))
+        iterators = dict(cat([i.compile().items() for i in self.iterators]))
 
         # Check that each iterator is defined only once
         if len(self.iterator_variables()) > len(set(self.iterator_variables())):
             raise NameError("Some iterated variables are defined multiple times")
-
 
         # Cartesian product of all iterators, returned as dicts
         # Turns {'V': ['Q', 'X'], 'com': ['01', '02', '03']}
