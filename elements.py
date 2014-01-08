@@ -24,7 +24,10 @@ class Real(BaseElement, Immediate): pass
 # and can contain any number of alphanumerical characters or underscores
 class VariableName(BaseElement):
     def compile(self, bindings, heap, option):
-        return priceVolume(str(self.value), option)
+        if self in bindings.keys():
+            return bindings[self]
+        else:
+            return priceVolume(str(self.value), option)
 
 # A Placeholder is a VariableName enclosed in curly brackets, e.g. `{X}`
 class Placeholder(BaseElement):
@@ -52,8 +55,7 @@ class Index(BaseElement, HasIteratedVariables):
         return self.value
 
     def compile(self, bindings, heap, option):
-        return '_'.join([bindings[v] if isinstance(v, VariableName) else
-                         v.compile(bindings, heap, option) for v in self.value])
+        return '_'.join([v.compile(bindings, heap, option) for v in self.value])
 
 class TimeOffset(BaseElement):
     def compile(self, bindings, heap, option):
