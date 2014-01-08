@@ -24,13 +24,15 @@ placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Place
 
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
-index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
+expression = Forward()
+# index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
+index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).setParseClass(TimeOffset, True)
 
 array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
-expression = Forward()
+#expression = Forward()
 operand = array | identifier | real | integer
 
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)

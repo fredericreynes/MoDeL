@@ -59,7 +59,8 @@ class TestCompiler(object):
         res = grammar.index.parseString("[com, sec]")[0]
         assert isinstance(res, grammar.Index)
         assert len(res.value) == 2
-        assert res.value[0] == grammar.VariableName("com") and res.value[1] == grammar.VariableName("sec")
+        assert isinstance(res.value[0], grammar.Expression)
+        assert isinstance(res.value[1], grammar.Expression)
 
     def test_parses_TimeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
@@ -93,7 +94,6 @@ class TestCompiler(object):
         assert isinstance(res.index, grammar.Index)
         assert len(res.identifier.value) == 4
         assert len(res.index.value) == 3
-        assert res.index.value[1].value == 5
         assert len(res.timeOffset) == 0
         res = grammar.array.parseString("timeAry[5](-1)")[0]
         assert isinstance(res, grammar.Array)
@@ -152,6 +152,8 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
         res = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
         assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
+        res = grammar.expression.parseString("s")[0]
+        assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "02"
 
     def test_evaluates_Expression(self):
         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]

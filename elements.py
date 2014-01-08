@@ -52,10 +52,10 @@ class Identifier(BaseElement, HasIteratedVariables):
 # It can have multiple dimensions, e.g. [com, sec]
 class Index(BaseElement, HasIteratedVariables):
     def getIteratedVariableNames(self):
-        return self.value
+        return cat([e.getIteratedVariableNames() for e in self.value])
 
     def compile(self, bindings, heap, option):
-        return '_'.join([v.compile(bindings, heap, option) for v in self.value])
+        return '_'.join([e.compile(bindings, heap, option) for e in self.value])
 
 class TimeOffset(BaseElement):
     def compile(self, bindings, heap, option):
