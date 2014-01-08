@@ -105,7 +105,6 @@ class TestCompiler(object):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "arrayName8_24_5_2403"
         res = grammar.array.parseString("timeAry[5](-1)")[0]
-        print res.compile({}, {}, '')
         assert res.compile({}, {}, '') == "timeAry_5(-1)"
 
     def test_compiles_Array_Price_Volume(self):
@@ -151,6 +150,8 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
+        res = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
+        assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
 
     def test_evaluates_Expression(self):
         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]
