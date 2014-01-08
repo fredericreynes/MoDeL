@@ -86,7 +86,7 @@ class Expression(namedtuple("Expression", ['value']), HasIteratedVariables):
 
     def evaluate(self, bindings, heap):
         return eval(' '.join([e.compile(bindings, heap, '') if isinstance(e, Immediate) else
-                              str(heap[e.compile(bindings, heap, '')]) for e in self.value]))
+                              str(heap[e.compile(bindings, heap, '').upper()]) for e in self.value]))
 
 class Operator(BaseElement, Immediate): pass
 
