@@ -18,21 +18,19 @@ integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Intege
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
 
-variableName = Word(alphas + '_%@', alphanums + '_').setParseClass(VariableName, True)
+variableName = Word(alphas + '_%$', alphanums + '_').setParseClass(VariableName, True)
 
 placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Placeholder, True)
 
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
 expression = Forward()
-# index = (Suppress('[') + delimitedList(variableName | integer) + Suppress(']')).setParseClass(Index)
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).setParseClass(TimeOffset, True)
 
 array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
-#expression = Forward()
 operand = array | identifier | real | integer
 
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)

@@ -106,6 +106,8 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "arrayName8_24_5_2403"
         res = grammar.array.parseString("timeAry[5](-1)")[0]
         assert res.compile({}, {}, '') == "timeAry_5(-1)"
+        res = grammar.array.parseString("test[$s]")[0]
+        assert res.compile({grammar.VariableName("$s"): 15}, {}, '') == "test_15"
 
     def test_compiles_Array_Price_Volume(self):
         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
@@ -263,3 +265,9 @@ class TestCompiler(object):
         res = grammar.formula.parseString("!pv Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11")[0]
         assert res.compile({'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
                             'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20}) == expected
+        expected = ("Q_04 = Test_1 + 2 * 1\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_06 = Test_3 + 2 * 3")
+        res = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c, c in 04 05 06")[0]
+        print res.compile({})
+        assert res.compile({}) == expected

@@ -23,9 +23,12 @@ class Real(BaseElement, Immediate): pass
 # A VariableName must start with an alphabetical character or an underscore,
 # and can contain any number of alphanumerical characters or underscores
 class VariableName(BaseElement):
+    def getLoopCounterVariable(self):
+        return VariableName('$' + self.value)
+
     def compile(self, bindings, heap, option):
         if self in bindings.keys():
-            return bindings[self]
+            return str(bindings[self])
         else:
             return priceVolume(str(self.value), option)
 
@@ -143,7 +146,14 @@ class Lst(namedtuple("LstBase", ['base', 'remove'])):
 # with each value in the Lst, sequentially, at the compile stage
 # e.g. com in 01 02 03 04 05 06 07 08 09
 class Iter(namedtuple("Iter", ['variableName', 'lst'])):
-    # Return lst
+    def compileLoopCounter(self):
+        # WARNING: the range of the loop counter is calculated over the base list, not the copmiled list
+        # This is because the list removal feature is designed to skip an equation,
+        # but the loop counter is usually used to iterate over rows or columns of data
+        # which ignore this skipping
+        return {self.variableName.getLoopCounterVariable(): range(1, len(self.lst.base) + 1) }
+
+    # Return a dict of: {VariableName: compiled Lst}
     def compile(self):
         return {self.variableName: self.lst.compile()}
 
@@ -157,22 +167,27 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
     def iterated_variables(self):
         return self.equation.getIteratedVariableNames()
 
-    def build_iterator_dicts(self):
-        # Find the unique variableNames used as Placeholders or Indexes
-        uniqueVars = set(self.equation.getIteratedVariableNames())
-        # Compile each iterator to get a dict of {VariableNames: Iter}
-        iterators = dict(cat([i.compile().items() for i in self.iterators]))
-
-        # Check that each iterator is defined only once
-        if len(self.iterator_variables()) > len(set(self.iterator_variables())):
-            raise NameError("Some iterated variables are defined multiple times")
-
+    def cartesianProduct(self, iterators):
         # Cartesian product of all iterators, returned as dicts
         # Turns {'V': ['Q', 'X'], 'com': ['01', '02', '03']}
         # into [{'V': 'Q', 'com': '01'}, {'V': 'Q', 'com': '02'}, {'V': 'Q', 'com': '03'},
         #       {'X': 'Q', 'com': '01'}, {'X': 'Q', 'com': '02'}, {'X': 'Q', 'com': '03'} ]
-        cartesianProduct = [l for l in apply(itertools.product, iterators.values())]
-        return [dict(zip(iterators.keys(), p)) for p in cartesianProduct]
+        cartesianProd = [l for l in apply(itertools.product, iterators.values())]
+        return [dict(zip(iterators.keys(), p)) for p in cartesianProd]
+
+    def build_iterator_dicts(self):
+        # Check that each iterator is defined only once
+        if len(self.iterator_variables()) > len(set(self.iterator_variables())):
+            raise NameError("Some iterated variables are defined multiple times")
+
+        # Compile each iterator to get a dict of {VariableNames: Iter}
+        iterators = dict(cat([i.compile().items() for i in self.iterators]))
+        loopCounters = dict(cat([i.compileLoopCounter().items() for i in self.iterators]))
+
+        iteratorDicts = self.cartesianProduct(iterators)
+        loopCounterDicts = self.cartesianProduct(loopCounters)
+
+        return [merge(iterDict, counterDict) for iterDict, counterDict in zip(iteratorDicts, loopCounterDicts)]
 
     def evaluate_conditions(self, bindings, heap, iteratorDicts):
         # Evaluate the condition for each iterator binding
