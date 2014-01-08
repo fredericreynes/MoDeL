@@ -18,7 +18,7 @@ integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Intege
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
 
-variableName = Word(alphas + '_%$', alphanums + '_').setParseClass(VariableName, True)
+variableName = Word(alphas + '_%$@', alphanums + '_').setParseClass(VariableName, True)
 
 placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Placeholder, True)
 

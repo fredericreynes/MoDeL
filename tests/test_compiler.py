@@ -116,11 +116,11 @@ class TestCompiler(object):
     def test_parses_Func(self):
         res = grammar.func.parseString("d(log(test))")[0]
         assert isinstance(res, grammar.Func)
-        assert res.name == 'd' and isinstance(res.expressions[0], grammar.Expression)
+        assert res.variableName == grammar.VariableName('d') and isinstance(res.expressions[0], grammar.Expression)
         assert isinstance(res.expressions[0].value[0], grammar.Func)
         res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
         assert isinstance(res, grammar.Func)
-        assert res.name == '@elem'
+        assert res.variableName == grammar.VariableName('@elem')
         assert len(res.expressions) == 2
 
     def test_compiles_Func(self):
@@ -130,6 +130,8 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13, %baseyear)"
         res = grammar.func.parseString("@elem(PK[s](-1), %baseyear)")[0]
         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13(-1), %baseyear)"
+        res = grammar.func.parseString("ES_KLEM($s, 1)")[0]
+        assert res.compile({grammar.VariableName('$s'): '42'}, {}, '') == "ES_KLEM(42, 1)"
 
     def test_parses_Expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
@@ -144,6 +146,9 @@ class TestCompiler(object):
         assert isinstance(res.value[6], grammar.Identifier)
         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         assert isinstance(res, grammar.Expression)
+        res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
+        assert isinstance(res, grammar.Expression)
+        assert len(res.value) == 4
 
     def test_compiles_Expression(self):
         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
@@ -269,5 +274,4 @@ class TestCompiler(object):
                     "Q_05 = Test_2 + 2 * 2\n"
                     "Q_06 = Test_3 + 2 * 3")
         res = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c, c in 04 05 06")[0]
-        print res.compile({})
         assert res.compile({}) == expected

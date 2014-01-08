@@ -105,14 +105,14 @@ class SumFunc(namedtuple("SumFunc", ['formula']), HasIteratedVariables):
         else:
             return "0"
 
-class Func(namedtuple("Func", ['name', 'expressions']), HasIteratedVariables):
+class Func(namedtuple("Func", ['variableName', 'expressions']), HasIteratedVariables):
     def getIteratedVariableNames(self):
         return cat([e.getIteratedVariableNames() for e in self.expressions])
 
     def compile(self, bindings, heap, option):
         # Expressions inside a function (such as, e.g. a dlog) mustn't be compiled
         # with the price-value option, if any
-        return self.name + '(' + ', '.join([e.compile(bindings, heap, '') for e in self.expressions]) + ')'
+        return self.variableName.compile({}, {}, '') + '(' + ', '.join([e.compile(bindings, heap, '') for e in self.expressions]) + ')'
 
 # An Equation is made of two Expressions separated by an equal sign
 class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):
