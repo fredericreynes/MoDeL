@@ -33,13 +33,15 @@ array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, 
 
 operand = array | identifier | real | integer
 
+unaryOperator = oneOf('+ -').setParseClass(Operator, True)
+
 operator = oneOf('+ - * / ^').setParseClass(Operator, True)
 
 comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, True)
 
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
-func = (oneOf('exp log d @elem') + Suppress('(') + Group(delimitedList(expression)) + Suppress(')')).setParseClass(Func, True)
+func = (variableName + Suppress('(') + Group(delimitedList(expression)) + Suppress(')')).setParseClass(Func, True)
 
 formula = Forward()
 sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)
@@ -48,7 +50,7 @@ openParen = Literal('(').setParseClass(BaseElement, True)
 closeParen = Literal(')').setParseClass(BaseElement, True)
 
 atom =  sumFunc | func | openParen + expression + closeParen | operand
-expression << atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
+expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.setParseClass(Expression)
 
 equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
