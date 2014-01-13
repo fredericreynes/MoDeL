@@ -59,8 +59,9 @@ condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True
 
 lstRaw  = OneOrMore(Word(alphanums))
 lst = (Group(lstRaw) + Group(Optional(Suppress('\\') + lstRaw))).setParseClass(Lst, True)
+lsts = Group(lst | '(' + delimitedList(lst) + ')').setParseClass(Lsts)
 
-iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
+iter = (Group(variableName | '(' + delimitedList(variableName) + ')') + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 

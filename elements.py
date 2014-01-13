@@ -146,39 +146,62 @@ class Lst(namedtuple("LstBase", ['base', 'remove'])):
     def compile(self):
         return [e for e in self.base if e not in self.remove]
 
-# An Iterator is the combination of a VariableName and a Lst
+# An Lsts is one or more Lst
+# If it holds more than one Lst, then must declared as
+# a comma-delimited list, between parentheses
+# (used to iterate over multiple variables simultaneously)
+class Lsts(BaseElement):
+    def compile(self):
+        return zip(*[l.compile() for l in self.value])
+
+# An Iterator is the combination of a VariableName and a Lsts
 # Each occurence of the VariableName inside an Index or a Placeholder will be replaced
 # with each value in the Lst, sequentially, at the compile stage
-# e.g. com in 01 02 03 04 05 06 07 08 09
-class Iter(namedtuple("Iter", ['variableName', 'lst'])):
+# e.g. c in 01 02 03 04 05 06 07 08 09
+# If the Lsts contains multiple Lst, then each list in the Lsts
+# are iterated over in parallel
+class Iter(namedtuple("Iter", ['variableNames', 'lsts'])):
     def compileLoopCounter(self):
-        # WARNING: the range of the loop counter is calculated over the base list, not the copmiled list
+        # WARNING: the range of the loop counter is calculated over the base list, not the compiled list
         # This is because the list removal feature is designed to skip an equation,
         # but the loop counter is usually used to iterate over rows or columns of data
         # which ignore this skipping
-        return {self.variableName.getLoopCounterVariable(): range(1, len(self.lst.base) + 1) }
+        return {self.variableNames[0].getLoopCounterVariable(): range(1, len(self.lsts[0].base) + 1) }
 
     # Return a dict of: {VariableName: compiled Lst}
     def compile(self):
-        return {self.variableName: self.lst.compile()}
+        # Check if all Lst have the same length
+        if len(set([len(l) for l in self.lsts])) > 1:
+            raise IndexError("When iterating multiple lists in parallel, all lists should be of equal length")
+        else:
+            return self.variableNames, self.lsts.compile()
 
 # A Formula is the combination of an Equation, zero or one Condition, and one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
 # e.g. {V}[com] = {V}D[com] + {V}M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09
 class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'iterators'])):
     def iterator_variables(self):
-        return [i.variableName for i in self.iterators]
+        return [v for i in self.iterators for v in i.variableNames]
 
     def iterated_variables(self):
         return self.equation.getIteratedVariableNames()
 
+    # Cartesian product of all iterators, returned as dicts
+    # Turns {['V']: [['Q'], ['X']], ['c', 's']: [['01', '22'], ['02', '23'], ['03', '24']]}
+    # into [{'V': 'Q', 'c': '01', 's': '22'}, {'V': 'Q', 'c': '02', 's': '23'}, {'V': 'Q', 'c': '03', 's': '24'},
+    #       {'X': 'Q', 'c': '01', 's': '22'}, {'X': 'Q', 'c': '02', 's': '23'}, {'X': 'Q', 'c': '03', 's': '24'} ]
     def cartesianProduct(self, iterators):
-        # Cartesian product of all iterators, returned as dicts
-        # Turns {'V': ['Q', 'X'], 'com': ['01', '02', '03']}
-        # into [{'V': 'Q', 'com': '01'}, {'V': 'Q', 'com': '02'}, {'V': 'Q', 'com': '03'},
-        #       {'X': 'Q', 'com': '01'}, {'X': 'Q', 'com': '02'}, {'X': 'Q', 'com': '03'} ]
+        # First, cartesian product of all Lst values
+        # e.g. [[['Q'], ['01', '22']], [['Q'], ['02', '23']], [['Q'], ['03', '24']],
+        #       [['X'], ['01', '22']], [['X'], ['02', '23']], [['X'], ['03', '24']]]
         cartesianProd = [l for l in apply(itertools.product, iterators.values())]
-        return [dict(zip(iterators.keys(), p)) for p in cartesianProd]
+        # Second, combine the cartesian product values with their respective VariableNames
+        # (stored in iterators.keys)
+        # e.g. [[['V']: ['Q']], [['c', 's']: ['01', '22']]
+        zipped = [zip(iterators.keys(), p) for p in cartesianProd]
+        # Finally, create and merge all the inner dicts
+        return [merge(*[dict(zip(*l)) for l in z]) for z in zipped]
+        # return [dict(zip(iterators.keys(), p)) for p in cartesianProd]
 
     def build_iterator_dicts(self):
         # Check that each iterator is defined only once
@@ -186,7 +209,7 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
             raise NameError("Some iterated variables are defined multiple times")
 
         # Compile each iterator to get a dict of {VariableNames: Iter}
-        iterators = dict(cat([i.compile().items() for i in self.iterators]))
+        iterators = dict(cat([i.compile()[1] for i in self.iterators]))
         loopCounters = dict(cat([i.compileLoopCounter().items() for i in self.iterators]))
 
         iteratorDicts = self.cartesianProduct(iterators)
