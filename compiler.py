@@ -18,12 +18,15 @@ with open('tmp_all_vars.csv', 'rb') as csvfile:
                      None for e in rows[2]]))
 
 # Compilation
-try:
+if len(sys.argv) > 1:
     output = grammar.formula.parseString(code)[0].compile(heap)
-except pyparsing.ParseException as e:
-    output = "Error\r\n" + str(e)
-except Exception as e:
-    output = "Error\r\n" + repr(e)
+else:
+    try:
+        output = grammar.formula.parseString(code)[0].compile(heap)
+    except pyparsing.ParseException as e:
+        output = "Error\r\n" + str(e)
+    except Exception as e:
+        output = "Error\r\n" + repr(e)
 
 # Writes the output, compiled code or error message to file out.txt
 with open("out.txt", 'w') as f:
