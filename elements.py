@@ -110,9 +110,14 @@ class Func(namedtuple("Func", ['variableName', 'expressions']), HasIteratedVaria
         return cat([e.getIteratedVariableNames() for e in self.expressions])
 
     def compile(self, bindings, heap, option):
+        # The 'value' function allows to transform a volume
+        # expression into a value expression
+        if self.variableName.value == 'value':
+            return self.expressions[0].compile(bindings, heap, '!pv')
         # Expressions inside a function (such as, e.g. a dlog) mustn't be compiled
         # with the price-value option, if any
-        return self.variableName.compile({}, {}, '') + '(' + ', '.join([e.compile(bindings, heap, '') for e in self.expressions]) + ')'
+        else:
+            return self.variableName.compile({}, {}, '') + '(' + ', '.join([e.compile(bindings, heap, '') for e in self.expressions]) + ')'
 
 # An Equation is made of two Expressions separated by an equal sign
 class Equation(namedtuple("Equation", ['lhs', 'rhs']), HasIteratedVariables):

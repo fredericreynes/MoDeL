@@ -132,6 +132,8 @@ class TestCompiler(object):
         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13(-1), %baseyear)"
         res = grammar.func.parseString("ES_KLEM($s, 1)")[0]
         assert res.compile({grammar.VariableName('$s'): '42'}, {}, '') == "ES_KLEM(42, 1)"
+        res = grammar.func.parseString("value(QD[c] + ID[c])")[0]
+        assert res.compile({grammar.VariableName('c'): '42'}, {}, '') == "PQD_42 * QD_42 + PID_42 * ID_42"
 
     def test_parses_Expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
