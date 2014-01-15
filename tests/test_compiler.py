@@ -208,6 +208,13 @@ class TestCompiler(object):
         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         assert res.compile() == ['01', '02', '03', '05', '07']
 
+    def test_parses_Grouped_Lst(self):
+        res = grammar.grouped(grammar.lst).parseString("(01 02 03 04 05 06 07, 01 02 03)")[0]
+        assert isinstance(res, grammar.Grouped)
+        assert len(res.value) == 2
+        assert len(res.value[0].base) == 7
+        assert len(res.value[1].base) == 3
+
     def test_parses_Iter(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
         assert isinstance(res, grammar.Iter)

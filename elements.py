@@ -146,13 +146,12 @@ class Lst(namedtuple("LstBase", ['base', 'remove'])):
     def compile(self):
         return [e for e in self.base if e not in self.remove]
 
-# An Lsts is one or more Lst
-# If it holds more than one Lst, then must declared as
-# a comma-delimited list, between parentheses
-# (used to iterate over multiple variables simultaneously)
-class Lsts(BaseElement):
+# A Grouped is one element or
+# a comma-delimited list of elements, between parentheses
+# (notably used to iterate over multiple variables simultaneously)
+class Grouped(BaseElement):
     def compile(self):
-        return zip(*[l.compile() for l in self.value])
+        return zip(*[e.compile() for e in self.value])
 
 # An Iterator is the combination of a VariableName and a Lsts
 # Each occurence of the VariableName inside an Index or a Placeholder will be replaced
@@ -160,7 +159,15 @@ class Lsts(BaseElement):
 # e.g. c in 01 02 03 04 05 06 07 08 09
 # If the Lsts contains multiple Lst, then each list in the Lsts
 # are iterated over in parallel
-class Iter(namedtuple("Iter", ['variableNames', 'lsts'])):
+class Iter(namedtuple("Iter", ['variableNames_', 'lsts_'])):
+    @property
+    def variableNames(self):
+        return self.variableNames_
+
+    @property
+    def lsts(self):
+        return self.lsts_.compile()
+
     def compileLoopCounter(self):
         # WARNING: the range of the loop counter is calculated over the base list, not the compiled list
         # This is because the list removal feature is designed to skip an equation,
@@ -168,13 +175,13 @@ class Iter(namedtuple("Iter", ['variableNames', 'lsts'])):
         # which ignore this skipping
         return {self.variableNames[0].getLoopCounterVariable(): range(1, len(self.lsts[0].base) + 1) }
 
-    # Return a dict of: {VariableName: compiled Lst}
-    def compile(self):
-        # Check if all Lst have the same length
-        if len(set([len(l) for l in self.lsts])) > 1:
-            raise IndexError("When iterating multiple lists in parallel, all lists should be of equal length")
-        else:
-            return self.variableNames, self.lsts.compile()
+    # # Return a dict of: {VariableName: compiled Lst}
+    # def compile(self):
+    #     # Check if all Lst have the same length
+    #     if len(set([len(l) for l in self.lsts])) > 1:
+    #         raise IndexError("When iterating multiple lists in parallel, all lists should be of equal length")
+    #     else:
+    #         return self.variableNames, self.lsts.compile()
 
 # A Formula is the combination of an Equation, zero or one Condition, and one or more Iter(ators)
 # This is the full form of the code passed from eViews to the compiler
@@ -209,7 +216,10 @@ class Formula(namedtuple("Formula", ['options', 'equation', 'conditions', 'itera
             raise NameError("Some iterated variables are defined multiple times")
 
         # Compile each iterator to get a dict of {VariableNames: Iter}
-        iterators = dict(cat([i.compile()[1] for i in self.iterators]))
+        # iterators = cat(i.variableNames, [i.compile()[1] for i in self.iterators]))
+
+        # Zip in the loop counters
+        #lsts = [zip(i.lsts(),
         loopCounters = dict(cat([i.compileLoopCounter().items() for i in self.iterators]))
 
         iteratorDicts = self.cartesianProduct(iterators)
