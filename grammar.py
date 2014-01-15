@@ -48,7 +48,7 @@ class AST:
         elif self.has_value():
             return base + str(self.value)
         elif self.has_children():
-            return base + ', '.join([str(e) for e in self.children])
+            return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
         else:
             return base
 
@@ -58,7 +58,7 @@ real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(la
 
 variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName', True)
 
-placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Placeholder, True)
+placeholder = (Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
 
@@ -107,4 +107,4 @@ formula << (Group(Optional(options)) +
             Group(Optional(condition)) +
             Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
 
-print variableName.parseString('%pouet')[0]
+print placeholder.parseString('|pouet|')[0]
