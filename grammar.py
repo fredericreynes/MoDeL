@@ -2,22 +2,10 @@ from pyparsing import *
 
 from elements import *
 
-def tokensAsList(kls, tokens):
-    return kls(tokens.asList())
-
-def tokensAsArguments(kls, tokens):
-    return kls(*tokens.asList())
-
-def setParseClass(self, kls, unpack = False):
-    self.setParseAction(partial(tokensAsArguments if unpack else tokensAsList, kls))
-    return self
-
 def ast(self, nodetype):
     self.setParseAction(lambda toks: AST(nodetype, toks))
     return self
 
-
-ParserElement.setParseClass = setParseClass
 ParserElement.ast = ast
 
 class AST:
