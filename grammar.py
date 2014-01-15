@@ -27,6 +27,7 @@ def ast(self, nodetype, hasValue = False):
 
 
 ParserElement.setParseClass = setParseClass
+ParserElement.ast = ast
 
 class AST:
     def __init__(self, nodetype, value = None, children = None):
@@ -55,7 +56,7 @@ integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('i
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', value = float(toks[0])))
 
-variableName = Word(alphas + '_%$@', alphanums + '_').setParseClass(VariableName, True)
+variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName', True)
 
 placeholder = (Suppress('|') + variableName + Suppress('|')).setParseClass(Placeholder, True)
 
@@ -106,4 +107,4 @@ formula << (Group(Optional(options)) +
             Group(Optional(condition)) +
             Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
 
-print real.parseString('10.5')[0]
+print variableName.parseString('%pouet')[0]
