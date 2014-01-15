@@ -60,7 +60,7 @@ variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName', True)
 
 placeholder = (Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 
-identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).setParseClass(Identifier)
+identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).ast('identifier')
 
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
@@ -107,4 +107,4 @@ formula << (Group(Optional(options)) +
             Group(Optional(condition)) +
             Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
 
-print placeholder.parseString('|pouet|')[0]
+print identifier.parseString('test|X|_energy|O|')[0]
