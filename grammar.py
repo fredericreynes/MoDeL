@@ -75,8 +75,8 @@ formula = Forward()
 func = (variableName + Suppress('(') + delimitedList(expression) + Suppress(')')).ast("function")
 formulaFunc = (variableName + Suppress('(') + formula + Suppress(')')).ast("formulaFunction")
 
-openParen = Literal('(').setParseClass(BaseElement, True)
-closeParen = Literal(')').setParseClass(BaseElement, True)
+openParen = Literal('(').ast('literal')
+closeParen = Literal(')').ast('literal')
 
 atom =  func | openParen + expression + closeParen | operand
 expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
