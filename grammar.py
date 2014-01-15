@@ -14,6 +14,29 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
+class AST:
+    def __init__(self, nodetype, value = None, children = None):
+        self.nodetype = nodetype
+        self.value = value
+        self.children = children
+
+    def has_value(self):
+        return not self.value is None
+
+    def has_children(self):
+        return not self.children is None
+
+    def __str__(self):
+        base = self.nodetype + ": "
+        if self.has_value() and self.has_children():
+            return base + str(self.value) + ", (" + ', '.join([str(e) for e in self.children])  + ")"
+        elif self.has_value():
+            return base + str(self.value)
+        elif self.has_children():
+            return base + ', '.join([str(e) for e in self.children])
+        else:
+            return base
+
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
