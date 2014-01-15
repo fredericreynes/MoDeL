@@ -14,6 +14,9 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
+lpar = Suppress('(')
+rpar = Suppress(')')
+
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
@@ -27,7 +30,7 @@ identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placehol
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
 
-timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).setParseClass(TimeOffset, True)
+timeOffset = (lpar + (integer | variableName) + rpar).setParseClass(TimeOffset, True)
 
 array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
@@ -41,10 +44,10 @@ comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, 
 
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
-func = (variableName + Suppress('(') + Group(delimitedList(expression)) + Suppress(')')).setParseClass(Func, True)
+func = (variableName + lpar + Group(delimitedList(expression)) + rpar).setParseClass(Func, True)
 
 formula = Forward()
-sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)
+sumFunc = (Suppress('sum') + lpar + formula + rpar).setParseClass(SumFunc, True)
 
 openParen = Literal('(').setParseClass(BaseElement, True)
 closeParen = Literal(')').setParseClass(BaseElement, True)
