@@ -19,15 +19,6 @@ import csv
 #         res = grammar.placeholder.parseString("|V|")[0]
 #         assert res.compile({grammar.VariableName('V'): 'X'}, {}, '') == 'X'
 
-#     def test_parses_Identifier(self):
-#         res = grammar.identifier.parseString("test|X|_energy|O|")[0]
-#         assert isinstance(res, grammar.Identifier)
-#         assert len(res.value) == 4
-#         assert isinstance(res.value[0], grammar.VariableName) and isinstance(res.value[2], grammar.VariableName)
-#         assert isinstance(res.value[1], grammar.Placeholder) and isinstance(res.value[3], grammar.Placeholder)
-#         assert res.value[0].value == "test" and res.value[2].value == "_energy"
-#         assert res.value[1].value == grammar.VariableName("X") and res.value[3].value == grammar.VariableName("O")
-
 #     def test_compiles_Identifier(self):
 #         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
 #         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, {}, '') == "testQ_energyM"
@@ -42,19 +33,6 @@ import csv
 #         assert len(res.value) == 1 and isinstance(res.value[0], grammar.VariableName)
 
 
-#     def test_parses_Array(self):
-#         res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
-#         assert isinstance(res, grammar.Array)
-#         assert isinstance(res.identifier, grammar.Identifier)
-#         assert isinstance(res.index, grammar.Index)
-#         assert len(res.identifier.value) == 4
-#         assert len(res.index.value) == 3
-#         assert len(res.timeOffset) == 0
-#         res = grammar.array.parseString("timeAry[5](-1)")[0]
-#         assert isinstance(res, grammar.Array)
-#         assert isinstance(res.identifier, grammar.Identifier)
-#         assert isinstance(res.index, grammar.Index)
-#         assert len(res.timeOffset) == 1
 
 #     def test_compiles_Array(self):
 #         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
@@ -264,6 +242,15 @@ class TestParser(object):
         assert res.nodetype == "placeholder"
         assert res.children[0].nodetype == "variableName"
 
+    def test_parses_identifier(self):
+        res = grammar.identifier.parseString("test|X|_energy|O|")[0]
+        assert res.nodetype == "identifier"
+        assert len(res.children) == 4
+        assert res.children[0].nodetype == "variableName"
+        assert res.children[1].nodetype == "placeholder"
+        assert res.children[2].nodetype == "variableName"
+        assert res.children[3].nodetype == "placeholder"
+
     def test_parses_timeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
         assert res.nodetype == "timeOffset"
@@ -281,3 +268,19 @@ class TestParser(object):
         assert len(res.children) == 2
         # assert isinstance(res.immediate[0], grammar.Expression)
         # assert isinstance(res.immediate[1], grammar.Expression)
+
+
+    def test_parses_array(self):
+        res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
+        assert res.nodetype == "array"
+        assert len(res.children) == 3
+        assert res.children[0].nodetype == "identifier"
+        assert res.children[1].nodetype == "index"
+        assert res.children[2] == None
+        res = grammar.array.parseString("timeAry[5](-1)")[0]
+        print res
+        assert res.nodetype == "array"
+        assert len(res.children) == 3
+        assert res.children[0].nodetype == "identifier"
+        assert res.children[1].nodetype == "index"
+        assert res.children[2].nodetype == "timeOffset"

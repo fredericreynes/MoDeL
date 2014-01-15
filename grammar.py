@@ -58,7 +58,7 @@ index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
 
-array = (identifier + index + Group(Optional(timeOffset))).ast('array')
+array = (identifier + index + Optional(timeOffset, default = None)).ast('array')
 
 operand = array | identifier | real | integer
 
