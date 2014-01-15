@@ -1,4 +1,5 @@
 from .. import grammar
+from .. import traversal
 import csv
 
 # class TestCompiler(object):
@@ -191,7 +192,7 @@ class TestParser(object):
         res = grammar.array.parseString("timeAry[5](-1)")[0]
         self._expected(res, "array", 3, "identifier", "index", "timeOffset")
 
-    def test_parses_func(self):
+    def test_parses_function(self):
         res = grammar.func.parseString("d(log(test))")[0]
         self._expected(res, "function", 2, "variableName", "formula")
         assert res.children[1].children[1].nodetype == "expression"
@@ -221,7 +222,7 @@ class TestParser(object):
         res = grammar.lstBase.parseString("01 02 03 04 05 06 07")[0]
         self._expected(res, "listBase", 7, "string", "string", "string", "string", "string", "string", "string")
 
-    def test_parses_lst(self):
+    def test_parses_list(self):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
         self._expected(res, "list", 2, "listBase", None)
         assert res.children[0].children[3].immediate == "04"
@@ -230,7 +231,7 @@ class TestParser(object):
         assert res.children[0].children[3].immediate == "04"
         assert res.children[1].children[1].immediate == "06"
 
-    def test_parses_iter(self):
+    def test_parses_iterator(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
         self._expected(res, "iterator", 2, "variableName", "list")
 
@@ -244,3 +245,17 @@ class TestParser(object):
         res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
         self._expected(res, "formula", 4, None, "equation", None, "iterator")
         self._expected(res.children[1].children[1], 'expression', 1, "function")
+
+
+class TestCompiler(object):
+    def test_compiles_integer(self):
+        ast = grammar.integer.parseString("42")[0]
+        assert traversal.compile(ast) == 42
+
+    def test_compiles_real(self):
+        ast = grammar.real.parseString("3.14159")[0]
+        assert traversal.compile(ast) == 3.14159
+
+    def test_compiles_variableName(self):
+        ast = grammar.variableName.parseString("_test9_Variable")[0]
+        assert traversal.compile(ast) == "_test9_Variable"
