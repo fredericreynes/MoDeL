@@ -41,37 +41,6 @@ import csv
 #         assert isinstance(res, grammar.Identifier)
 #         assert len(res.value) == 1 and isinstance(res.value[0], grammar.VariableName)
 
-#     def test_parses_Index(self):
-#         res = grammar.index.parseString("[com, sec]")[0]
-#         assert isinstance(res, grammar.Index)
-#         assert len(res.value) == 2
-#         assert isinstance(res.value[0], grammar.Expression)
-#         assert isinstance(res.value[1], grammar.Expression)
-
-#     def test_parses_TimeOffset(self):
-#         res = grammar.timeOffset.parseString("(-1)")[0]
-#         assert isinstance(res, grammar.TimeOffset)
-#         assert res.value.value == -1
-#         res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
-#         assert isinstance(res, grammar.TimeOffset)
-#         assert isinstance(res.value, grammar.VariableName)
-#         assert res.value.value == "outOfTimeMan"
-
-#     def test_parses_Integer(self):
-#         res = grammar.integer.parseString("42")[0]
-#         assert isinstance(res, grammar.Integer)
-#         assert res.value == 42
-#         res = grammar.integer.parseString("-42")[0]
-#         assert isinstance(res, grammar.Integer)
-#         assert res.value == -42
-
-#     def test_parses_Real(self):
-#         res = grammar.real.parseString("3.14159")[0]
-#         assert isinstance(res, grammar.Real)
-#         assert res.value == 3.14159
-#         res = grammar.real.parseString("-3.14159")[0]
-#         assert isinstance(res, grammar.Real)
-#         assert res.value == -3.14159
 
 #     def test_parses_Array(self):
 #         res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
@@ -268,10 +237,14 @@ class TestParser(object):
     def test_parses_integer(self):
         res = grammar.integer.parseString("42")[0]
         assert res.value == 42
+        res = grammar.integer.parseString("-42")[0]
+        assert res.value == -42
 
     def test_parses_real(self):
         res = grammar.real.parseString("3.14159")[0]
         assert res.value == 3.14159
+        res = grammar.real.parseString("-3.14159")[0]
+        assert res.value == -3.14159
 
     def test_parses_variableName(self):
         res = grammar.variableName.parseString("testVariable")[0]
@@ -279,7 +252,22 @@ class TestParser(object):
         res = grammar.variableName.parseString("_test9_Variable")[0]
         assert res.value == "_test9_Variable"
 
-    def test_parses_Placeholder(self):
+    def test_parses_placeholder(self):
         res = grammar.placeholder.parseString("|X|")[0]
         assert len(res.children) == 1
         assert res.children[0].nodetype == "variableName"
+
+    def test_parses_timeOffset(self):
+        res = grammar.timeOffset.parseString("(-1)")[0]
+        assert len(res.children) == 1
+        assert res.children[0].value == -1
+        res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
+        assert len(res.children) == 1
+        assert res.children[0].nodetype == "variableName"
+        assert res.children[0].value == "outOfTimeMan"
+
+    def test_parses_Index(self):
+        res = grammar.index.parseString("[com, sec]")[0]
+        assert len(res.children) == 2
+        # assert isinstance(res.value[0], grammar.Expression)
+        # assert isinstance(res.value[1], grammar.Expression)

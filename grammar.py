@@ -63,9 +63,9 @@ placeholder = (Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).ast('identifier')
 
 expression = Forward()
-index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
+index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
-timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).setParseClass(TimeOffset, True)
+timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
 
 array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
