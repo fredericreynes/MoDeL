@@ -75,11 +75,6 @@ import csv
 #         assert res.evaluate({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'},
 #                             {'Q_24_2403': 1, 'X_24_2403': 10}) == True
 
-#     def test_parses_Equation(self):
-#         res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
-#         assert isinstance(res, grammar.Equation)
-#         assert isinstance(res.lhs, grammar.Expression)
-#         assert isinstance(res.rhs, grammar.Expression)
 
 #     def test_compiles_Equation(self):
 #         res = grammar.equation.parseString("energy[com] = log(B[3])")[0]
@@ -303,3 +298,10 @@ class TestParser(object):
         assert res.children[1].nodetype == 'function'
         assert res.children[2].nodetype == 'operator'
         assert res.children[1].nodetype == 'function'
+
+    def test_parses_Equation(self):
+        res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
+        assert res.nodetype == "equation"
+        assert len(res.children) == 2
+        assert res.children[0].nodetype == "expression"
+        assert res.children[1].nodetype == "expression"

@@ -82,7 +82,7 @@ atom =  func | openParen + expression + closeParen | operand
 expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.ast('expression')
 
-equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
+equation = (expression + Suppress('=') + expression).ast('equation')
 
 condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
 
