@@ -84,7 +84,7 @@ expression = expression.ast('expression')
 
 equation = (expression + Suppress('=') + expression).ast('equation')
 
-condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True)
+condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
 lstRaw  = OneOrMore(Word(alphanums))
 lst = (Group(lstRaw) + Group(Optional(Suppress('\\') + lstRaw))).setParseClass(Lst, True)

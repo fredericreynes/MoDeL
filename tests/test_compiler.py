@@ -82,12 +82,6 @@ import csv
 #         res = grammar.equation.parseString("energy[com] = B[3]")[0]
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
-#     def test_parses_Condition(self):
-#         res = grammar.condition.parseString("if energy[com, sec] > 0")[0]
-#         assert isinstance(res, grammar.Condition)
-#         assert isinstance(res.expression, grammar.Expression)
-#         assert len(res.expression.value) == 3
-
 #     def test_parses_Lst(self):
 #         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
 #         assert isinstance(res, grammar.Lst)
@@ -299,9 +293,15 @@ class TestParser(object):
         assert res.children[2].nodetype == 'operator'
         assert res.children[1].nodetype == 'function'
 
-    def test_parses_Equation(self):
+    def test_parses_equation(self):
         res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
         assert res.nodetype == "equation"
         assert len(res.children) == 2
         assert res.children[0].nodetype == "expression"
         assert res.children[1].nodetype == "expression"
+
+    def test_parses_condition(self):
+        res = grammar.condition.parseString("if energy[com, sec] > 0")[0]
+        assert res.nodetype == "condition"
+        assert len(res.children) == 1
+        assert res.children[0].nodetype == "expression"
