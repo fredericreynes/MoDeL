@@ -9,29 +9,6 @@ def ast(self, nodetype):
 
 ParserElement.ast = ast
 
-class AST:
-    def __init__(self, nodetype, children):
-        self.nodetype = nodetype
-        self.children = children
-
-    @property
-    def is_immediate(self):
-        return len(self.children) == 1 and not isinstance(self.children[0], AST)
-
-    @property
-    def immediate(self):
-        if self.is_immediate:
-            return self.children[0]
-        else:
-            raise TypeError
-
-    def __str__(self):
-        base = self.nodetype + ": "
-        if self.is_immediate:
-            return base + repr(self.children[0])
-        else:
-            return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
-
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('integer', [int(toks[0])] ))
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', [float(toks[0])] ))
@@ -88,4 +65,5 @@ formula << (Optional(options, default = None) +
 
 ast = formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
 
-traverse = NodeCount(ast)
+NodeCount(ast)
+print ast.compiled
