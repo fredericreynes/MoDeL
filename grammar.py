@@ -51,9 +51,9 @@ class AST:
         else:
             return base
 
-integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
+integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('integer', value = int(toks[0])))
 
-real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: Real(float(toks[0])))
+real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', value = float(toks[0])))
 
 variableName = Word(alphas + '_%$@', alphanums + '_').setParseClass(VariableName, True)
 
@@ -105,3 +105,5 @@ formula << (Group(Optional(options)) +
             (equation | expression) +
             Group(Optional(condition)) +
             Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
+
+print real.parseString('10.5')[0]
