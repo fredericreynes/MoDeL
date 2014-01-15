@@ -27,10 +27,6 @@ import csv
 #         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
 #         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, {}, '!pv') == "PtestQ_energyM * testQ_energyM"
 
-#     def test_parses_Simple_VariableName_as_Identifier(self):
-#         res = grammar.identifier.parseString("testVar")[0]
-#         assert isinstance(res, grammar.Identifier)
-#         assert len(res.value) == 1 and isinstance(res.value[0], grammar.VariableName)
 
 
 
@@ -46,15 +42,6 @@ import csv
 #         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
 #         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "ParrayName8_24_5_2403 * arrayName8_24_5_2403"
 
-#     def test_parses_Func(self):
-#         res = grammar.func.parseString("d(log(test))")[0]
-#         assert isinstance(res, grammar.Func)
-#         assert res.variableName == grammar.VariableName('d') and isinstance(res.expressions[0], grammar.Expression)
-#         assert isinstance(res.expressions[0].value[0], grammar.Func)
-#         res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
-#         assert isinstance(res, grammar.Func)
-#         assert res.variableName == grammar.VariableName('@elem')
-#         assert len(res.expressions) == 2
 
 #     def test_compiles_Func(self):
 #         res = grammar.func.parseString("d(log(test[j]))")[0]
@@ -146,11 +133,6 @@ import csv
 #         assert isinstance(res, grammar.Iter)
 #         assert isinstance(res.variableName, grammar.VariableName)
 #         assert isinstance(res.lst, grammar.Lst)
-
-#     def test_parses_SumFunc(self):
-#         res = grammar.sumFunc.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
-#         assert isinstance(res, grammar.SumFunc)
-#         assert isinstance(res.formula, grammar.Formula)
 
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
@@ -250,6 +232,10 @@ class TestParser(object):
         assert res.children[1].nodetype == "placeholder"
         assert res.children[2].nodetype == "variableName"
         assert res.children[3].nodetype == "placeholder"
+        res = grammar.identifier.parseString("testVar")[0]
+        assert res.nodetype == "identifier"
+        assert len(res.children) == 1
+        assert res.children[0].nodetype == "variableName"
 
     def test_parses_timeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
@@ -284,3 +270,20 @@ class TestParser(object):
         assert res.children[0].nodetype == "identifier"
         assert res.children[1].nodetype == "index"
         assert res.children[2].nodetype == "timeOffset"
+
+
+    def test_parses_Func(self):
+        res = grammar.func.parseString("d(log(test))")[0]
+        assert res.nodetype == "function"
+        assert len(res.children) == 2
+        assert res.children[0].nodetype == "variableName"
+        # res.variableName == grammar.VariableName('d') and isinstance(res.expressions[0], grammar.Expression)
+        # assert isinstance(res.expressions[0].value[0], grammar.Func)
+        # res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
+        # assert isinstance(res, grammar.Func)
+        # assert res.variableName == grammar.VariableName('@elem')
+        # assert len(res.expressions) == 2
+        res = grammar.func.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
+        assert res.nodetype == "function"
+        assert len(res.children) == 2
+        assert res.children[0].nodetype == "variableName"

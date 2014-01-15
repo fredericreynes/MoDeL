@@ -62,23 +62,22 @@ array = (identifier + index + Optional(timeOffset, default = None)).ast('array')
 
 operand = array | identifier | real | integer
 
-unaryOperator = oneOf('+ -').setParseClass(Operator, True)
+unaryOperator = oneOf('+ -').ast('operator')
 
-operator = oneOf('+ - * / ^').setParseClass(Operator, True)
+operator = oneOf('+ - * / ^').ast('operator')
 
-comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, True)
+comparisonOperator = oneOf('<> < <= > >= ==').ast("comparisonOperator")
 
-booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
-
-func = (variableName + Suppress('(') + Group(delimitedList(expression)) + Suppress(')')).setParseClass(Func, True)
+booleanOperator = oneOf('and or xor').ast("booleanOperator")
 
 formula = Forward()
-sumFunc = (Suppress('sum') + Suppress('(') + formula + Suppress(')')).setParseClass(SumFunc, True)
+
+func = (variableName + Suppress('(') + (formula | delimitedList(expression)) + Suppress(')')).ast("function")
 
 openParen = Literal('(').setParseClass(BaseElement, True)
 closeParen = Literal(')').setParseClass(BaseElement, True)
 
-atom =  sumFunc | func | openParen + expression + closeParen | operand
+atom =  func | openParen + expression + closeParen | operand
 expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.setParseClass(Expression)
 
