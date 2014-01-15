@@ -5,6 +5,15 @@ class AST:
         self.compiled = None
         self.generated = None
 
+    def __getitem__(self, i):
+        return self.children[i]
+
+    def __iter__(self):
+        return iter(self.children)
+
+    def __len__(self):
+        return len(self.children)
+
     @property
     def is_immediate(self):
         return len(self.children) == 1 and not isinstance(self.children[0], AST)
@@ -32,7 +41,9 @@ class ASTTraversal:
         method_name = "n_" + ast.nodetype
         if ast.is_immediate and hasattr(self, "n_immediate"):
             self.n_immediate(ast)
-        if hasattr(self, method_name):
+            if hasattr(self, method_name):
+                getattr(self, "n_" + ast.nodetype)(ast)
+        elif hasattr(self, method_name):
             getattr(self, "n_" + ast.nodetype)(ast)
         else:
             self.default(ast)
@@ -51,11 +62,11 @@ class ASTTraversal:
 
 class NodeCount(ASTTraversal):
     def default(self, ast):
-        ast.compiled = ast.nodetype + ": " + str(len(ast.children))
+        ast.compiled = ast.nodetype + ": " + str(len(ast))
 
 class Compile(ASTTraversal):
     def n_immediate(self, ast):
-        ast.compiled = ast.children[0]
+        ast.compiled = ast[0]
 
     def n_list(self, ast):
         ast.compiled = [e for e in ast.children[0] if e not in ast.children[1]]
