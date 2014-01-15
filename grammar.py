@@ -12,17 +12,8 @@ def setParseClass(self, kls, unpack = False):
     self.setParseAction(partial(tokensAsArguments if unpack else tokensAsList, kls))
     return self
 
-def ast(self, nodetype, hasValue = False):
-    def astLambda(toks):
-        if hasValue:
-            if len(toks) > 1:
-                return AST(nodetype, value = toks[0], children = toks[1:])
-            else:
-                return AST(nodetype, value = toks[0])
-        else:
-            return AST(nodetype, children = toks)
-
-    self.setParseAction(astLambda)
+def ast(self, nodetype):
+    self.setParseAction(lambda toks: AST(nodetype, toks))
     return self
 
 
@@ -30,33 +21,33 @@ ParserElement.setParseClass = setParseClass
 ParserElement.ast = ast
 
 class AST:
-    def __init__(self, nodetype, value = None, children = None):
+    def __init__(self, nodetype, children):
         self.nodetype = nodetype
-        self.value = value
         self.children = children
 
-    def has_value(self):
-        return not self.value is None
+    @property
+    def is_immediate(self):
+        return len(self.children) == 1 and not isinstance(self.children[0], AST)
 
-    def has_children(self):
-        return not self.children is None
+    @property
+    def immediate(self):
+        if self.is_immediate:
+            return self.children[0]
+        else:
+            raise TypeError
 
     def __str__(self):
         base = self.nodetype + ": "
-        if self.has_value() and self.has_children():
-            return base + str(self.value) + ", (" + ', '.join([str(e) for e in self.children])  + ")"
-        elif self.has_value():
-            return base + str(self.value)
-        elif self.has_children():
-            return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
+        if self.is_immediate:
+            return base + str(self.children[0])
         else:
-            return base
+            return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
 
-integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('integer', value = int(toks[0])))
+integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('integer', [int(toks[0])] ))
 
-real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', value = float(toks[0])))
+real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', [float(toks[0])] ))
 
-variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName', True)
+variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName')
 
 placeholder = (Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 
@@ -67,7 +58,7 @@ index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
 
-array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
+array = (identifier + index + Group(Optional(timeOffset))).ast('array')
 
 operand = array | identifier | real | integer
 

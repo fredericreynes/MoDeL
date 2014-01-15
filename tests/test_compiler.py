@@ -236,38 +236,48 @@ import csv
 class TestParser(object):
     def test_parses_integer(self):
         res = grammar.integer.parseString("42")[0]
-        assert res.value == 42
+        assert res.nodetype == "integer"
+        assert res.immediate == 42
         res = grammar.integer.parseString("-42")[0]
-        assert res.value == -42
+        assert res.nodetype == "integer"
+        assert res.immediate == -42
 
     def test_parses_real(self):
         res = grammar.real.parseString("3.14159")[0]
-        assert res.value == 3.14159
+        assert res.nodetype == "real"
+        assert res.immediate == 3.14159
         res = grammar.real.parseString("-3.14159")[0]
-        assert res.value == -3.14159
+        assert res.nodetype == "real"
+        assert res.immediate == -3.14159
 
     def test_parses_variableName(self):
         res = grammar.variableName.parseString("testVariable")[0]
-        assert res.value == "testVariable"
+        assert res.nodetype == "variableName"
+        assert res.immediate == "testVariable"
         res = grammar.variableName.parseString("_test9_Variable")[0]
-        assert res.value == "_test9_Variable"
+        assert res.nodetype == "variableName"
+        assert res.immediate == "_test9_Variable"
 
     def test_parses_placeholder(self):
         res = grammar.placeholder.parseString("|X|")[0]
         assert len(res.children) == 1
+        assert res.nodetype == "placeholder"
         assert res.children[0].nodetype == "variableName"
 
     def test_parses_timeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
+        assert res.nodetype == "timeOffset"
         assert len(res.children) == 1
-        assert res.children[0].value == -1
+        assert res.children[0].immediate == -1
         res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
+        assert res.nodetype == "timeOffset"
         assert len(res.children) == 1
         assert res.children[0].nodetype == "variableName"
-        assert res.children[0].value == "outOfTimeMan"
+        assert res.children[0].immediate == "outOfTimeMan"
 
-    def test_parses_Index(self):
+    def test_parses_index(self):
         res = grammar.index.parseString("[com, sec]")[0]
+        assert res.nodetype == "index"
         assert len(res.children) == 2
-        # assert isinstance(res.value[0], grammar.Expression)
-        # assert isinstance(res.value[1], grammar.Expression)
+        # assert isinstance(res.immediate[0], grammar.Expression)
+        # assert isinstance(res.immediate[1], grammar.Expression)
