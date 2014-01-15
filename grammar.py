@@ -12,6 +12,20 @@ def setParseClass(self, kls, unpack = False):
     self.setParseAction(partial(tokensAsArguments if unpack else tokensAsList, kls))
     return self
 
+def ast(self, nodetype, hasValue = False):
+    def astLambda(toks):
+        if hasValue:
+            if len(toks) > 1:
+                return AST(nodetype, value = toks[0], children = toks[1:])
+            else:
+                return AST(nodetype, value = toks[0])
+        else:
+            return AST(nodetype, children = toks)
+
+    self.setParseAction(astLambda)
+    return self
+
+
 ParserElement.setParseClass = setParseClass
 
 class AST:
