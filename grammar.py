@@ -39,7 +39,7 @@ class AST:
     def __str__(self):
         base = self.nodetype + ": "
         if self.is_immediate:
-            return base + str(self.children[0])
+            return base + repr(self.children[0])
         else:
             return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
 
@@ -72,14 +72,15 @@ booleanOperator = oneOf('and or xor').ast("booleanOperator")
 
 formula = Forward()
 
-func = (variableName + Suppress('(') + (formula | delimitedList(expression)) + Suppress(')')).ast("function")
+func = (variableName + Suppress('(') + delimitedList(expression) + Suppress(')')).ast("function")
+formulaFunc = (variableName + Suppress('(') + formula + Suppress(')')).ast("formulaFunction")
 
 openParen = Literal('(').setParseClass(BaseElement, True)
 closeParen = Literal(')').setParseClass(BaseElement, True)
 
 atom =  func | openParen + expression + closeParen | operand
 expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
-expression = expression.setParseClass(Expression)
+expression = expression.ast('expression')
 
 equation = (expression + Suppress('=') + expression).setParseClass(Equation, True)
 

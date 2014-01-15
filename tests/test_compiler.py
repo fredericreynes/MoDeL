@@ -55,23 +55,6 @@ import csv
 #         res = grammar.func.parseString("value(QD[c] + ID[c])")[0]
 #         assert res.compile({grammar.VariableName('c'): '42'}, {}, '') == "PQD_42 * QD_42 + PID_42 * ID_42"
 
-#     def test_parses_Expression(self):
-#         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-#         assert isinstance(res, grammar.Expression)
-#         assert len(res.value) == 7
-#         assert isinstance(res.value[0], grammar.Array)
-#         assert isinstance(res.value[1], grammar.Operator)
-#         assert isinstance(res.value[2], grammar.Func)
-#         assert isinstance(res.value[3], grammar.Operator)
-#         assert isinstance(res.value[4], grammar.Identifier)
-#         assert isinstance(res.value[5], grammar.Operator)
-#         assert isinstance(res.value[6], grammar.Identifier)
-#         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
-#         assert isinstance(res, grammar.Expression)
-#         res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
-#         assert isinstance(res, grammar.Expression)
-#         assert len(res.value) == 4
-
 #     def test_compiles_Expression(self):
 #         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
 #         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "D_24_2403 + d(log(Q_24_2403)) - A / B"
@@ -264,7 +247,6 @@ class TestParser(object):
         assert res.children[1].nodetype == "index"
         assert res.children[2] == None
         res = grammar.array.parseString("timeAry[5](-1)")[0]
-        print res
         assert res.nodetype == "array"
         assert len(res.children) == 3
         assert res.children[0].nodetype == "identifier"
@@ -272,7 +254,7 @@ class TestParser(object):
         assert res.children[2].nodetype == "timeOffset"
 
 
-    def test_parses_Func(self):
+    def test_parses_func(self):
         res = grammar.func.parseString("d(log(test))")[0]
         assert res.nodetype == "function"
         assert len(res.children) == 2
@@ -283,7 +265,34 @@ class TestParser(object):
         # assert isinstance(res, grammar.Func)
         # assert res.variableName == grammar.VariableName('@elem')
         # assert len(res.expressions) == 2
-        res = grammar.func.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
+        res = grammar.func.parseString("multiple(c, s, 42)")[0]
         assert res.nodetype == "function"
+        assert len(res.children) == 4
+        assert res.children[0] == "variableName"
+        assert res.children[1] == "variableName"
+        assert res.children[2] == "variableName"
+        assert res.children[3] == "integer"
+
+    def test_parses_formulaFunc(self):
+        res = grammar.formulaFunc.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
+        assert res.nodetype == "formulaFunction"
         assert len(res.children) == 2
         assert res.children[0].nodetype == "variableName"
+
+    def test_parses_Expression(self):
+        res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+        assert res.nodetype == "expression"
+        assert len(res.children) == 7
+        assert res.children[0].nodetype == "array"
+        assert res.children[1].nodetype == "operator"
+        assert res.children[2].nodetype == "function"
+        assert res.children[3].nodetype == "operator"
+        assert res.children[4].nodetype == "identifier"
+        assert res.children[5].nodetype == "operator"
+        assert res.children[6].nodetype == "identifier"
+        res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+        assert res.nodetype == "expression"
+        res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
+        print res
+        assert res.nodetype == "expression"
+        assert len(res.children) == 4
