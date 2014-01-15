@@ -82,29 +82,12 @@ import csv
 #         res = grammar.equation.parseString("energy[com] = B[3]")[0]
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
-#     def test_parses_Lst(self):
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-#         assert isinstance(res, grammar.Lst)
-#         assert len(res.base) == 7
-#         assert res.base[3] == "04"
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
-#         assert isinstance(res, grammar.Lst)
-#         assert len(res.base) == 7
-#         assert len(res.remove) == 2
-#         assert res.base[3] == "04"
-#         assert res.remove[1] == "06"
 
 #     def test_compiles_Lst(self):
 #         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
 #         assert res.compile() == ['01', '02', '03', '04', '05', '06', '07']
 #         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
 #         assert res.compile() == ['01', '02', '03', '05', '07']
-
-#     def test_parses_Iter(self):
-#         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
-#         assert isinstance(res, grammar.Iter)
-#         assert isinstance(res.variableName, grammar.VariableName)
-#         assert isinstance(res.lst, grammar.Lst)
 
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
@@ -166,6 +149,16 @@ import csv
 #         assert res.compile({}) == expected
 
 class TestParser(object):
+
+    def _expected(self, res, nodetype, children_count, *children_types):
+        assert res.nodetype == nodetype
+        assert len(res.children) == children_count
+        for i, t in enumerate(children_types):
+            if t is None:
+                assert res.children[i] is None
+            else:
+                assert res.children[i].nodetype == t
+
     def test_parses_integer(self):
         res = grammar.integer.parseString("42")[0]
         assert res.nodetype == "integer"
@@ -192,116 +185,73 @@ class TestParser(object):
 
     def test_parses_placeholder(self):
         res = grammar.placeholder.parseString("|X|")[0]
-        assert len(res.children) == 1
-        assert res.nodetype == "placeholder"
-        assert res.children[0].nodetype == "variableName"
+        self._expected(res, "placeholder", 1, "variableName")
 
     def test_parses_identifier(self):
         res = grammar.identifier.parseString("test|X|_energy|O|")[0]
-        assert res.nodetype == "identifier"
-        assert len(res.children) == 4
-        assert res.children[0].nodetype == "variableName"
-        assert res.children[1].nodetype == "placeholder"
-        assert res.children[2].nodetype == "variableName"
-        assert res.children[3].nodetype == "placeholder"
+        self._expected(res, "identifier", 4, "variableName", "placeholder", "variableName", "placeholder")
         res = grammar.identifier.parseString("testVar")[0]
-        assert res.nodetype == "identifier"
-        assert len(res.children) == 1
-        assert res.children[0].nodetype == "variableName"
+        self._expected(res, "identifier", 1, "variableName")
 
     def test_parses_timeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
-        assert res.nodetype == "timeOffset"
-        assert len(res.children) == 1
-        assert res.children[0].immediate == -1
+        self._expected(res, "timeOffset", 1, "integer")
         res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
-        assert res.nodetype == "timeOffset"
-        assert len(res.children) == 1
-        assert res.children[0].nodetype == "variableName"
-        assert res.children[0].immediate == "outOfTimeMan"
+        self._expected(res, "timeOffset", 1, "variableName")
 
     def test_parses_index(self):
         res = grammar.index.parseString("[com, sec]")[0]
-        assert res.nodetype == "index"
-        assert len(res.children) == 2
-        # assert isinstance(res.immediate[0], grammar.Expression)
-        # assert isinstance(res.immediate[1], grammar.Expression)
-
+        self._expected(res, "index", 2, "expression", "expression")
 
     def test_parses_array(self):
         res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
-        assert res.nodetype == "array"
-        assert len(res.children) == 3
-        assert res.children[0].nodetype == "identifier"
-        assert res.children[1].nodetype == "index"
-        assert res.children[2] == None
+        self._expected(res, "array", 3, "identifier", "index", None)
         res = grammar.array.parseString("timeAry[5](-1)")[0]
-        assert res.nodetype == "array"
-        assert len(res.children) == 3
-        assert res.children[0].nodetype == "identifier"
-        assert res.children[1].nodetype == "index"
-        assert res.children[2].nodetype == "timeOffset"
-
+        self._expected(res, "array", 3, "identifier", "index", "timeOffset")
 
     def test_parses_func(self):
         res = grammar.func.parseString("d(log(test))")[0]
-        assert res.nodetype == "function"
-        assert len(res.children) == 2
-        assert res.children[0].nodetype == "variableName"
-        # res.variableName == grammar.VariableName('d') and isinstance(res.expressions[0], grammar.Expression)
-        # assert isinstance(res.expressions[0].value[0], grammar.Func)
-        # res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
-        # assert isinstance(res, grammar.Func)
-        # assert res.variableName == grammar.VariableName('@elem')
-        # assert len(res.expressions) == 2
+        self._expected(res, "function", 2, "variableName", "expression")
+        assert res.children[1].children[0].nodetype == "function"
+        res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
+        self._expected(res, "function", 3, "variableName", "expression", "expression")
+        assert res.children[0].immediate == '@elem'
         res = grammar.func.parseString("multiple(c, s, 42)")[0]
-        assert res.nodetype == "function"
-        assert len(res.children) == 4
-        assert res.children[0].nodetype == "variableName"
-        assert res.children[1].nodetype == "expression"
-        assert res.children[2].nodetype == "expression"
-        assert res.children[3].nodetype == "expression"
+        self._expected(res, "function", 4, "variableName", "expression", "expression", "expression")
 
     def test_parses_formulaFunc(self):
         res = grammar.formulaFunc.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
-        assert res.nodetype == "formulaFunction"
-        assert len(res.children) == 2
-        assert res.children[0].nodetype == "variableName"
+        self._expected(res, "formulaFunction", 2, "variableName", "formula")
 
     def test_parses_expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-        assert res.nodetype == "expression"
-        assert len(res.children) == 7
-        assert res.children[0].nodetype == "array"
-        assert res.children[1].nodetype == "operator"
-        assert res.children[2].nodetype == "function"
-        assert res.children[3].nodetype == "operator"
-        assert res.children[4].nodetype == "identifier"
-        assert res.children[5].nodetype == "operator"
-        assert res.children[6].nodetype == "identifier"
+        self._expected(res, "expression", 7, "array", "operator", "function", "operator", "identifier", "operator", "identifier")
         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
-        assert res.nodetype == "expression"
-        assert len(res.children) == 3
-        assert res.children[0].nodetype == 'literal'
-        assert res.children[1].nodetype == 'expression'
-        assert res.children[2].nodetype == 'literal'
+        self._expected(res, "expression", 3, "literal", "expression", "literal")
         res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
-        assert res.nodetype == "expression"
-        assert len(res.children) == 4
-        assert res.children[0].nodetype == 'operator'
-        assert res.children[1].nodetype == 'function'
-        assert res.children[2].nodetype == 'operator'
-        assert res.children[1].nodetype == 'function'
+        self._expected(res, "expression", 4, "operator", "function", "operator", "function")
 
     def test_parses_equation(self):
         res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
-        assert res.nodetype == "equation"
-        assert len(res.children) == 2
-        assert res.children[0].nodetype == "expression"
-        assert res.children[1].nodetype == "expression"
+        self._expected(res, "equation", 2, "expression", "expression")
 
     def test_parses_condition(self):
         res = grammar.condition.parseString("if energy[com, sec] > 0")[0]
-        assert res.nodetype == "condition"
-        assert len(res.children) == 1
-        assert res.children[0].nodetype == "expression"
+        self._expected(res, "condition", 1, "expression")
+
+    def test_parses_listBase(self):
+        res = grammar.lstBase.parseString("01 02 03 04 05 06 07")[0]
+        self._expected(res, "listBase", 7, "string", "string", "string", "string", "string", "string", "string")
+
+    def test_parses_Lst(self):
+        res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
+        self._expected(res, "list", 2, "listBase", None)
+        assert res.children[0].children[3].immediate == "04"
+        res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
+        self._expected(res, "list", 2, "listBase", "listBase")
+        assert res.children[0].children[3].immediate == "04"
+        assert res.children[1].children[1].immediate == "06"
+
+    def test_parses_Iter(self):
+        res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
+        self._expected(res, "iterator", 2, "variableName", "list")

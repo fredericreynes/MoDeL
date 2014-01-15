@@ -86,10 +86,10 @@ equation = (expression + Suppress('=') + expression).ast('equation')
 
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
-lstRaw  = OneOrMore(Word(alphanums))
-lst = (Group(lstRaw) + Group(Optional(Suppress('\\') + lstRaw))).setParseClass(Lst, True)
+lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
+lst = (lstBase + Optional(Suppress('\\') + lstBase, default = None)).ast('list')
 
-iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
+iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).ast('iterator')
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
