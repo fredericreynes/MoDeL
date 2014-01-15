@@ -14,8 +14,8 @@ def setParseClass(self, kls, unpack = False):
 
 ParserElement.setParseClass = setParseClass
 
-lpar = Suppress('(')
-rpar = Suppress(')')
+openParenSuppr = Suppress('(')
+closeParenSuppr = Suppress(')')
 
 integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: Integer(int(toks[0])))
 
@@ -30,7 +30,7 @@ identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placehol
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).setParseClass(Index)
 
-timeOffset = (lpar + (integer | variableName) + rpar).setParseClass(TimeOffset, True)
+timeOffset = (openParenSuppr + (integer | variableName) + closeParenSuppr).setParseClass(TimeOffset, True)
 
 array = (identifier + index + Group(Optional(timeOffset))).setParseClass(Array, True)
 
@@ -44,10 +44,10 @@ comparisonOperator = oneOf('<> < <= > >= ==').setParseClass(ComparisonOperator, 
 
 booleanOperator = oneOf('and or xor').setParseClass(BooleanOperator, True)
 
-func = (variableName + lpar + Group(delimitedList(expression)) + rpar).setParseClass(Func, True)
+func = (variableName + openParenSuppr + Group(delimitedList(expression)) + closeParenSuppr).setParseClass(Func, True)
 
 formula = Forward()
-sumFunc = (Suppress('sum') + lpar + formula + rpar).setParseClass(SumFunc, True)
+sumFunc = (Suppress('sum') + openParenSuppr + formula + closeParenSuppr).setParseClass(SumFunc, True)
 
 openParen = Literal('(').setParseClass(BaseElement, True)
 closeParen = Literal(')').setParseClass(BaseElement, True)
@@ -62,9 +62,9 @@ condition = (Suppress(Keyword('if')) + expression).setParseClass(Condition, True
 
 lstRaw  = OneOrMore(Word(alphanums))
 lst = (Group(lstRaw) + Group(Optional(Suppress('\\') + lstRaw))).setParseClass(Lst, True)
-lsts = Group(lst | '(' + delimitedList(lst) + ')').setParseClass(Lsts)
+lsts = Group(lst | openParenSuppr + delimitedList(lst) + closeParenSuppr).setParseClass(Lsts, True)
 
-iter = (Group(variableName | '(' + delimitedList(variableName) + ')') + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
+iter = (Group(variableName | openParenSuppr + delimitedList(variableName) + closeParenSuppr) + Suppress(Keyword('in')) + (lst | variableName)).setParseClass(Iter, True)
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
