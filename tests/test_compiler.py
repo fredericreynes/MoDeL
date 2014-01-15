@@ -93,24 +93,6 @@ import csv
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
 #         assert res.compile({grammar.VariableName('s'): '10'}, {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20}, '') == "0 + Q_01_10 + Q_03_10"
 
-#     def test_parses_Formula(self):
-#         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
-#         assert isinstance(res, grammar.Formula)
-#         assert isinstance(res.equation, grammar.Equation)
-#         assert len(res.iterators) == 2
-#         assert reduce(lambda x, y: x and y, [isinstance(e, grammar.Iter) for e in res.iterators])
-#         res = grammar.formula.parseString("Q = QD + QM")[0]
-#         assert isinstance(res, grammar.Formula)
-#         assert len(res.iterators) == 0
-#         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
-#         assert isinstance(res, grammar.Formula)
-#         assert len(res.conditions) == 1
-#         assert isinstance(res.conditions[0], grammar.Condition)
-#         assert len(res.iterators) == 2
-#         res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
-#         assert isinstance(res, grammar.Formula)
-#         assert len(res.iterators)
-
 #     def test_compiles_Formula(self):
 #         expected = ("Q_01 = QD_01 + QM_01\n"
 #                     "Q_02 = QD_02 + QM_02\n"
@@ -211,17 +193,13 @@ class TestParser(object):
 
     def test_parses_func(self):
         res = grammar.func.parseString("d(log(test))")[0]
-        self._expected(res, "function", 2, "variableName", "expression")
-        assert res.children[1].children[0].nodetype == "function"
+        self._expected(res, "function", 2, "variableName", "formula")
+        assert res.children[1].children[1].nodetype == "expression"
         res = grammar.func.parseString("@elem(PK[s], %baseyear)")[0]
         self._expected(res, "function", 3, "variableName", "expression", "expression")
         assert res.children[0].immediate == '@elem'
         res = grammar.func.parseString("multiple(c, s, 42)")[0]
         self._expected(res, "function", 4, "variableName", "expression", "expression", "expression")
-
-    def test_parses_formulaFunc(self):
-        res = grammar.formulaFunc.parseString("sum(q[c, s] if q[c, s] <> 0, c in 01 02 03)")[0]
-        self._expected(res, "formulaFunction", 2, "variableName", "formula")
 
     def test_parses_expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
@@ -243,7 +221,7 @@ class TestParser(object):
         res = grammar.lstBase.parseString("01 02 03 04 05 06 07")[0]
         self._expected(res, "listBase", 7, "string", "string", "string", "string", "string", "string", "string")
 
-    def test_parses_Lst(self):
+    def test_parses_lst(self):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
         self._expected(res, "list", 2, "listBase", None)
         assert res.children[0].children[3].immediate == "04"
@@ -252,6 +230,18 @@ class TestParser(object):
         assert res.children[0].children[3].immediate == "04"
         assert res.children[1].children[1].immediate == "06"
 
-    def test_parses_Iter(self):
+    def test_parses_iter(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
         self._expected(res, "iterator", 2, "variableName", "list")
+
+    def test_parses_formula(self):
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
+        self._expected(res, "formula", 5, None, "equation", None, "iterator", "iterator")
+        res = grammar.formula.parseString("Q = QD + QM")[0]
+        self._expected(res, "formula", 4, None, "equation", None, None)
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
+        self._expected(res, "formula", 5, None, "equation", "condition", "iterator", "iterator")
+        res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        self._expected(res, "formula", 4, None, "equation", None, "iterator")
+        print res.children[1].children[1]
+        self._expected(res.children[1].children[1], 'expression', 1, "function")

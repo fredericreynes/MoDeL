@@ -72,13 +72,12 @@ booleanOperator = oneOf('and or xor').ast("booleanOperator")
 
 formula = Forward()
 
-func = (variableName + Suppress('(') + delimitedList(expression) + Suppress(')')).ast("function")
-formulaFunc = (variableName + Suppress('(') + formula + Suppress(')')).ast("formulaFunction")
+func = (variableName + Suppress('(') + (formula ^ delimitedList(expression)) + Suppress(')')).ast("function")
 
 openParen = Literal('(').ast('literal')
 closeParen = Literal(')').ast('literal')
 
-atom =  func | openParen + expression + closeParen | operand
+atom = func | openParen + expression + closeParen | operand
 expression << Optional(unaryOperator) + atom + ZeroOrMore((operator | comparisonOperator | booleanOperator) + atom)
 expression = expression.ast('expression')
 
@@ -93,9 +92,7 @@ iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).ast('iter
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
-formula << (Group(Optional(options)) +
+formula << (Optional(options, default = None) +
             (equation | expression) +
-            Group(Optional(condition)) +
-            Group(Optional(Suppress(',') + delimitedList(iter)))).setParseClass(Formula, True)
-
-print identifier.parseString('test|X|_energy|O|')[0]
+            Optional(condition, default = None) +
+            Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
