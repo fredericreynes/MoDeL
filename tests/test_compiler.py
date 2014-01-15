@@ -243,5 +243,4 @@ class TestParser(object):
         self._expected(res, "formula", 5, None, "equation", "condition", "iterator", "iterator")
         res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
         self._expected(res, "formula", 4, None, "equation", None, "iterator")
-        print res.children[1].children[1]
         self._expected(res.children[1].children[1], 'expression', 1, "function")

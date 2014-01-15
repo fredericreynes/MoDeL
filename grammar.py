@@ -1,6 +1,7 @@
 from pyparsing import *
 
 from elements import *
+from traversal import *
 
 def ast(self, nodetype):
     self.setParseAction(lambda toks: AST(nodetype, toks))
@@ -84,3 +85,7 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
+
+ast = formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
+
+traverse = NodeCount(ast)
