@@ -14,6 +14,15 @@ class AST:
     def __len__(self):
         return len(self.children)
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return all(selfc == otherc for (selfc, otherc) in zip(self.children, other.children))
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @property
     def is_immediate(self):
         return len(self.children) == 1 and not isinstance(self.children[0], AST)
@@ -37,27 +46,39 @@ class ASTTraversal:
     def __init__(self, ast):
         self.traverse(ast)
 
-    def call_node_method(self, ast):
-        method_name = "n_" + ast.nodetype
-        if ast.is_immediate and hasattr(self, "n_immediate"):
-            self.n_immediate(ast)
-            if hasattr(self, method_name):
-                getattr(self, "n_" + ast.nodetype)(ast)
-        elif hasattr(self, method_name):
-            getattr(self, "n_" + ast.nodetype)(ast)
-        else:
-            self.default(ast)
+    def safe_call(self, method, arg):
+        if hasattr(self, method):
+            getattr(self, method)(arg)
 
-    def default(self, ast):
+    def call_node_method(self, ast, suffix):
+        method_name = "n_" + ast.nodetype + "_" + suffix
+
+        if ast.is_immediate:
+            self.safe_call("n_immediate_" + suffix, ast)
+            self.safe_call(method_name, ast)
+        elif hasattr(self, method_name):
+            getattr(self, method_name)(ast)
+        else:
+            if suffix == "pre":
+                self.default_pre(ast)
+            else:
+                self.default_post(ast)
+
+    def default_pre(self, ast):
+        pass
+
+    def default_post(self, ast):
         pass
 
     def traverse(self, ast):
-        self.call_node_method(ast)
+        self.call_node_method(ast, "pre")
 
         if not ast.is_immediate:
             for c in ast.children:
                 if not (c is None or c.is_immediate):
                     self.traverse(c)
+
+        self.call_node_method(ast, "post")
 
 
 class NodeCount(ASTTraversal):
@@ -65,14 +86,16 @@ class NodeCount(ASTTraversal):
         ast.compiled = ast.nodetype + ": " + str(len(ast))
 
 class Compile(ASTTraversal):
-    def n_immediate(self, ast):
+    def n_immediate_post(self, ast):
         ast.compiled = ast[0]
 
-    def n_list(self, ast):
-        ast.compiled = [e for e in ast.children[0] if e not in ast.children[1]]
-
-    def default(self, ast):
-        ast.compiled = [c.compiled for c in ast.children]
+    def n_list_post(self, ast):
+        if ast.children[1] is None:
+            ast.compiled = ast.children[0]
+        else:
+            print ast.children[0]
+            print ast.children[1]
+            ast.compiled = [e for e in ast.children[0] if e not in ast.children[1]]
 
 def compile(ast):
     Compile(ast)
