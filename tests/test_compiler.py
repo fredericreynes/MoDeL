@@ -84,12 +84,6 @@ import csv
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
 
-#     def test_compiles_Lst(self):
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-#         assert res.compile() == ['01', '02', '03', '04', '05', '06', '07']
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
-#         assert res.compile() == ['01', '02', '03', '05', '07']
-
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
 #         assert res.compile({grammar.VariableName('s'): '10'}, {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20}, '') == "0 + Q_01_10 + Q_03_10"
@@ -259,3 +253,9 @@ class TestCompiler(object):
     def test_compiles_variableName(self):
         ast = grammar.variableName.parseString("_test9_Variable")[0]
         assert traversal.compile(ast) == "_test9_Variable"
+
+    def test_compiles_list(self):
+        ast = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
+        assert len(traversal.compile(ast)) == 7
+        ast = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
+        assert len(traversal.compile(ast)) == 5
