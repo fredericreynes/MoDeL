@@ -39,8 +39,26 @@ def compile_ast(ast, bindings = {}):
     if ast.is_immediate:
         ast.compiled = ast.immediate
 
-    elif ast.nodetype == "identifier":
-        ast.compiled = ''.join([compile_ast(c, bindings) for c in ast.children])
+    # elif ast.nodetype == "expression":
+    #     for c in ast.children:
+    #         compile_ast(c, children)
+    #     ast.compiled = ast.children
+
+    elif ast.nodetype == "formula":
+        # First iterators
+        # Then conditions
+        # Then compile the equation for each iterator / condition - will be evaluated later
+        pass
+
+    elif ast.nodetype == "identifier" or ast.nodetype == "array":
+        ast.compiled = [compile_ast(c, bindings) for c in ast.children]
+
+    elif ast.nodetype == "iterator":
+        # If the iterator is correctly defined, there are as many iterator names
+        # as there are lists. So we divide the children in halves
+        list_count = len(ast.children) / 2
+        ast.compiled = {'names': [compile_ast(c) for c in ast.children[:list_count]],
+                        'lists': [compile_ast(c) for c in ast.children[list_count:]]}
 
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c) for c in ast.children]
