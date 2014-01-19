@@ -39,6 +39,9 @@ def compile_ast(ast, bindings = {}):
     if ast.is_immediate:
         ast.compiled = ast.immediate
 
+    elif ast.nodetype == "identifier":
+        ast.compiled = ''.join([compile_ast(c, bindings) for c in ast.children])
+
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c) for c in ast.children]
 

@@ -16,9 +16,6 @@ import csv
 #         assert res.compile({}, {}, '!pv') == 'PM * M'
 
 
-#     def test_compiles_Identifier(self):
-#         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
-#         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, {}, '') == "testQ_energyM"
 
 #     def test_compiles_Identifier_Price_Volume(self):
 #         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
@@ -263,3 +260,6 @@ class TestCompiler(object):
         ast = grammar.placeholder.parseString("|V|")[0]
         assert traversal.compile_ast(ast, {'V': 'X'}) == 'X'
 
+    def test_compiles_identifier(self):
+        ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
+        assert traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}) == "testQ_energyM"
