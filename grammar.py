@@ -63,7 +63,3 @@ formula << (Optional(options, default = None) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
 
-ast = formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
-
-NodeCount(ast)
-print ast.compiled

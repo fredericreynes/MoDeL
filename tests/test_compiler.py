@@ -16,10 +16,6 @@ import csv
 #         assert res.compile({}, {}, '!pv') == 'PM * M'
 
 
-#     def test_compiles_Placeholder(self):
-#         res = grammar.placeholder.parseString("|V|")[0]
-#         assert res.compile({grammar.VariableName('V'): 'X'}, {}, '') == 'X'
-
 #     def test_compiles_Identifier(self):
 #         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
 #         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, {}, '') == "testQ_energyM"
@@ -259,8 +255,11 @@ class TestCompiler(object):
 
     def test_compiles_list(self):
         ast = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-        print traversal.compile_ast(ast)
         assert traversal.compile_ast(ast) == ['01', '02', '03', '04', '05', '06', '07']
         ast = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         assert traversal.compile_ast(ast) == ['01', '02', '03', '05', '07']
+
+    def test_compiles_placeholder(self):
+        ast = grammar.placeholder.parseString("|V|")[0]
+        assert traversal.compile_ast(ast, {'V': 'X'}) == 'X'
 

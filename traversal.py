@@ -35,9 +35,9 @@ class AST:
 ASTNone = AST('none', [])
 
 
-def compile_ast(ast):
+def compile_ast(ast, bindings = {}):
     if ast.is_immediate:
-        ast.compiled = ast[0]
+        ast.compiled = ast.immediate
 
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c) for c in ast.children]
@@ -47,11 +47,12 @@ def compile_ast(ast):
         excluded = compile_ast(ast.children[1])
         ast.compiled = [e for e in base if e not in excluded]
 
+    elif ast.nodetype == "placeholder":
+        ast.compiled = bindings[compile_ast(ast.children[0])]
+
     elif ast.nodetype == "none":
         ast.compiled = ASTNone
 
     return ast.compiled
-
-
 
 
