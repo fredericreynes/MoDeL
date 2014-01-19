@@ -206,6 +206,8 @@ class TestParser(object):
     def test_parses_iterator(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
         self._expected(res, "iterator", 2, "variableName", "list")
+        res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
+        self._expected(res, "iterator", 4, "variableName", "variableName", "list", "list")
 
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
@@ -249,6 +251,8 @@ class TestCompiler(object):
     def test_compiles_iterator(self):
         ast = grammar.iter.parseString("V in Q CH G I DS")[0]
         assert traversal.compile_ast(ast) == {'names': ['V'], 'lists': [['Q', 'CH', 'G', 'I', 'DS']]}
+        ast = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
+        assert traversal.compile_ast(ast) == {'names': ['c', 's'], 'lists': [['01', '02', '03'], ['04', '05', '06']]}
 
 
     # def test_compiles_Array(self):

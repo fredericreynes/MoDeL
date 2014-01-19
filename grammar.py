@@ -54,7 +54,10 @@ condition = (Suppress(Keyword('if')) + expression).ast('condition')
 lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
 lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('list')
 
-iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).ast('iterator')
+def grouped(elem):
+    return elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))
+
+iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | variableName)).ast('iterator')
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
