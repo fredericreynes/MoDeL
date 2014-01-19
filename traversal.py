@@ -32,48 +32,26 @@ class AST:
         else:
             return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
 
-
-class ASTTraversal:
-    def __init__(self, ast):
-        self.traverse(ast)
-
-    def call_node_method(self, ast):
-        method_name = "n_" + ast.nodetype
-        if ast.is_immediate and hasattr(self, "n_immediate"):
-            self.n_immediate(ast)
-            if hasattr(self, method_name):
-                getattr(self, "n_" + ast.nodetype)(ast)
-        elif hasattr(self, method_name):
-            getattr(self, "n_" + ast.nodetype)(ast)
-        else:
-            self.default(ast)
-
-    def default(self, ast):
-        pass
-
-    def traverse(self, ast):
-        self.call_node_method(ast)
-
-        if not ast.is_immediate:
-            for c in ast.children:
-                if not (c is None or c.is_immediate):
-                    self.traverse(c)
+ASTNone = AST('none', [])
 
 
-class NodeCount(ASTTraversal):
-    def default(self, ast):
-        ast.compiled = ast.nodetype + ": " + str(len(ast))
-
-class Compile(ASTTraversal):
-    def n_immediate(self, ast):
+def compile_ast(ast):
+    if ast.is_immediate:
         ast.compiled = ast[0]
 
-    def n_list(self, ast):
-        ast.compiled = [e for e in ast.children[0] if e not in ast.children[1]]
+    elif ast.nodetype == "listBase":
+        ast.compiled = [compile_ast(c) for c in ast.children]
 
-    def default(self, ast):
-        ast.compiled = [c.compiled for c in ast.children]
+    elif ast.nodetype == "list":
+        base = compile_ast(ast.children[0])
+        excluded = compile_ast(ast.children[1])
+        ast.compiled = [e for e in base if e not in excluded]
 
-def compile(ast):
-    Compile(ast)
+    elif ast.nodetype == "none":
+        ast.compiled = ASTNone
+
     return ast.compiled
+
+
+
+

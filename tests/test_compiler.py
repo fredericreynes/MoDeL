@@ -84,11 +84,6 @@ import csv
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
 
-#     def test_compiles_Lst(self):
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-#         assert res.compile() == ['01', '02', '03', '04', '05', '06', '07']
-#         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
-#         assert res.compile() == ['01', '02', '03', '05', '07']
 
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
@@ -139,6 +134,8 @@ class TestParser(object):
         for i, t in enumerate(children_types):
             if t is None:
                 assert res.children[i] is None
+            elif t == traversal.ASTNone:
+                assert res.children[i] == traversal.ASTNone
             else:
                 assert res.children[i].nodetype == t
 
@@ -224,7 +221,7 @@ class TestParser(object):
 
     def test_parses_list(self):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-        self._expected(res, "list", 2, "listBase", None)
+        self._expected(res, "list", 2, "listBase", traversal.ASTNone)
         assert res.children[0].children[3].immediate == "04"
         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         self._expected(res, "list", 2, "listBase", "listBase")
@@ -250,12 +247,20 @@ class TestParser(object):
 class TestCompiler(object):
     def test_compiles_integer(self):
         ast = grammar.integer.parseString("42")[0]
-        assert traversal.compile(ast) == 42
+        assert traversal.compile_ast(ast) == 42
 
     def test_compiles_real(self):
         ast = grammar.real.parseString("3.14159")[0]
-        assert traversal.compile(ast) == 3.14159
+        assert traversal.compile_ast(ast) == 3.14159
 
     def test_compiles_variableName(self):
         ast = grammar.variableName.parseString("_test9_Variable")[0]
-        assert traversal.compile(ast) == "_test9_Variable"
+        assert traversal.compile_ast(ast) == "_test9_Variable"
+
+    def test_compiles_list(self):
+        ast = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
+        print traversal.compile_ast(ast)
+        assert traversal.compile_ast(ast) == ['01', '02', '03', '04', '05', '06', '07']
+        ast = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
+        assert traversal.compile_ast(ast) == ['01', '02', '03', '05', '07']
+

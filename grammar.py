@@ -52,7 +52,7 @@ equation = (expression + Suppress('=') + expression).ast('equation')
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
 lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
-lst = (lstBase + Optional(Suppress('\\') + lstBase, default = None)).ast('list')
+lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('list')
 
 iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).ast('iterator')
 
