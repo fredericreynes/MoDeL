@@ -1,3 +1,5 @@
+from itertools import product
+
 class AST:
     def __init__(self, nodetype, children):
         self.nodetype = nodetype
@@ -45,15 +47,29 @@ def compile_ast(ast, bindings = {}):
     #     ast.compiled = ast.children
 
     elif ast.nodetype == "formula":
-        # First iterators
+        # First compile iterators
         if not ast.children[3] is None:
             iterators = [compile_ast(c) for c in ast.children[3:]]
-
-
+            # Get the lists only
+            all_lists = [iter['lists'] for iter in iterators]
+            # Cartesian product of all the iterators' lists
+            prod = product(*all_lists)
+            # Names of all the iterators and associated loop counters
+            all_names = cat(iter['names'] for iter in iterators)
+            # Build the final list containing all the bindings
+            all_bindings = [dict(zip(all_names, cat(p))) for p in prod]
         else:
-            iterators = []
-        # Then conditions
-        # Then compile the equation for each iterator / condition - will be evaluated later
+            all_bindings = [{}]
+        # Then compile conditions
+        if not ast.children[2] is None:
+            conditions = (compile_ast(ast.children[2], bindings) for bindings in all_bindings)
+        else:
+            conditions = []
+        # Finally compile the equation / expression for each binding
+        equations = (compile_ast(ast.children[1], bindings) for bindings in all_bindings)
+
+        ast.compiled = { 'conditions': conditions,
+                         'equations': equations }
 
     elif ast.nodetype == "identifier" or ast.nodetype == "array":
         ast.compiled = [compile_ast(c, bindings) for c in ast.children]
@@ -69,8 +85,8 @@ def compile_ast(ast, bindings = {}):
         # Add the loop counters
         names = names + ['$' + name for name in names]
         lists = lists + [range(1, n + 1) for n in listBaseLength]
-        ast.compiled = {'names': names,
-                        'lists': zip(*lists)}
+        ast.compiled = { 'names': names,
+                         'lists': zip(*lists) }
 
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c) for c in ast.children]

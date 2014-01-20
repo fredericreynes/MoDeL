@@ -259,7 +259,6 @@ class TestCompiler(object):
                                                         ('02', '05', 2, 2),
                                                         ('03', '06', 3, 3)]}
 
-
     # def test_compiles_Array(self):
     #     ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
     #     assert traversal.compile_ast({'com': '24', 'sec': '2403'}) == ["arrayName8", "24", "5", "2403"]
