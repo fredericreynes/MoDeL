@@ -108,7 +108,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
         name = compile_ast(ast.children[0]).compiled
 
         if name == "sum":
-            generator = lambda toks: "0 + " + ' + '.join(toks)
+            generator = lambda toks: "0 + " + ' + '.join(toks) if len(toks) > 0 else "0"
         elif name == "value":
             as_value = True
             generator = lambda toks: toks[0]
