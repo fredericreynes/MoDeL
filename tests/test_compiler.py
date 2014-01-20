@@ -59,10 +59,6 @@ import csv
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 6ea31076b40d824ce58d234e0899376be2f96e9e
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
 #         assert res.compile({grammar.VariableName('s'): '10'}, {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20}, '') == "0 + Q_01_10 + Q_03_10"
@@ -281,3 +277,19 @@ class TestCompiler(object):
      #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
      #    # res = grammar.expression.parseString("s")[0]
      #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "02"
+
+class TestGenerator(object):
+    def test_generates_integer(self):
+        ast = grammar.integer.parseString("42")[0]
+        traversal.compile_ast(ast)
+        assert traversal.generate(ast) == "42"
+
+    def test_generates_real(self):
+        ast = grammar.real.parseString("3.14159")[0]
+        traversal.compile_ast(ast)
+        assert traversal.generate(ast) == "3.14159"
+
+    def test_generates_variableName(self):
+        ast = grammar.variableName.parseString("_test9_Variable")[0]
+        traversal.compile_ast(ast)
+        assert traversal.generate(ast) == "_test9_Variable"

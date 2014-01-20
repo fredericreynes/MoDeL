@@ -50,11 +50,6 @@ def compile_ast(ast, bindings = {}):
     if ast.is_immediate:
         ast.compiled = ast.immediate
 
-    # elif ast.nodetype == "expression":
-    #     for c in ast.children:
-    #         compile_ast(c, children)
-    #     ast.compiled = ast.children
-
     elif ast.nodetype == "formula":
         # First compile iterators
         if not ast.children[3] is None:
@@ -114,3 +109,14 @@ def compile_ast(ast, bindings = {}):
         ast.compiled = ast.children
 
     return ast.compiled
+
+
+def generate(ast, heap = {}):
+    if ast.is_immediate:
+        return str(ast.compiled)
+
+    elif ast.nodetype == "identifier":
+        return ''.join(generate(c) for c in ast.compiled)
+
+    elif ast.nodetype == "array":
+        return '_'.join(generate(c) for c in ast.compiled)
