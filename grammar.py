@@ -2,6 +2,7 @@ from pyparsing import *
 
 from elements import *
 from traversal import *
+from adjacent import Adjacent
 
 def ast(self, nodetype):
     self.setParseAction(lambda toks: AST(nodetype, toks))
@@ -15,16 +16,16 @@ real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(la
 
 variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName')
 
-placeholder = (Suppress('|') + variableName + Suppress('|')).ast('placeholder')
+placeholder = Adjacent(Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 
-identifier = ( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).ast('identifier')
+identifier = Adjacent( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).ast('identifier')
 
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
 
-array = (identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
+array = Adjacent(identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
 operand = array | identifier | real | integer
 

@@ -283,3 +283,7 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("Q[c] = QD[c] + QM[c] if K_n[c] <> 0, c in 04 05")[0]
         res = '\n'.join(traversal.generate(traversal.compile_ast(ast), {'K_N_04': 15, 'K_N_05': 0}))
         assert res == expected
+        expected = ("PM_01 = PWD_01 * TC")
+        ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01")[0]
+        res = '\n'.join(traversal.generate(traversal.compile_ast(ast), {'M_01': 15}))
+        assert res == expected
