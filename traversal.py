@@ -46,9 +46,14 @@ def compile_ast(ast, bindings = {}):
 
     elif ast.nodetype == "formula":
         # First iterators
+        if not ast.children[3] is None:
+            iterators = [compile_ast(c) for c in ast.children[3:]]
+
+
+        else:
+            iterators = []
         # Then conditions
         # Then compile the equation for each iterator / condition - will be evaluated later
-        pass
 
     elif ast.nodetype == "identifier" or ast.nodetype == "array":
         ast.compiled = [compile_ast(c, bindings) for c in ast.children]
@@ -57,8 +62,15 @@ def compile_ast(ast, bindings = {}):
         # If the iterator is correctly defined, there are as many iterator names
         # as there are lists. So we divide the children in halves
         list_count = len(ast.children) / 2
-        ast.compiled = {'names': [compile_ast(c) for c in ast.children[:list_count]],
-                        'lists': [compile_ast(c) for c in ast.children[list_count:]]}
+        names = [compile_ast(c) for c in ast.children[:list_count]]
+        lists = [compile_ast(c) for c in ast.children[list_count:]]
+        # HACK !! Used for the loop counters
+        listBaseLength = [len(lst.children[0].children) for lst in ast.children[list_count:]]
+        # Add the loop counters
+        names = names + ['$' + name for name in names]
+        lists = lists + [range(1, n + 1) for n in listBaseLength]
+        ast.compiled = {'names': names,
+                        'lists': zip(*lists)}
 
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c) for c in ast.children]

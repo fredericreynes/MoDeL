@@ -250,9 +250,14 @@ class TestCompiler(object):
 
     def test_compiles_iterator(self):
         ast = grammar.iter.parseString("V in Q CH G I DS")[0]
-        assert traversal.compile_ast(ast) == {'names': ['V'], 'lists': [['Q', 'CH', 'G', 'I', 'DS']]}
+        assert traversal.compile_ast(ast) == {'names': ['V', '$V'],
+                                              'lists': [('Q', 1), ('CH', 2), ('G', 3), ('I', 4), ('DS', 5)]}
         ast = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
-        assert traversal.compile_ast(ast) == {'names': ['c', 's'], 'lists': [['01', '02', '03'], ['04', '05', '06']]}
+        print repr(traversal.compile_ast(ast))
+        assert traversal.compile_ast(ast) == {'names': ['c', 's', '$c', '$s'],
+                                              'lists': [('01', '04', 1, 1),
+                                                        ('02', '05', 2, 2),
+                                                        ('03', '06', 3, 3)]}
 
 
     # def test_compiles_Array(self):
