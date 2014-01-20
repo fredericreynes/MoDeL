@@ -16,13 +16,6 @@ import csv
 #         assert res.compile({}, {}, '!pv') == 'PM * M'
 
 
-#     def test_compiles_Placeholder(self):
-#         res = grammar.placeholder.parseString("|V|")[0]
-#         assert res.compile({grammar.VariableName('V'): 'X'}, {}, '') == 'X'
-
-#     def test_compiles_Identifier(self):
-#         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
-#         assert res.compile({grammar.VariableName('V'): 'Q', grammar.VariableName('O'): 'M'}, {}, '') == "testQ_energyM"
 
 #     def test_compiles_Identifier_Price_Volume(self):
 #         res = grammar.identifier.parseString("test|V|_energy|O|")[0]
@@ -31,13 +24,6 @@ import csv
 
 
 
-#     def test_compiles_Array(self):
-#         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
-#         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "arrayName8_24_5_2403"
-#         res = grammar.array.parseString("timeAry[5](-1)")[0]
-#         assert res.compile({}, {}, '') == "timeAry_5(-1)"
-#         res = grammar.array.parseString("test[$s]")[0]
-#         assert res.compile({grammar.VariableName("$s"): 15}, {}, '') == "test_15"
 
 #     def test_compiles_Array_Price_Volume(self):
 #         res = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
@@ -56,17 +42,6 @@ import csv
 #         res = grammar.func.parseString("value(QD[c] + ID[c])")[0]
 #         assert res.compile({grammar.VariableName('c'): '42'}, {}, '') == "PQD_42 * QD_42 + PID_42 * ID_42"
 
-#     def test_compiles_Expression(self):
-#         res = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-#         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '') == "D_24_2403 + d(log(Q_24_2403)) - A / B"
-#         res = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
-#         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
-#         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
-#         assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
-#         res = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
-#         assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
-#         res = grammar.expression.parseString("s")[0]
-#         assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "02"
 
 #     def test_evaluates_Expression(self):
 #         res = grammar.expression.parseString("2 * Q[com, sec] + 4 * X[com, sec]")[0]
@@ -84,6 +59,10 @@ import csv
 #         assert res.compile({grammar.VariableName('com'): '24'}, {}, '!pv') == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6ea31076b40d824ce58d234e0899376be2f96e9e
 #     def test_compiles_SumFunc(self):
 #         res = grammar.sumFunc.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
 #         assert res.compile({grammar.VariableName('s'): '10'}, {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20}, '') == "0 + Q_01_10 + Q_03_10"
@@ -133,6 +112,8 @@ class TestParser(object):
         for i, t in enumerate(children_types):
             if t is None:
                 assert res.children[i] is None
+            elif t == traversal.ASTNone:
+                assert res.children[i] == traversal.ASTNone
             else:
                 assert res.children[i].nodetype == t
 
@@ -218,7 +199,7 @@ class TestParser(object):
 
     def test_parses_list(self):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-        self._expected(res, "list", 2, "listBase", None)
+        self._expected(res, "list", 2, "listBase", traversal.ASTNone)
         assert res.children[0].children[3].immediate == "04"
         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         self._expected(res, "list", 2, "listBase", "listBase")
@@ -228,6 +209,8 @@ class TestParser(object):
     def test_parses_iterator(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
         self._expected(res, "iterator", 2, "variableName", "list")
+        res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
+        self._expected(res, "iterator", 4, "variableName", "variableName", "list", "list")
 
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
@@ -244,18 +227,57 @@ class TestParser(object):
 class TestCompiler(object):
     def test_compiles_integer(self):
         ast = grammar.integer.parseString("42")[0]
-        assert traversal.compile(ast) == 42
+        assert traversal.compile_ast(ast) == 42
 
     def test_compiles_real(self):
         ast = grammar.real.parseString("3.14159")[0]
-        assert traversal.compile(ast) == 3.14159
+        assert traversal.compile_ast(ast) == 3.14159
 
     def test_compiles_variableName(self):
         ast = grammar.variableName.parseString("_test9_Variable")[0]
-        assert traversal.compile(ast) == "_test9_Variable"
+        assert traversal.compile_ast(ast) == "_test9_Variable"
 
     def test_compiles_list(self):
         ast = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
-        assert len(traversal.compile(ast)) == 7
+        assert traversal.compile_ast(ast) == ['01', '02', '03', '04', '05', '06', '07']
         ast = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
-        assert len(traversal.compile(ast)) == 5
+        assert traversal.compile_ast(ast) == ['01', '02', '03', '05', '07']
+
+    def test_compiles_placeholder(self):
+        ast = grammar.placeholder.parseString("|V|")[0]
+        assert traversal.compile_ast(ast, {'V': 'X'}) == 'X'
+
+    # def test_compiles_identifier(self):
+    #     ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
+    #     assert traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}) == ["test", "Q", "_energy", "M"]
+
+    def test_compiles_iterator(self):
+        ast = grammar.iter.parseString("V in Q CH G I DS")[0]
+        assert traversal.compile_ast(ast) == {'names': ['V', '$V'],
+                                              'lists': [('Q', 1), ('CH', 2), ('G', 3), ('I', 4), ('DS', 5)]}
+        ast = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
+        print repr(traversal.compile_ast(ast))
+        assert traversal.compile_ast(ast) == {'names': ['c', 's', '$c', '$s'],
+                                              'lists': [('01', '04', 1, 1),
+                                                        ('02', '05', 2, 2),
+                                                        ('03', '06', 3, 3)]}
+
+    # def test_compiles_Array(self):
+    #     ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
+    #     assert traversal.compile_ast({'com': '24', 'sec': '2403'}) == ["arrayName8", "24", "5", "2403"]
+    #     # res = grammar.array.parseString("timeAry[5](-1)")[0]
+    #     # assert res.compile({}, {}, '') == "timeAry_5(-1)"
+    #     # res = grammar.array.parseString("test[$s]")[0]
+    #     # assert res.compile({grammar.VariableName("$s"): 15}, {}, '') == "test_15"
+
+     # def test_compiles_Expression(self):
+     #    ast = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+     #    assert traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
+     #    # res = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
+     #    # assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
+     #    # res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+     #    # assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
+     #    # res = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
+     #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
+     #    # res = grammar.expression.parseString("s")[0]
+     #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "02"

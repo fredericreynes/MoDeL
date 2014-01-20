@@ -52,9 +52,12 @@ equation = (expression + Suppress('=') + expression).ast('equation')
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
 lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
-lst = (lstBase + Optional(Suppress('\\') + lstBase, default = None)).ast('list')
+lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('list')
 
-iter = (variableName + Suppress(Keyword('in')) + (lst | variableName)).ast('iterator')
+def grouped(elem):
+    return elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))
+
+iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | variableName)).ast('iterator')
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
@@ -63,7 +66,3 @@ formula << (Optional(options, default = None) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
 
-ast = formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
-
-NodeCount(ast)
-print ast.compiled
