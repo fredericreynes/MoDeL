@@ -244,9 +244,9 @@ class TestCompiler(object):
         ast = grammar.placeholder.parseString("|V|")[0]
         assert traversal.compile_ast(ast, {'V': 'X'}) == 'X'
 
-    def test_compiles_identifier(self):
-        ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
-        assert traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}) == ["test", "Q", "_energy", "M"]
+    # def test_compiles_identifier(self):
+    #     ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
+    #     assert traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}) == ["test", "Q", "_energy", "M"]
 
     def test_compiles_iterator(self):
         ast = grammar.iter.parseString("V in Q CH G I DS")[0]

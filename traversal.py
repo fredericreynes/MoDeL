@@ -71,9 +71,6 @@ def compile_ast(ast, bindings = {}):
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
 
-    elif ast.nodetype == "identifier" or ast.nodetype == "array":
-        ast.compiled = [compile_ast(c, bindings) for c in ast.children]
-
     elif ast.nodetype == "iterator":
         # If the iterator is correctly defined, there are as many iterator names
         # as there are lists. So we divide the children in halves
@@ -101,6 +98,11 @@ def compile_ast(ast, bindings = {}):
 
     elif ast.nodetype == "none":
         ast.compiled = ASTNone
+
+    else:
+        for c in ast.children:
+            compile_ast(c, bindings)
+        ast.compiled = ast.children
 
     return ast.compiled
 
