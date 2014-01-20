@@ -1,4 +1,5 @@
 from itertools import product
+from funcy import *
 
 class AST:
     def __init__(self, nodetype, children):
@@ -61,7 +62,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
     elif ast.nodetype == "formula":
         # First compile iterators
         if not ast.children[3] is None:
-            iterators = [compile_ast(c) for c in ast.children[3:]]
+            iterators = [compile_ast(c).compiled for c in ast.children[3:]]
             # Get the lists only
             all_lists = [iter['lists'] for iter in iterators]
             # Cartesian product of all the iterators' lists
@@ -84,7 +85,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
                          'equations': equations }
 
     elif ast.nodetype == "function":
-        name = compile_ast(ast.children[0])
+        name = compile_ast(ast.children[0]).compiled
 
         if name == "sum":
             generator = lambda toks: "0" + ' + '.join(toks)
@@ -95,19 +96,17 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
 
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': ast.children[1:] }
+                         'arguments': [compile_ast(c) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
-        for c in ast.children:
-            compile_ast(c, bindings, True)
-        ast.compiled = ast.children
+        ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]
 
     elif ast.nodetype == "iterator":
         # If the iterator is correctly defined, there are as many iterator names
         # as there are lists. So we divide the children in halves
         list_count = len(ast.children) / 2
-        names = [compile_ast(c) for c in ast.children[:list_count]]
-        lists = [compile_ast(c) for c in ast.children[list_count:]]
+        names = [compile_ast(c).compiled for c in ast.children[:list_count]]
+        lists = [compile_ast(c).compiled for c in ast.children[list_count:]]
         # HACK !! Used for the loop counters
         listBaseLength = [len(lst.children[0].children) for lst in ast.children[list_count:]]
         # Add the loop counters
@@ -117,22 +116,20 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
                          'lists': zip(*lists) }
 
     elif ast.nodetype == "listBase":
-        ast.compiled = [compile_ast(c) for c in ast.children]
+        ast.compiled = [compile_ast(c).compiled for c in ast.children]
 
     elif ast.nodetype == "list":
-        base = compile_ast(ast.children[0])
-        excluded = compile_ast(ast.children[1])
+        base = compile_ast(ast.children[0]).compiled
+        excluded = compile_ast(ast.children[1]).compiled
         ast.compiled = [e for e in base if e not in excluded]
 
     elif ast.is_none:
         ast.compiled = ASTNone
 
     else:
-        for c in ast.children:
-            compile_ast(c, bindings, use_bindings)
-        ast.compiled = ast.children
+        ast.compiled = [compile_ast(c, bindings, use_bindings) for c in ast.children]
 
-    return ast.compiled
+    return ast
 
 
 def generate(ast, heap = {}):
@@ -154,7 +151,7 @@ def generate(ast, heap = {}):
         return generate(ast.children[0]) + ' = ' + generate(ast.children[1])
 
     elif ast.nodetype == "formula":
-        return
+        return [generate(eq) for eq in ast.compiled['equations']]
 
     elif ast.nodetype == "function":
         generated_args = (generate(a) for a in ast.compiled['arguments'])
