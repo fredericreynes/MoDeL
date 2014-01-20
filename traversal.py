@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import product, chain, tee
 from funcy import *
 import code
 
@@ -91,7 +91,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
             conditions = (compile_ast(ast.children[2], locals) for locals in all_bindings)
             # If price-value is set, should generate a second set of equations - but conditions should remain unchanged, thus we just repeat them
             if price_value:
-                conditions = itertools.chain(conditions, conditions)
+                conditions = chain(conditions, (compile_ast(ast.children[2], locals) for locals in all_bindings))
         else:
             conditions = []
 
@@ -99,7 +99,9 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
         equations = (compile_ast(ast.children[1], locals) for locals in all_bindings)
         # If price-value is set, should generate a second set of equations, in value form
         if price_value:
-            equations = itertools.chain(equations, (compile_ast(ast.children[1], locals, as_value = True) for locals in all_bindings))
+            equations = chain(equations, (compile_ast(ast.children[1], locals, as_value = True) for locals in all_bindings))
+
+
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
@@ -114,7 +116,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
 
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': [compile_ast(c, bindings, True) for c in ast.children[1:]] }
+                         'arguments': [compile_ast(c, bindings, True, as_value) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
         ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]

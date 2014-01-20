@@ -280,12 +280,13 @@ class TestGenerator(object):
                     "CH_02 = CHD_02 + CHM_02")
         ast = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
         assert '\n'.join(traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})) == expected
-#         expected = ("PQ_02 * Q_02 = PQD_02 * QD_02 + PQM_02 * QM_02\n"
-#                     "Q_02 = QD_02 + QM_02\n"
-#                     "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02\n"
-#                     "CH_02 = CHD_02 + CHM_02")
-#         res = grammar.formula.parseString("!Pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
-#         assert res.compile({"CHD_01": 0, "CHD_02": 15}) == expected
+        expected = ("Q_02 = QD_02 + QM_02\n"
+                    "CH_02 = CHD_02 + CHM_02\n"
+                    "PQ_02 * Q_02 = PQD_02 * QD_02 + PQM_02 * QM_02\n"
+                    "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02")
+        ast = grammar.formula.parseString("!Pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        res = traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})
+        assert '\n'.join(res) == expected
         # expected = ("Q_10 = 0 + Q_01_10 + Q_03_10\n"
         #             "Q_11 = 0 + Q_01_11 + Q_02_11 + Q_03_11\n"
         #             "Q_12 = 0 + Q_01_12 + Q_02_12")
