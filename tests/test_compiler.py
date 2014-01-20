@@ -261,12 +261,13 @@ class TestGenerator(object):
         assert res == "D_24_2403 + d(log(Q)) - A / B"
         # ast = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
         # assert traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}) == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
-        # ast = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
-        # assert traversal.compile_ast(ast, {grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
-        # ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
-        # assert traversal.compile_ast(ast, {grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
-        # ast = grammar.expression.parseString("s")[0]
-        # assert traversal.compile_ast(ast, {grammar.VariableName('s'): '02'}, {}, '') == "02"
+        ast = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+        assert traversal.generate(traversal.compile_ast(ast, {'c': '01'})) == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
+        ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
+        assert traversal.generate(traversal.compile_ast(ast, {'s': '02'})) == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
+        ast = grammar.expression.parseString("s")[0]
+        res = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, True))
+        assert res == "02"
 
 
     def test_generates_formula(self):
