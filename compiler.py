@@ -2,6 +2,7 @@ import os, sys, csv
 
 import pyparsing
 import grammar
+import traversal
 
 # The code to be compiled is passed in file in.txt
 with open("in.txt", "r") as f:
@@ -17,12 +18,16 @@ with open('tmp_all_vars.csv', 'rb') as csvfile:
                     [float(e) if e != 'NA' else
                      None for e in rows[2]]))
 
+def compilation(code, heap):
+    ast = grammar.formula.parseString(code)[0]
+    return '\n'.join(traversal.generate(traversal.compile_ast(ast), heap))
+
 # Compilation
 if len(sys.argv) > 1:
-    output = grammar.formula.parseString(code)[0].compile(heap)
+    output = compilation(code, heap)
 else:
     try:
-        output = grammar.formula.parseString(code)[0].compile(heap)
+        output = compilation(code, heap)
     except pyparsing.ParseException as e:
         output = "Error\r\n" + str(e)
     except Exception as e:
