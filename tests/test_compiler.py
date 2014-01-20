@@ -30,17 +30,6 @@ import csv
 #         assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "ParrayName8_24_5_2403 * arrayName8_24_5_2403"
 
 
-#     def test_compiles_Func(self):
-#         res = grammar.func.parseString("d(log(test[j]))")[0]
-#         assert res.compile({grammar.VariableName('j'): '24'}, {}, '') == "d(log(test_24))"
-#         res = grammar.func.parseStringtring("@elem(PK[s], %baseyear)")[0]
-#         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13, %baseyear)"
-#         res = grammar.func.parseString("@elem(PK[s](-1), %baseyear)")[0]
-#         assert res.compile({grammar.VariableName('s'): '13'}, {}, '') == "@elem(PK_13(-1), %baseyear)"
-#         res = grammar.func.parseString("ES_KLEM($s, 1)")[0]
-#         assert res.compile({grammar.VariableName('$s'): '42'}, {}, '') == "ES_KLEM(42, 1)"
-#         res = grammar.func.parseString("value(QD[c] + ID[c])")[0]
-#         assert res.compile({grammar.VariableName('c'): '42'}, {}, '') == "PQD_42 * QD_42 + PID_42 * ID_42"
 
 
 #     def test_evaluates_Expression(self):
@@ -243,11 +232,24 @@ class TestGenerator(object):
         ast = grammar.array.parseString("test[$s]")[0]
         assert traversal.generate(traversal.compile_ast(ast, {'$s': 15})) == "test_15"
 
+    def test_generates_function(self):
+        ast = grammar.func.parseString("d(log(test))")[0]
+        assert traversal.generate(traversal.compile_ast(ast)) == "d(log(test))"
+        ast = grammar.func.parseString("@elem(PK, %baseyear)")[0]
+        assert traversal.generate(traversal.compile_ast(ast)) == "@elem(PK, %baseyear)"
+        ast = grammar.func.parseString("@elem(PK(-1), %baseyear)")[0]
+        res = traversal.generate(traversal.compile_ast(ast))
+        assert res == "@elem(PK(- 1), %baseyear)"
+#         res = grammar.func.parseString("ES_KLEM($s, 1)")[0]
+#         assert res.compile({grammar.VariableName('$s'): '42'}, {}, '') == "ES_KLEM(42, 1)"
+#         res = grammar.func.parseString("value(QD[c] + ID[c])")[0]
+#         assert res.compile({grammar.VariableName('c'): '42'}, {}, '') == "PQD_42 * QD_42 + PID_42 * ID_42"
+
     def test_generates_equation(self):
         ast = grammar.equation.parseString("energy[com] = B[3]")[0]
         assert traversal.generate(traversal.compile_ast(ast, {'com': '24'})) == "energy_24 = B_3"
-        ast = grammar.equation.parseString("energy[com] = log(B[3])")[0]
-        assert traversal.generate(traversal.compile_ast(ast, {'com': '24'})) == "energy_24 = log(B_3)"
+        # ast = grammar.equation.parseString("energy[com] = log(B[3])")[0]
+        # assert traversal.generate(traversal.compile_ast(ast, {'com': '24'})) == "energy_24 = log(B_3)"
         # ast = grammar.equation.parseString("energy[com] = B[3]")[0]
         # traversal.compile_ast(ast, {'com': '24'})
         # assert traversal.generate(ast) == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
@@ -266,7 +268,7 @@ class TestGenerator(object):
         # assert traversal.compile_ast(ast, {grammar.VariableName('s'): '02'}, {}, '') == "02"
 
 
-    def test_compiles_formula(self):
+    def test_generates_formula(self):
         expected = ("Q_01 = QD_01 + QM_01\n"
                     "Q_02 = QD_02 + QM_02\n"
                     "CH_01 = CHD_01 + CHM_01\n"

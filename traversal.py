@@ -1,5 +1,6 @@
 from itertools import product
 from funcy import *
+import code
 
 class AST:
     def __init__(self, nodetype, children):
@@ -89,14 +90,13 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
 
         if name == "sum":
             generator = lambda toks: "0" + ' + '.join(toks)
-        elif name == "value":
-            generator = lambda toks: " ".join(toks)
         else:
-            generator = lambda toks: " ".join(toks)
+            generator = lambda toks: toks if type(toks) is str else "".join(toks)
 
+        # print [str(compile_ast(c, bindings).compiled['equations'][0].compiled[0]) for c in ast.children[1:]]
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': [compile_ast(c) for c in ast.children[1:]] }
+                         'arguments': [compile_ast(c, bindings) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
         ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]
@@ -154,9 +154,8 @@ def generate(ast, heap = {}):
         return [generate(eq) for eq in ast.compiled['equations']]
 
     elif ast.nodetype == "function":
-        generated_args = (generate(a) for a in ast.compiled['arguments'])
-        print [generate(a) for a in ast.compiled['arguments']]
-        return ast.compiled['name'] + '(' + ', '.join(ast.compiled['generator'](a) for a in generated_args)
+        generated_args = [generate(a) for a in ast.compiled['arguments']]
+        return ast.compiled['name'] + '(' + ', '.join(ast.compiled['generator'](a) for a in generated_args) + ')'
 
     elif ast.nodetype in ["identifier", "placeholder"]:
         return ''.join(generate(c) for c in ast.compiled)

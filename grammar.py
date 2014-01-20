@@ -65,3 +65,7 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
+
+ast = func.parseString("@elem(PK, %baseyear)")[0]
+res = generate(compile_ast(ast))
+print res
