@@ -74,13 +74,17 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
             all_bindings = [dict(zip(all_names, cat(p))) for p in prod]
         else:
             all_bindings = [{}]
+
+        # Apply external bindings, if any
+        if len(bindings) > 0:
+            all_bindings = [merge(locals, bindings) for locals in all_bindings]
         # Then compile conditions
         if not ast.children[2] is None:
-            conditions = (compile_ast(ast.children[2], bindings) for bindings in all_bindings)
+            conditions = (compile_ast(ast.children[2], locals) for locals in all_bindings)
         else:
             conditions = []
         # Finally compile the equation / expression for each binding
-        equations = (compile_ast(ast.children[1], bindings) for bindings in all_bindings)
+        equations = (compile_ast(ast.children[1], locals) for locals in all_bindings)
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
@@ -95,7 +99,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
 
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': [compile_ast(c, bindings) for c in ast.children[1:]] }
+                         'arguments': [compile_ast(c, bindings, True) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
         ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]
@@ -143,6 +147,9 @@ def generate(ast, heap = {}):
             ret += generate(ast.children[2])
         return ret
 
+    elif ast.nodetype == "condition":
+        return eval(generate(ast.compiled[0]), heap)
+
     elif ast.nodetype == "expression":
         return ' '.join(generate(c) for c in ast.compiled)
 
@@ -150,7 +157,12 @@ def generate(ast, heap = {}):
         return generate(ast.children[0]) + ' = ' + generate(ast.children[1])
 
     elif ast.nodetype == "formula":
-        return [generate(eq) for eq in ast.compiled['equations']]
+        conditions = [generate(cond, heap) for cond in ast.compiled['conditions']]
+        equations = [generate(eq) for eq in ast.compiled['equations']]
+        if len(conditions) > 0:
+            return [eq for eq, cond in zip(equations, conditions) if cond]
+        else:
+            return equations
 
     elif ast.nodetype == "function":
         generated_args = [generate(a) for a in ast.compiled['arguments']]
