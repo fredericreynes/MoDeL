@@ -32,7 +32,7 @@ unaryOperator = oneOf('+ -').ast('operator')
 
 operator = oneOf('+ - * / ^').ast('operator')
 
-comparisonOperator = oneOf('<> < <= > >= ==').ast("comparisonOperator")
+comparisonOperator = oneOf('<> < <= =< > >= => ==').ast("comparisonOperator")
 
 booleanOperator = oneOf('and or xor').ast("booleanOperator")
 
