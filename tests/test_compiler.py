@@ -80,6 +80,8 @@ class TestParser(object):
         self._expected(res, "expression", 7, "array", "operator", "function", "operator", "identifier", "operator", "identifier")
         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         self._expected(res, "expression", 3, "literal", "expression", "literal")
+        res = grammar.expression.parseString("( (CH[c]>=0) * CH[c] + (CH[c]=>0) * 1 )")[0]
+        self._expected(res, "expression", 3, "literal", "expression", "literal")
         res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
         self._expected(res, "expression", 4, "operator", "function", "operator", "function")
 
