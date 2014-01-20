@@ -184,7 +184,8 @@ def generate(ast, heap = {}):
         return value_form(''.join(generate(c) for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
-        return eval(generate(ast.compiled[0]), heap)
+        # All variables in the heap should be uppercase
+        return eval(generate(ast.compiled[0]).upper(), heap)
 
     elif ast.nodetype == "expression":
         return ' '.join(generate(c, heap) for c in ast.compiled)
