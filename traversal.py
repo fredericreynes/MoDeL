@@ -83,6 +83,20 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
 
+    elif ast.nodetype == "function":
+        name = compile_ast(ast.children[0])
+
+        if name == "sum":
+            generator = lambda toks: "0" + ' + '.join(toks)
+        elif name == "value":
+            generator = lambda toks: " ".join(toks)
+        else:
+            generator = lambda toks: " ".join(toks)
+
+        ast.compiled = { 'name': name,
+                         'generator': generator,
+                         'arguments': ast.children[1:] }
+
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
         for c in ast.children:
             compile_ast(c, bindings, True)
@@ -135,6 +149,17 @@ def generate(ast, heap = {}):
 
     elif ast.nodetype == "expression":
         return ' '.join(generate(c) for c in ast.compiled)
+
+    elif ast.nodetype == "equation":
+        return generate(ast.children[0]) + ' = ' + generate(ast.children[1])
+
+    elif ast.nodetype == "formula":
+        return
+
+    elif ast.nodetype == "function":
+        generated_args = (generate(a) for a in ast.compiled['arguments'])
+        print [generate(a) for a in ast.compiled['arguments']]
+        return ast.compiled['name'] + '(' + ', '.join(ast.compiled['generator'](a) for a in generated_args)
 
     elif ast.nodetype in ["identifier", "placeholder"]:
         return ''.join(generate(c) for c in ast.compiled)

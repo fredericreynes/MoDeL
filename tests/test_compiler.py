@@ -253,18 +253,6 @@ class TestCompiler(object):
                                                         ('02', '05', 2, 2),
                                                         ('03', '06', 3, 3)]}
 
-     # def test_compiles_Expression(self):
-     #    ast = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-     #    assert traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
-     #    # res = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
-     #    # assert res.compile({grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
-     #    # res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
-     #    # assert res.compile({grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
-     #    # res = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
-     #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
-     #    # res = grammar.expression.parseString("s")[0]
-     #    # assert res.compile({grammar.VariableName('s'): '02'}, {}, '') == "02"
-
 class TestGenerator(object):
     def test_generates_integer(self):
         ast = grammar.integer.parseString("42")[0]
@@ -296,3 +284,27 @@ class TestGenerator(object):
         ast = grammar.array.parseString("test[$s]")[0]
         traversal.compile_ast(ast, {'$s': 15})
         assert traversal.generate(ast) == "test_15"
+
+    def test_generates_equation(self):
+        ast = grammar.equation.parseString("energy[com] = B[3]")[0]
+        traversal.compile_ast(ast, {'com': '24'})
+        assert traversal.generate(ast) == "energy_24 = B_3"
+        # ast = grammar.equation.parseString("energy[com] = log(B[3])")[0]
+        # traversal.compile_ast(ast, {'com': '24'})
+        # assert traversal.generate(ast) == "energy_24 = log(B_3)"
+        # ast = grammar.equation.parseString("energy[com] = B[3]")[0]
+        # traversal.compile_ast(ast, {'com': '24'})
+        # assert traversal.generate(ast) == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
+
+        # def test_compiles_Expression(self):
+    #     ast = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
+    #     traversal.compile_ast(ast, {'com': '24', 'sec': '2403'})
+    #     assert traversal.generate(ast) == "D_24_2403 + d(log(Q_24_2403)) - A / B"
+        # ast = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
+        # assert traversal.compile_ast(ast, {grammar.VariableName('com'): '24', grammar.VariableName('sec'): '2403'}, {}, '!pv') == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
+        # ast = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
+        # assert traversal.compile_ast(ast, {grammar.VariableName('c'): '01'}, {}, '') == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
+        # ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
+        # assert traversal.compile_ast(ast, {grammar.VariableName('s'): '02'}, {}, '') == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
+        # ast = grammar.expression.parseString("s")[0]
+        # assert traversal.compile_ast(ast, {grammar.VariableName('s'): '02'}, {}, '') == "02"
