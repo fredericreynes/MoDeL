@@ -30,6 +30,10 @@ class AST:
         return len(self.children) == 1 and not isinstance(self.children[0], AST)
 
     @property
+    def is_none(self):
+        return self.nodetype == "none"
+
+    @property
     def immediate(self):
         if self.is_immediate:
             return self.children[0]
@@ -46,9 +50,13 @@ class AST:
 ASTNone = AST('none', [])
 
 
-def compile_ast(ast, bindings = {}):
+def compile_ast(ast, bindings = {}, use_bindings = False):
     if ast.is_immediate:
-        ast.compiled = ast.immediate
+        imm = ast.immediate
+        if use_bindings and imm in bindings and ast.nodetype == "variableName":
+            ast.compiled = bindings[imm]
+        else:
+            ast.compiled = imm
 
     elif ast.nodetype == "formula":
         # First compile iterators
@@ -75,6 +83,11 @@ def compile_ast(ast, bindings = {}):
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
 
+    elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
+        for c in ast.children:
+            compile_ast(c, bindings, True)
+        ast.compiled = ast.children
+
     elif ast.nodetype == "iterator":
         # If the iterator is correctly defined, there are as many iterator names
         # as there are lists. So we divide the children in halves
@@ -97,15 +110,12 @@ def compile_ast(ast, bindings = {}):
         excluded = compile_ast(ast.children[1])
         ast.compiled = [e for e in base if e not in excluded]
 
-    elif ast.nodetype == "placeholder":
-        ast.compiled = bindings[compile_ast(ast.children[0])]
-
-    elif ast.nodetype == "none":
+    elif ast.is_none:
         ast.compiled = ASTNone
 
     else:
         for c in ast.children:
-            compile_ast(c, bindings)
+            compile_ast(c, bindings, use_bindings)
         ast.compiled = ast.children
 
     return ast.compiled
@@ -116,10 +126,24 @@ def generate(ast, heap = {}):
         return str(ast.compiled)
 
     elif ast.nodetype == "array":
-        return '_'.join(generate(c) for c in ast.compiled)
+        ret = generate(ast.children[0])
+        if not ast.children[1].is_none:
+            ret += '_' + generate(ast.children[1])
+        if not ast.children[2].is_none:
+            ret += generate(ast.children[2])
+        return ret
 
-    elif ast.nodetype == "identifier":
+    elif ast.nodetype == "expression":
+        return ' '.join(generate(c) for c in ast.compiled)
+
+    elif ast.nodetype in ["identifier", "placeholder"]:
         return ''.join(generate(c) for c in ast.compiled)
 
-    elif ast.nodetype == "placeholder":
-        return str(ast.compiled)
+    elif ast.nodetype == "index":
+        return '_'.join(generate(c) for c in ast.compiled)
+
+    elif ast.nodetype == "timeOffset":
+        return '(' + generate(ast.children[0]) + ')'
+
+    elif ast.is_none:
+        return ""

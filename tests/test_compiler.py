@@ -159,7 +159,7 @@ class TestParser(object):
 
     def test_parses_array(self):
         res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
-        self._expected(res, "array", 3, "identifier", "index", None)
+        self._expected(res, "array", 3, "identifier", "index", traversal.ASTNone)
         res = grammar.array.parseString("timeAry[5](-1)")[0]
         self._expected(res, "array", 3, "identifier", "index", "timeOffset")
 
@@ -241,26 +241,17 @@ class TestCompiler(object):
 
     def test_compiles_placeholder(self):
         ast = grammar.placeholder.parseString("|V|")[0]
-        assert traversal.compile_ast(ast, {'V': 'X'}) == 'X'
+        assert traversal.compile_ast(ast, {'V': 'X'})[0].compiled == 'X'
 
     def test_compiles_iterator(self):
         ast = grammar.iter.parseString("V in Q CH G I DS")[0]
         assert traversal.compile_ast(ast) == {'names': ['V', '$V'],
                                               'lists': [('Q', 1), ('CH', 2), ('G', 3), ('I', 4), ('DS', 5)]}
         ast = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
-        print repr(traversal.compile_ast(ast))
         assert traversal.compile_ast(ast) == {'names': ['c', 's', '$c', '$s'],
                                               'lists': [('01', '04', 1, 1),
                                                         ('02', '05', 2, 2),
                                                         ('03', '06', 3, 3)]}
-
-    # def test_compiles_Array(self):
-    #     ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
-    #     assert traversal.compile_ast({'com': '24', 'sec': '2403'}) == ["arrayName8", "24", "5", "2403"]
-    #     # res = grammar.array.parseString("timeAry[5](-1)")[0]
-    #     # assert res.compile({}, {}, '') == "timeAry_5(-1)"
-    #     # res = grammar.array.parseString("test[$s]")[0]
-    #     # assert res.compile({grammar.VariableName("$s"): 15}, {}, '') == "test_15"
 
      # def test_compiles_Expression(self):
      #    ast = grammar.expression.parseString("D[com, sec] + d(log(Q[com, sec])) - A / B")[0]
@@ -294,3 +285,14 @@ class TestGenerator(object):
         ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
         traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'})
         assert traversal.generate(ast) == "testQ_energyM"
+
+    def test_generates_array(self):
+        ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
+        traversal.compile_ast(ast, {'com': '24', 'sec': '2403'})
+        assert traversal.generate(ast) == "arrayName8_24_5_2403"
+        ast = grammar.array.parseString("timeAry[5](-1)")[0]
+        traversal.compile_ast(ast)
+        assert traversal.generate(ast) == "timeAry_5(-1)"
+        ast = grammar.array.parseString("test[$s]")[0]
+        traversal.compile_ast(ast, {'$s': 15})
+        assert traversal.generate(ast) == "test_15"

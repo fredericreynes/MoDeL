@@ -24,7 +24,7 @@ index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
 
-array = (identifier + index + Optional(timeOffset, default = None)).ast('array')
+array = (identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
 operand = array | identifier | real | integer
 
@@ -65,4 +65,3 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
-
