@@ -115,8 +115,11 @@ def generate(ast, heap = {}):
     if ast.is_immediate:
         return str(ast.compiled)
 
+    elif ast.nodetype == "array":
+        return '_'.join(generate(c) for c in ast.compiled)
+
     elif ast.nodetype == "identifier":
         return ''.join(generate(c) for c in ast.compiled)
 
-    elif ast.nodetype == "array":
-        return '_'.join(generate(c) for c in ast.compiled)
+    elif ast.nodetype == "placeholder":
+        return str(ast.compiled)
