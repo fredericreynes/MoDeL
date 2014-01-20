@@ -93,7 +93,6 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
         else:
             generator = lambda toks: toks if type(toks) is str else "".join(toks)
 
-        # print [str(compile_ast(c, bindings).compiled['equations'][0].compiled[0]) for c in ast.children[1:]]
         ast.compiled = { 'name': name,
                          'generator': generator,
                          'arguments': [compile_ast(c, bindings) for c in ast.children[1:]] }
