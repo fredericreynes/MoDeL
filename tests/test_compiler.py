@@ -251,16 +251,15 @@ class TestGenerator(object):
         assert traversal.generate(traversal.compile_ast(ast, {'com': '24'})) == "energy_24 = B_3"
         ast = grammar.equation.parseString("energy[com] = log(B[3])")[0]
         assert traversal.generate(traversal.compile_ast(ast, {'com': '24'})) == "energy_24 = log(B_3)"
-        # ast = grammar.equation.parseString("energy[com] = B[3]")[0]
-        # traversal.compile_ast(ast, {'com': '24'})
-        # assert traversal.generate(ast) == "Penergy_24 * energy_24 = PB_3 * B_3\nenergy_24 = B_3"
+        ast = grammar.equation.parseString("energy[com] = B[3]")[0]
+        assert traversal.generate(traversal.compile_ast(ast, {'com': '24'}, as_value = True)) == "Penergy_24 * energy_24 = PB_3 * B_3"
 
     def test_generates_expression(self):
         ast = grammar.expression.parseString("D[com, sec] + d(log(Q)) - A / B")[0]
         res = traversal.generate(traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}))
         assert res == "D_24_2403 + d(log(Q)) - A / B"
-        # ast = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
-        # assert traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}) == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
+        ast = grammar.expression.parseString("D[com, sec] + Q[com, sec] - A")[0]
+        assert traversal.generate(traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}, as_value = True)) == "PD_24_2403 * D_24_2403 + PQ_24_2403 * Q_24_2403 - PA * A"
         ast = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         assert traversal.generate(traversal.compile_ast(ast, {'c': '01'})) == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
         ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
@@ -301,8 +300,9 @@ class TestGenerator(object):
 #         res = grammar.formula.parseString("!pv Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11")[0]
 #         assert res.compile({'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
 #                             'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20}) == expected
-#         expected = ("Q_04 = Test_1 + 2 * 1\n"
-#                     "Q_05 = Test_2 + 2 * 2\n"
-#                     "Q_06 = Test_3 + 2 * 3")
-#         res = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c, c in 04 05 06")[0]
-#         assert res.compile({}) == expected
+        expected = ("Q_04 = Test_1 + 2 * 1\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_06 = Test_3 + 2 * 3")
+        ast = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c, c in 04 05 06")[0]
+        res = '\n'.join(traversal.generate(traversal.compile_ast(ast)))
+        assert res == expected

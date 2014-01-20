@@ -7,7 +7,7 @@ class AST:
         self.nodetype = nodetype
         self.children = children
         self.compiled = None
-        self.generated = None
+        self.as_value = False
 
     def __getitem__(self, i):
         return self.children[i]
@@ -52,9 +52,13 @@ class AST:
 ASTNone = AST('none', [])
 
 
-def compile_ast(ast, bindings = {}, use_bindings = False):
+def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
+    ast.as_value = as_value
+
     if ast.is_immediate:
         imm = ast.immediate
+        # Always use bindings for loop counters
+        use_bindings = use_bindings or str(imm)[0] == '$'
         if use_bindings and imm in bindings and ast.nodetype == "variableName":
             ast.compiled = bindings[imm]
         else:
@@ -78,13 +82,24 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
         # Apply external bindings, if any
         if len(bindings) > 0:
             all_bindings = [merge(locals, bindings) for locals in all_bindings]
+
+        # Check for the price-value option
+        price_value = not ast.children[0] is None
+
         # Then compile conditions
         if not ast.children[2] is None:
             conditions = (compile_ast(ast.children[2], locals) for locals in all_bindings)
+            # If price-value is set, should generate a second set of equations - but conditions should remain unchanged, thus we just repeat them
+            if price_value:
+                conditions = itertools.chain(conditions, conditions)
         else:
             conditions = []
+
         # Finally compile the equation / expression for each binding
         equations = (compile_ast(ast.children[1], locals) for locals in all_bindings)
+        # If price-value is set, should generate a second set of equations, in value form
+        if price_value:
+            equations = itertools.chain(equations, (compile_ast(ast.children[1], locals, as_value = True) for locals in all_bindings))
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
@@ -103,6 +118,12 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
         ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]
+
+    elif ast.nodetype in ["identifier", "array"]:
+        # The as_value flag should not propagate downwards inside the identifier and array nodetypes
+        if as_value:
+            as_value = False
+        ast.compiled = [compile_ast(c, bindings, use_bindings, as_value) for c in ast.children]
 
     elif ast.nodetype == "iterator":
         # If the iterator is correctly defined, there are as many iterator names
@@ -130,14 +151,23 @@ def compile_ast(ast, bindings = {}, use_bindings = False):
         ast.compiled = ASTNone
 
     else:
-        ast.compiled = [compile_ast(c, bindings, use_bindings) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings, use_bindings, as_value) for c in ast.children]
 
     return ast
 
+def value_form(str, flag):
+    if flag:
+        return 'P' + str + ' * ' + str
+    else:
+        return str
 
 def generate(ast, heap = {}):
     if ast.is_immediate:
-        return str(ast.compiled)
+        ret = str(ast.compiled)
+        if ast.nodetype == "variableName":
+            return value_form(ret, ast.as_value)
+        else:
+            return ret
 
     elif ast.nodetype == "array":
         ret = generate(ast.children[0])
@@ -145,7 +175,10 @@ def generate(ast, heap = {}):
             ret += '_' + generate(ast.children[1])
         if not ast.children[2].is_none:
             ret += generate(ast.children[2])
-        return ret
+        return value_form(ret, ast.as_value)
+
+    elif ast.nodetype == "identifier":
+        return value_form(''.join(generate(c) for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
         return eval(generate(ast.compiled[0]), heap)
@@ -168,7 +201,7 @@ def generate(ast, heap = {}):
         generated_args = [generate(a) for a in ast.compiled['arguments']]
         return ast.compiled['name'] + '(' + ', '.join(ast.compiled['generator'](a) for a in generated_args) + ')'
 
-    elif ast.nodetype in ["identifier", "placeholder"]:
+    elif ast.nodetype == "placeholder":
         return ''.join(generate(c) for c in ast.compiled)
 
     elif ast.nodetype == "index":
