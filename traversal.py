@@ -99,7 +99,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
         equations = (compile_ast(ast.children[1], locals, use_bindings, as_value) for locals in all_bindings)
         # If price-value is set, should generate a second set of equations, in value form
         if price_value:
-            equations = chain(equations, (compile_ast(ast.children[1], locals, use_bindings, as_value) for locals in all_bindings))
+            equations = chain(equations, (compile_ast(ast.children[1], locals, use_bindings, True) for locals in all_bindings))
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
