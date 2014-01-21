@@ -209,6 +209,9 @@ class TestGenerator(object):
         ast = grammar.func.parseString("value(QD[c] + ID[c])")[0]
         res = traversal.generate(traversal.compile_ast(ast, {'c': '42'}))
         assert res == "PQD_42 * QD_42 + PID_42 * ID_42"
+        ast = grammar.func.parseString("sum(c1 - c2 if c1 <> c2, (c1, c2) in (01 02 03, 01 02 03))")[0]
+        res = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
+        assert res == "0"
 
     def test_generates_equation(self):
         ast = grammar.equation.parseString("energy[com] = B[3]")[0]
