@@ -1,5 +1,6 @@
 from .. import grammar
 from .. import traversal
+from .. import lineparser
 import csv
 
 class TestParser(object):
@@ -290,3 +291,28 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01")[0]
         res = '\n'.join(traversal.generate(traversal.compile_ast(ast), {'M_01': 15}))
         assert res == expected
+
+class TestLineParser:
+    def test_parses_lines(self):
+        test = r"""# this is a comment
+        # comment with leading whitespace
+        line 1
+        line 2
+
+        line 3 # has a comment
+        line 4 \# does not have a comment
+        line 5 _
+        continues over three _
+        physical lines
+
+        line 6 _
+
+        continues over two physical lines, with a blank in between
+
+        line 7 doesn't continue _p
+        line _8 in_cludes escapes (and also a bug).
+        line 9 also has a comment # which gets rid of this backslash _
+        and lastly line 10.
+        """
+
+        assert len(lineparser.parse_lines(test)) == 10
