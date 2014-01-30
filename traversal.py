@@ -29,7 +29,7 @@ class AST:
 
     @property
     def is_immediate(self):
-        return len(self.children) == 1 and not isinstance(self.children[0], AST)
+        return len(self.children) == 1 and not isinstance(self.children[0], AST) and not self.nodetype == "loopCounter"
 
     @property
     def is_none(self):
@@ -63,6 +63,9 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
             ast.compiled = bindings[imm]
         else:
             ast.compiled = imm
+
+    elif ast.nodetype == "loopCounter":
+        ast.compiled = bindings[ast.children[0]]
 
     elif ast.nodetype == "formula":
         # First compile iterators
@@ -165,7 +168,7 @@ def value_form(str, flag):
         return str
 
 def generate(ast, heap = {}):
-    if ast.is_immediate:
+    if ast.is_immediate or ast.nodetype == "loopCounter":
         ret = str(ast.compiled)
         if ast.nodetype == "variableName":
             return value_form(ret, ast.as_value)

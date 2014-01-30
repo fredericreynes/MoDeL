@@ -14,7 +14,11 @@ integer = Combine(Optional('-') + Word(nums)).setParseAction(lambda toks: AST('i
 
 real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(lambda toks: AST('real', [float(toks[0])] ))
 
-variableName = Word(alphas + '_%$@', alphanums + '_').ast('variableName')
+varNameChars = alphanums + '_'
+
+variableName = Word(alphas + '_%@', varNameChars).ast('variableName')
+
+loopCounter = Word('$', varNameChars).ast('loopCounter')
 
 placeholder = Adjacent(Suppress('|') + variableName + Suppress('|')).ast('placeholder')
 
@@ -27,7 +31,7 @@ timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('tim
 
 array = Adjacent(identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
-operand = array | identifier | real | integer
+operand = array | identifier | loopCounter | real | integer
 
 unaryOperator = oneOf('+ -').ast('operator')
 
@@ -66,3 +70,8 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
+
+ast = func.parseString("ES_KLEM($s, 1)")[0]
+res = compile_ast(ast, {'$s': 42})
+print res
+print generate(res)
