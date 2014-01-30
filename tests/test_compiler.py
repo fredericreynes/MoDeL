@@ -315,4 +315,4 @@ class TestLineParser:
         and lastly line 10.
         """
 
-        assert len(lineparser.parse_lines(test)) == 10
+        assert len(lineparser.parse_lines(test.split("\n"))) == 10

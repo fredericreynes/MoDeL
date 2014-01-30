@@ -1,15 +1,13 @@
 import os, sys, csv
 
 import pyparsing
+import lineparser
 import grammar
 import traversal
 
 # The code to be compiled is passed in file in.txt
 with open("in.txt", "r") as f:
-    code = f.readline().strip()
-
-if code[0] == '"':
-    code = code[1:-1]
+    program = lineparser.parse_lines(f.readlines())
 
 # Load values of all variables
 with open('tmp_all_vars.csv', 'rb') as csvfile:
@@ -24,10 +22,10 @@ def compilation(code, heap):
 
 # Compilation
 if len(sys.argv) > 1:
-    output = compilation(code, heap)
+    output = '\n'.join([compilation(line, heap) for line in program])
 else:
     try:
-        output = compilation(code, heap)
+        output = '\n'.join([compilation(line, heap) for line in program])
     except pyparsing.ParseException as e:
         output = "Error\r\n" + str(e)
     except Exception as e:

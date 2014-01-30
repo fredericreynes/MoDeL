@@ -1,8 +1,8 @@
 import re
 
-def parse_lines(str):
+def parse_lines(lines):
     # Remove comments
-    parsed = [re.sub(r'#.*$', '', l).strip() for l in str.split('\n')]
+    parsed = [re.sub(r'#.*$', '', l).strip() for l in lines]
     # Remove blank lines
     parsed = [l for l in parsed if len(l) > 0]
 
