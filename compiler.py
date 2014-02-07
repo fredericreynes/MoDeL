@@ -5,9 +5,13 @@ import lineparser
 import grammar
 import traversal
 
-# The code to be compiled is passed in file in.txt
-with open("in.txt", "r") as f:
-    program = lineparser.parse_lines(f.readlines())
+def load_file(filename):
+    with open(filename, "r") as f:
+        return lineparser.parse_lines(f.readlines())
+
+def compilation(code, heap):
+    ast = grammar.formula.parseString(code)[0]
+    return '\n'.join(traversal.generate(traversal.compile_ast(ast), heap))
 
 # Load values of all variables
 with open('tmp_all_vars.csv', 'rb') as csvfile:
@@ -16,9 +20,8 @@ with open('tmp_all_vars.csv', 'rb') as csvfile:
                     [float(e) if e != 'NA' else
                      None for e in rows[2]]))
 
-def compilation(code, heap):
-    ast = grammar.formula.parseString(code)[0]
-    return '\n'.join(traversal.generate(traversal.compile_ast(ast), heap))
+# The code to be compiled is passed in file in.txt
+program = load_file("in.txt")
 
 # Compilation
 if len(sys.argv) > 1:
