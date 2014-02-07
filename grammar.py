@@ -70,8 +70,3 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
-
-ast = func.parseString("ES_KLEM($s, 1)")[0]
-res = compile_ast(ast, {'$s': 42})
-print res
-print generate(res)

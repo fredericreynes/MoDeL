@@ -112,7 +112,6 @@ class TestParser(object):
         self._expected(res, "iterator", 2, "variableName", "list")
         res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
         self._expected(res, "iterator", 4, "variableName", "variableName", "list", "list")
-
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         self._expected(res, "formula", 5, None, "equation", None, "iterator", "iterator")
@@ -213,6 +212,9 @@ class TestGenerator(object):
         ast = grammar.func.parseString("sum(c1 - c2 if c1 <> c2, (c1, c2) in (01 02 03, 01 02 03))")[0]
         res = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
         assert res == "0"
+        ast = grammar.func.parseString("sum(|V|[c], c in 01 02 03)")[0]
+        res = traversal.generate(traversal.compile_ast(ast, {'V': 'Q'}))
+        assert res == "0 + Q_01 + Q_02 + Q_03"
 
     def test_generates_equation(self):
         ast = grammar.equation.parseString("energy[com] = B[3]")[0]
@@ -291,6 +293,12 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01")[0]
         res = '\n'.join(traversal.generate(traversal.compile_ast(ast), {'M_01': 15}))
         assert res == expected
+        expected = ("YQ = 0 + YQ_01 + YQ_02 + YQ_03\n"
+                    "M = 0 + M_01 + M_02 + M_03")
+        ast = grammar.formula.parseString("|V| = sum(|V|[c], c in 01 02 03), V in YQ M")[0]
+        res = '\n'.join(traversal.generate(traversal.compile_ast(ast)))
+        assert res == expected
+
 
 class TestLineParser:
     def test_parses_lines(self):
