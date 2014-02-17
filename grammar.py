@@ -70,3 +70,7 @@ formula << (Optional(options, default = None) +
             (equation | expression) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
+
+assignment = (grouped(variableName) + Suppress(':=') + grouped(lst | variableName)).ast('assignment')
+
+ast = assignment.parseString("(test, pouet) := (1 2 3, 15 12 3)")[0]

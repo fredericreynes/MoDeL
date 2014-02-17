@@ -170,7 +170,7 @@ def value_form(str, flag):
     else:
         return str
 
-def generate(ast, heap = {}):
+def generate(ast, data = {}):
     if ast.is_immediate or ast.nodetype == "loopCounter":
         ret = str(ast.compiled)
         if ast.nodetype == "variableName":
@@ -190,25 +190,25 @@ def generate(ast, heap = {}):
         return value_form(''.join(generate(c) for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
-        # All variables in the heap should be uppercase
-        return eval(generate(ast.compiled[0]).upper(), heap)
+        # All variables in the data should be uppercase
+        return eval(generate(ast.compiled[0]).upper(), data)
 
     elif ast.nodetype == "expression":
-        return ' '.join(generate(c, heap) for c in ast.compiled)
+        return ' '.join(generate(c, data) for c in ast.compiled)
 
     elif ast.nodetype == "equation":
-        return generate(ast.children[0], heap) + ' = ' + generate(ast.children[1], heap)
+        return generate(ast.children[0], data) + ' = ' + generate(ast.children[1], data)
 
     elif ast.nodetype == "formula":
-        conditions = [generate(cond, heap) for cond in ast.compiled['conditions']]
-        equations = [generate(eq, heap) for eq in ast.compiled['equations']]
+        conditions = [generate(cond, data) for cond in ast.compiled['conditions']]
+        equations = [generate(eq, data) for eq in ast.compiled['equations']]
         if len(conditions) > 0:
             return [eq for eq, cond in zip(equations, conditions) if cond]
         else:
             return equations
 
     elif ast.nodetype == "function":
-        generated_args = [generate(a, heap) for a in ast.compiled['arguments']]
+        generated_args = [generate(a, data) for a in ast.compiled['arguments']]
         # Special case if there is only one argument, parsed as a formula but behaving like an expression
         if len(generated_args) == 1 and isinstance(generated_args[0], list):
             generated_args = generated_args[0]
@@ -218,7 +218,7 @@ def generate(ast, heap = {}):
         return ''.join(generate(c) for c in ast.compiled)
 
     elif ast.nodetype == "index":
-        return '_'.join(generate(c, heap) for c in ast.compiled)
+        return '_'.join(generate(c, data) for c in ast.compiled)
 
     elif ast.nodetype == "timeOffset":
         return '(' + generate(ast.children[0]) + ')'
