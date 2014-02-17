@@ -132,18 +132,21 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
         ast.compiled = [compile_ast(c, bindings, use_bindings, as_value) for c in ast.children]
 
     elif ast.nodetype == "iterator":
+        names = ast.children[0].children
+        lists = ast.children[1].children
         # If the iterator is correctly defined, there are as many iterator names
-        # as there are lists. So we divide the children in halves
-        list_count = len(ast.children) / 2
-        names = [compile_ast(c).compiled for c in ast.children[:list_count]]
-        lists = [compile_ast(c).compiled for c in ast.children[list_count:]]
+        # as there are lists.
+        if len(names) <> len(lists):
+            raise SyntaxError("An iterator must have the same number of list names and list definitions")
+        compiled_names = [compile_ast(c).compiled for c in ast.children[0].children]
+        compiled_lists = [compile_ast(c).compiled for c in ast.children[1].children]
         # HACK !! Used for the loop counters
-        listBaseLength = [len(lst.children[0].children) for lst in ast.children[list_count:]]
+        listBaseLength = [len(lst.children[0].children) for lst in lists]
         # Add the loop counters
-        names = names + ['$' + name for name in names]
-        lists = lists + [range(1, n + 1) for n in listBaseLength]
-        ast.compiled = { 'names': names,
-                         'lists': zip(*lists) }
+        compiled_names = compiled_names + ['$' + name for name in compiled_names]
+        compiled_lists = compiled_lists + [range(1, n + 1) for n in listBaseLength]
+        ast.compiled = { 'names': compiled_names,
+                         'lists': zip(*compiled_lists) }
 
     elif ast.nodetype == "listBase":
         ast.compiled = [compile_ast(c).compiled for c in ast.children]

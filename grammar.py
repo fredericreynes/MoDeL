@@ -60,7 +60,7 @@ lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
 lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('list')
 
 def grouped(elem):
-    return elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))
+    return (elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))).ast('group')
 
 iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | variableName)).ast('iterator')
 

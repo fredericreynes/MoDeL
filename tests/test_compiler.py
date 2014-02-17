@@ -109,9 +109,9 @@ class TestParser(object):
 
     def test_parses_iterator(self):
         res = grammar.iter.parseString("com in 01 02 03 04 05 06 07")[0]
-        self._expected(res, "iterator", 2, "variableName", "list")
+        self._expected(res, "iterator", 2, "group", "group")
         res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
-        self._expected(res, "iterator", 4, "variableName", "variableName", "list", "list")
+        self._expected(res, "iterator", 2, "group", "group")
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         self._expected(res, "formula", 5, None, "equation", None, "iterator", "iterator")
