@@ -223,6 +223,11 @@ def generate(ast, heap = {}):
     elif ast.nodetype == "timeOffset":
         generated = '(' + generate(ast.children[0])[0] + ')'
 
+    elif ast.nodetype == "assignment":
+        generated = ""
+        for (localName, value) in zip(ast.children[0].compiled, ast.children[1].compiled):
+            heap[localName.compiled] = value.compiled
+
     elif ast.is_none:
         generated = ""
 

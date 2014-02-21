@@ -328,6 +328,12 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert '\n'.join(res) == expected
 
+    def test_generates_assignment(self):
+        ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]
+        res, heap = traversal.generate(traversal.compile_ast(ast))
+        assert res == ""
+        assert heap == {'%test': ['1', '2', '3'], '%pouet': ['15', '12', '3']}
+
 
 class TestLineParser:
     def test_parses_lines(self):
