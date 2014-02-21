@@ -52,7 +52,7 @@ class AST:
 ASTNone = AST('none', [])
 
 
-def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
+def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, as_value = False):
     ast.as_value = as_value
 
     if ast.is_immediate:
@@ -91,18 +91,18 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
 
         # Then compile conditions
         if not ast.children[2] is None:
-            conditions = (compile_ast(ast.children[2], locals, use_bindings = True) for locals in all_bindings)
+            conditions = (compile_ast(ast.children[2], bindings = locals, use_bindings = True) for locals in all_bindings)
             # If price-value is set, should generate a second set of equations - but conditions should remain unchanged, thus we just repeat them
             if price_value:
-                conditions = chain(conditions, (compile_ast(ast.children[2], locals, use_bindings = True) for locals in all_bindings))
+                conditions = chain(conditions, (compile_ast(ast.children[2], bindings = locals, use_bindings = True) for locals in all_bindings))
         else:
             conditions = []
 
         # Finally compile the equation / expression for each binding
-        equations = (compile_ast(ast.children[1], locals, use_bindings, as_value) for locals in all_bindings)
+        equations = (compile_ast(ast.children[1], bindings = locals, use_bindings = use_bindings, as_value = as_value) for locals in all_bindings)
         # If price-value is set, should generate a second set of equations, in value form
         if price_value:
-            equations = chain(equations, (compile_ast(ast.children[1], locals, use_bindings, True) for locals in all_bindings))
+            equations = chain(equations, (compile_ast(ast.children[1], bindings = locals, use_bindings = use_bindings, as_value = True) for locals in all_bindings))
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
@@ -120,16 +120,16 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
 
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': [compile_ast(c, bindings, True, as_value) for c in ast.children[1:]] }
+                         'arguments': [compile_ast(c, bindings = bindings, use_bindings = True, as_value = as_value) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
-        ast.compiled = [compile_ast(c, bindings, True) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings = bindings, use_bindings = True) for c in ast.children]
 
     elif ast.nodetype in ["identifier", "array"]:
         # The as_value flag should not propagate downwards inside the identifier and array nodetypes
         if as_value:
             as_value = False
-        ast.compiled = [compile_ast(c, bindings, use_bindings, as_value) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings = bindings, use_bindings = use_bindings, as_value = as_value) for c in ast.children]
 
     elif ast.nodetype == "iterator":
         names = ast.children[0].children
@@ -160,7 +160,7 @@ def compile_ast(ast, bindings = {}, use_bindings = False, as_value = False):
         ast.compiled = ASTNone
 
     else:
-        ast.compiled = [compile_ast(c, bindings, use_bindings, as_value) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings = bindings, use_bindings = use_bindings, as_value = as_value) for c in ast.children]
 
     return ast
 

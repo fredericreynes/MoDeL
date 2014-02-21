@@ -152,7 +152,7 @@ class TestCompiler(object):
 
     def test_compiles_placeholder(self):
         ast = grammar.placeholder.parseString("|V|")[0]
-        assert traversal.compile_ast(ast, {'V': 'X'})[0].compiled == 'X'
+        assert traversal.compile_ast(ast, bindings = {'V': 'X'})[0].compiled == 'X'
 
     def test_compiles_iterator(self):
         ast = grammar.iter.parseString("V in Q CH G I DS")[0]
@@ -259,7 +259,7 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}))
         assert res == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
         ast = grammar.expression.parseString("s")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, True))
+        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, use_bindings = True))
         assert res == "02"
 
     def test_generates_condition(self):
