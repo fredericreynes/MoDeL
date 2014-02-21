@@ -16,13 +16,15 @@ real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(la
 
 varNameChars = alphanums + '_'
 
-variableName = Word(alphas + '_%@', varNameChars).ast('variableName')
+variableName = Word(alphas + '_@', varNameChars).ast('variableName')
+
+localName = Word('%', varNameChars).ast('localName')
 
 loopCounter = Word('$', varNameChars).ast('loopCounter')
 
-placeholder = Adjacent(Suppress('|') + variableName + Suppress('|')).ast('placeholder')
+placeholder = Adjacent(Suppress('|') + (variableName | localName) + Suppress('|')).ast('placeholder')
 
-identifier = Adjacent( (variableName | placeholder) + ZeroOrMore(variableName | placeholder) ).ast('identifier')
+identifier = Adjacent( (variableName | localName | placeholder) + ZeroOrMore(variableName | localName | placeholder) ).ast('identifier')
 
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
@@ -71,6 +73,4 @@ formula << (Optional(options, default = None) +
             Optional(condition, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
 
-assignment = (grouped(variableName) + Suppress(':=') + grouped(lst | variableName)).ast('assignment')
-
-ast = assignment.parseString("(test, pouet) := (1 2 3, 15 12 3)")[0]
+assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
