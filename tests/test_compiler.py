@@ -123,6 +123,13 @@ class TestParser(object):
         self._expected(res, "formula", 4, None, "equation", None, "iterator")
         self._expected(res.children[1].children[1], 'expression', 1, "function")
 
+    def test_parses_assignment(self):
+        res = grammar.assignment.parseString("test := 1 2 3")[0]
+        self._expected(res, "assignment", 2, "group", "group")
+        res = grammar.assignment.parseString("(test, pouet) := (1 2 3, 15 12 3)")[0]
+        self._expected(res, "assignment", 2, "group", "group")
+        self._expected(res.children[0], "group", 2, "variableName", "variableName")
+        self._expected(res.children[1], "group", 2, "list", "list")
 
 class TestCompiler(object):
     def test_compiles_integer(self):
