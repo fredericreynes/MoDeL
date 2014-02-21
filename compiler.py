@@ -37,7 +37,8 @@ class MoDeLFile:
 
     def compile_line(self, line, heap):
         ast = grammar.formula.parseString(line)[0]
-        return '\n'.join(traversal.generate(traversal.compile_ast(ast), heap))
+        generated, heap = traversal.generate(traversal.compile_ast(ast), heap)
+        return '\n'.join(generated)
 
     def compile_program(self):
         return '\n'.join([self.compile_line(line, heap) for line in self.program])

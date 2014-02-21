@@ -170,58 +170,60 @@ def value_form(str, flag):
     else:
         return str
 
-def generate(ast, data = {}):
+def generate(ast, heap = {}):
     if ast.is_immediate or ast.nodetype == "loopCounter":
         ret = str(ast.compiled)
         if ast.nodetype == "variableName":
-            return value_form(ret, ast.as_value)
+            generated = value_form(ret, ast.as_value)
         else:
-            return ret
+            generated = ret
 
     elif ast.nodetype == "array":
-        ret = generate(ast.children[0])
+        ret = generate(ast.children[0])[0]
         if not ast.children[1].is_none:
-            ret += '_' + generate(ast.children[1])
+            ret += '_' + generate(ast.children[1])[0]
         if not ast.children[2].is_none:
-            ret += generate(ast.children[2])
-        return value_form(ret, ast.as_value)
+            ret += generate(ast.children[2])[0]
+        generated = value_form(ret, ast.as_value)
 
     elif ast.nodetype == "identifier":
-        return value_form(''.join(generate(c) for c in ast.compiled), ast.as_value)
+        generated = value_form(''.join(generate(c)[0] for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
-        # All variables in the data should be uppercase
-        return eval(generate(ast.compiled[0]).upper(), data)
+        # All variables in the heap should be uppercase
+        generated = eval(generate(ast.compiled[0])[0].upper(), heap)
 
     elif ast.nodetype == "expression":
-        return ' '.join(generate(c, data) for c in ast.compiled)
+        generated = ' '.join(generate(c, heap)[0] for c in ast.compiled)
 
     elif ast.nodetype == "equation":
-        return generate(ast.children[0], data) + ' = ' + generate(ast.children[1], data)
+        generated = generate(ast.children[0], heap)[0] + ' = ' + generate(ast.children[1], heap)[0]
 
     elif ast.nodetype == "formula":
-        conditions = [generate(cond, data) for cond in ast.compiled['conditions']]
-        equations = [generate(eq, data) for eq in ast.compiled['equations']]
+        conditions = [generate(cond, heap)[0] for cond in ast.compiled['conditions']]
+        equations = [generate(eq, heap)[0] for eq in ast.compiled['equations']]
         if len(conditions) > 0:
-            return [eq for eq, cond in zip(equations, conditions) if cond]
+            generated = [eq for eq, cond in zip(equations, conditions) if cond]
         else:
-            return equations
+            generated = equations
 
     elif ast.nodetype == "function":
-        generated_args = [generate(a, data) for a in ast.compiled['arguments']]
+        generated_args = [generate(a, heap)[0] for a in ast.compiled['arguments']]
         # Special case if there is only one argument, parsed as a formula but behaving like an expression
         if len(generated_args) == 1 and isinstance(generated_args[0], list):
             generated_args = generated_args[0]
-        return ast.compiled['generator'](generated_args)
+        generated = ast.compiled['generator'](generated_args)
 
     elif ast.nodetype == "placeholder":
-        return ''.join(generate(c) for c in ast.compiled)
+        generated = ''.join(generate(c)[0] for c in ast.compiled)
 
     elif ast.nodetype == "index":
-        return '_'.join(generate(c, data) for c in ast.compiled)
+        generated = '_'.join(generate(c, heap)[0] for c in ast.compiled)
 
     elif ast.nodetype == "timeOffset":
-        return '(' + generate(ast.children[0]) + ')'
+        generated = '(' + generate(ast.children[0])[0] + ')'
 
     elif ast.is_none:
-        return ""
+        generated = ""
+
+    return generated, heap
