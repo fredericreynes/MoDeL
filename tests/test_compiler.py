@@ -220,11 +220,11 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast, {'j': 24}))
         assert res == "d(log(test_24))"
         ast = grammar.func.parseString("@elem(PK, %baseyear)")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast))
-        assert res == "@elem(PK, %baseyear)"
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%baseyear': 2006}))
+        assert res == "@elem(PK, 2006)"
         ast = grammar.func.parseString("@elem(PK[s](-1), %baseyear)")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': 13}))
-        assert res == "@elem(PK_13(-1), %baseyear)"
+        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': 13}, heap = {'%baseyear': 2006}))
+        assert res == "@elem(PK_13(-1), 2006)"
         ast = grammar.func.parseString("ES_KLEM($s, 1)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'$s': 42}))
         assert res == "ES_KLEM(42, 1)"
@@ -266,8 +266,8 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast, {'c': '01'}))
         assert res == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
         ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}))
-        assert res == "EBE_02 - @elem(PK_02(-1), %baseyear) * Tdec_02 * K_02(-1)"
+        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, heap = {'%baseyear': 2006}))
+        assert res == "EBE_02 - @elem(PK_02(-1), 2006) * Tdec_02 * K_02(-1)"
         ast = grammar.expression.parseString("s")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, use_bindings = True))
         assert res == "02"
