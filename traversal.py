@@ -29,7 +29,7 @@ class AST:
 
     @property
     def is_immediate(self):
-        return len(self.children) == 1 and not isinstance(self.children[0], AST) and not self.nodetype == "loopCounter"
+        return len(self.children) == 1 and not isinstance(self.children[0], AST) and not self.nodetype in ["loopCounter", "localName"]
 
     @property
     def is_none(self):
@@ -52,7 +52,7 @@ class AST:
 ASTNone = AST('none', [])
 
 
-def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, as_value = False):
+def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
 
     if ast.is_immediate:
@@ -66,6 +66,12 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, as_value = 
 
     elif ast.nodetype == "loopCounter":
         ast.compiled = bindings[ast.children[0]]
+
+    elif ast.nodetype == "localName":
+        if use_heap:
+            ast.compiled = heap[ast.children[0]]
+        else:
+            ast.compiled = ast.children[0]
 
     elif ast.nodetype == "formula":
         # First compile iterators
@@ -139,12 +145,11 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, as_value = 
         if len(names) <> len(lists):
             raise SyntaxError("An iterator must have the same number of list names and list definitions")
         compiled_names = [compile_ast(c).compiled for c in ast.children[0].children]
-        compiled_lists = [compile_ast(c).compiled for c in ast.children[1].children]
-        # HACK !! Used for the loop counters
-        listBaseLength = [len(lst.children[0].children) for lst in lists]
-        # Add the loop counters
-        compiled_names = compiled_names + ['$' + name for name in compiled_names]
-        compiled_lists = compiled_lists + [range(1, n + 1) for n in listBaseLength]
+        compiled_lists = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[1].children]
+        compiled_lists = [ [h['list'], h['loopCounters']] for h in compiled_lists]
+        # Add the loop counter names
+        compiled_names = cat(zip(compiled_names, ['$' + name for name in compiled_names]))
+        compiled_lists = reduce(lambda x, y: x + y, compiled_lists, [])
         ast.compiled = { 'names': compiled_names,
                          'lists': zip(*compiled_lists) }
 
@@ -154,7 +159,14 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, as_value = 
     elif ast.nodetype == "list":
         base = compile_ast(ast.children[0]).compiled
         excluded = compile_ast(ast.children[1]).compiled
-        ast.compiled = [e for e in base if e not in excluded]
+        # WARNING ! Loop counters are based on the index of the base list
+        # This is because loop counters are often used
+        # to refer to columns in the calibration matrices
+        # When an item is excluded from the base list, it should not
+        # shift all the other columns
+        loopCounters = range(1, len(base) + 1)
+        ast.compiled = { 'list' : [e for e in base if e not in excluded],
+                         'loopCounters': [i for e, i in zip(base, loopCounters) if e not in excluded] }
 
     elif ast.is_none:
         ast.compiled = ASTNone
@@ -171,7 +183,7 @@ def value_form(str, flag):
         return str
 
 def generate(ast, heap = {}):
-    if ast.is_immediate or ast.nodetype == "loopCounter":
+    if ast.is_immediate or ast.nodetype in ["loopCounter", "localName"]:
         ret = str(ast.compiled)
         if ast.nodetype == "variableName":
             generated = value_form(ret, ast.as_value)

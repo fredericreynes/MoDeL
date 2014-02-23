@@ -64,7 +64,7 @@ lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('lis
 def grouped(elem):
     return (elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))).ast('group')
 
-iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | variableName)).ast('iterator')
+iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | localName)).ast('iterator')
 
 options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
 
