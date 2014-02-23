@@ -159,14 +159,19 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
     elif ast.nodetype == "list":
         base = compile_ast(ast.children[0]).compiled
         excluded = compile_ast(ast.children[1]).compiled
-        # WARNING ! Loop counters are based on the index of the base list
-        # This is because loop counters are often used
-        # to refer to columns in the calibration matrices
-        # When an item is excluded from the base list, it should not
-        # shift all the other columns
-        loopCounters = range(1, len(base) + 1)
-        ast.compiled = { 'list' : [e for e in base if e not in excluded],
-                         'loopCounters': [i for e, i in zip(base, loopCounters) if e not in excluded] }
+
+        # If there is just one element
+        if len(base) == 1:
+            ast.compiled = base[0]
+        else:
+            # WARNING ! Loop counters are based on the index of the base list
+            # This is because loop counters are often used
+            # to refer to columns in the calibration matrices
+            # When an item is excluded from the base list, it should not
+            # shift all the other columns
+            loopCounters = range(1, len(base) + 1)
+            ast.compiled = { 'list' : [e for e in base if e not in excluded],
+                             'loopCounters': [i for e, i in zip(base, loopCounters) if e not in excluded] }
 
     elif ast.is_none:
         ast.compiled = ASTNone

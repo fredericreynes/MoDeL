@@ -231,8 +231,8 @@ class TestGenerator(object):
         ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
         assert res == "0 + Q_01_10 + Q_03_10"
-        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 02)")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
+        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 02 03)")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 0})
         assert res == "0"
         ast = grammar.func.parseString("value(QD[c] + ID[c])")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'c': '42'}))
@@ -329,8 +329,8 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast), {'K_N_04': 15, 'K_N_05': 0})
         assert '\n'.join(res) == expected
         expected = ("PM_01 = PWD_01 * TC")
-        ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast), {'M_01': 15})
+        ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01 02")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast), {'M_01': 15, 'M_02': 0})
         assert '\n'.join(res) == expected
         expected = ("YQ = 0 + YQ_01 + YQ_02 + YQ_03\n"
                     "M = 0 + M_01 + M_02 + M_03")
@@ -342,10 +342,14 @@ class TestGenerator(object):
         ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]
         res, heap = traversal.generate(traversal.compile_ast(ast))
         assert res == ""
-        assert heap == {'%test': {'list': ['1', '2', '3'],
-                                  'loopCounters': [1, 2, 3]},
-                        '%pouet': {'list': ['15', '12', '3'],
-                                   'loopCounters': [1, 2, 3]}}
+        assert heap['%test'] == {'list': ['1', '2', '3'],
+                                 'loopCounters': [1, 2, 3]}
+        assert heap['%pouet'] == {'list': ['15', '12', '3'],
+                                  'loopCounters': [1, 2, 3]}
+        ast = grammar.assignment.parseString("%baseyear := 2006")[0]
+        res, heap = traversal.generate(traversal.compile_ast(ast))
+        assert res == ""
+        assert heap['%baseyear'] == '2006'
 
 
 class TestLineParser:
