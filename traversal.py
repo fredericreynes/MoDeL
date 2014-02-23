@@ -76,7 +76,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
     elif ast.nodetype == "formula":
         # First compile iterators
         if not ast.children[3] is None:
-            iterators = [compile_ast(c).compiled for c in ast.children[3:]]
+            iterators = [compile_ast(c, heap = heap).compiled for c in ast.children[3:]]
             # Get the lists only
             all_lists = [iter['lists'] for iter in iterators]
             # Cartesian product of all the iterators' lists
@@ -126,16 +126,16 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
         ast.compiled = { 'name': name,
                          'generator': generator,
-                         'arguments': [compile_ast(c, bindings = bindings, use_bindings = True, as_value = as_value) for c in ast.children[1:]] }
+                         'arguments': [compile_ast(c, bindings = bindings, heap = heap, use_bindings = True, as_value = as_value) for c in ast.children[1:]] }
 
     elif ast.nodetype in ["index", "placeholder", "timeOffset"]:
-        ast.compiled = [compile_ast(c, bindings = bindings, use_bindings = True) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings = bindings, heap = heap, use_bindings = True) for c in ast.children]
 
     elif ast.nodetype in ["identifier", "array"]:
         # The as_value flag should not propagate downwards inside the identifier and array nodetypes
         if as_value:
             as_value = False
-        ast.compiled = [compile_ast(c, bindings = bindings, use_bindings = use_bindings, as_value = as_value) for c in ast.children]
+        ast.compiled = [compile_ast(c, bindings = bindings, heap = heap, use_bindings = use_bindings, as_value = as_value) for c in ast.children]
 
     elif ast.nodetype == "iterator":
         names = ast.children[0].children

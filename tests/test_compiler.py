@@ -374,19 +374,28 @@ class TestLineParser:
         assert len(lineparser.parse_lines(test.split("\n"))) == 10
 
 
+
+test_files = {
+    'in1.txt': r"""# First test file
+    Q[c] = Test[$c] + 2 * $c, c in 04 05 06
+    """,
+    'in2.txt': r"""# Test comment
+    %sectors := 04 05 06
+    Q[c] = Test[$c] + 2 * $c, c in %sectors
+    """ }
+
 class TestFileCompiler:
     def setup(self):
-        test = r"""# First test file
-        Q[c] = Test[$c] + 2 * $c, c in 04 05 06
-        """
-        with open('in1.txt', 'w') as f:
-            f.write(test)
+        for fname, test in test_files.iteritems():
+            with open(fname, 'w') as f:
+                f.write(test)
 
     def teardown(self):
-        try:
-            os.remove('in1.txt')
-        except Exception as e:
-            pass
+        for fname in test_files:
+            try:
+                os.remove(fname)
+            except Exception as e:
+                pass
 
     def test_compiles_simple_file(self):
         expected = ("Q_04 = Test_1 + 2 * 1\n"
@@ -394,6 +403,16 @@ class TestFileCompiler:
                     "Q_06 = Test_3 + 2 * 3")
         # The code to be compiled is passed in file in.txt
         model = compiler.MoDeLFile("in1.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+        assert output == expected
+
+    def test_compiles_file_with_assignment(self):
+        expected = ("Q_04 = Test_1 + 2 * 1\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_06 = Test_3 + 2 * 3")
+        # The code to be compiled is passed in file in.txt
+        model = compiler.MoDeLFile("in2.txt")
         # Compile and generate the output
         output = model.compile_program()
         assert output == expected

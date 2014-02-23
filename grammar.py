@@ -74,3 +74,5 @@ formula << (Optional(options, default = None) +
             Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
 
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
+
+instruction = assignment | formula
