@@ -382,6 +382,13 @@ test_files = {
     'in2.txt': r"""# Test comment
     %sectors := 04 05 06
     Q[c] = Test[$c] + 2 * $c, c in %sectors
+    """ ,
+    'lists.mdl': r"""# Files containing the lists
+    %sectors := 04 05 06""",
+    'in3.txt': r"""
+    include lists
+
+    Q[c] = Test[$c] + 2 * $c, c in %sectors
     """ }
 
 class TestFileCompiler:
@@ -413,6 +420,16 @@ class TestFileCompiler:
                     "Q_06 = Test_3 + 2 * 3")
         # The code to be compiled is passed in file in.txt
         model = compiler.MoDeLFile("in2.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+        assert output == expected
+
+    def test_compiles_file_with_include(self):
+        expected = ("Q_04 = Test_1 + 2 * 1\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_06 = Test_3 + 2 * 3")
+        # The code to be compiled is passed in file in.txt
+        model = compiler.MoDeLFile("in3.txt")
         # Compile and generate the output
         output = model.compile_program()
         assert output == expected
