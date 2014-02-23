@@ -169,6 +169,10 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             raise SyntaxError("An iterator must have the same number of list names and list definitions")
         compiled_names = [compile_ast(c).compiled for c in ast.children[0].children]
         compiled_lists = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[1].children]
+        # Ensure that all elements of compiled lists really are lists
+        # This prevents bugs when a list is actually a singleton
+        compiled_lists = [ {'list': [h], 'loopCounters': [1]} if isinstance(h, basestring)
+                           else h for h in compiled_lists ]
         compiled_lists = [ [h['list'], h['loopCounters']] for h in compiled_lists]
         # Add the loop counter names
         compiled_names = cat(zip(compiled_names, ['$' + name for name in compiled_names]))
