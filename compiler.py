@@ -37,7 +37,7 @@ class MoDeLFile:
             return lineparser.parse_lines(f.readlines())
 
     def include_external(self, program):
-        return cat([self.read_file(l[8:].strip()) if l[0:7] == "include"
+        return cat([self.include_external(self.read_file(l[8:].strip())) if l[0:7] == "include"
                     else [l]
                     for l in program])
 

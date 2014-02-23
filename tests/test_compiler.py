@@ -389,10 +389,13 @@ test_files = {
     """ ,
     'lists.mdl': r"""# Files containing the lists
     %sectors := 04 05 06""",
-    'in3.txt': r"""
+    'in3.mdl': r"""
     include lists
 
     Q[c] = Test[$c] + 2 * $c, c in %sectors
+    """,
+    'in4.txt': r"""
+    include in3
     """ }
 
 class TestFileCompiler:
@@ -433,7 +436,18 @@ class TestFileCompiler:
                     "Q_05 = Test_2 + 2 * 2\n"
                     "Q_06 = Test_3 + 2 * 3")
         # The code to be compiled is passed in file in.txt
-        model = compiler.MoDeLFile("in3.txt")
+        model = compiler.MoDeLFile("in3.mdl")
         # Compile and generate the output
         output = model.compile_program()
         assert output == expected
+
+    def test_compiles_file_with_recursive_includes(self):
+        expected = ("Q_04 = Test_1 + 2 * 1\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_06 = Test_3 + 2 * 3")
+        # The code to be compiled is passed in file in.txt
+        model = compiler.MoDeLFile("in4.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+        assert output == expected
+
