@@ -44,26 +44,27 @@ class MoDeLFile:
         return '\n'.join([self.compile_line(line, heap) for line in self.program])
 
 # Load values of all variables
-with open('tmp_all_vars.csv', 'rb') as csvfile:
+with open('_tmp_all_vars.csv', 'rb') as csvfile:
     rows = list(csv.reader(csvfile))
     heap = dict(zip(rows[0],
                     [float(e) if e != 'NA' else
                      None for e in rows[2]]))
 
-try:
-    # The code to be compiled is passed in file in.txt
-    model = MoDeLFile("in.txt")
-    # Compile and generate the output
-    output = model.compile_program()
-except pyparsing.ParseException as e:
-    output = "Error\r\n" + str(e)
-except Exception as e:
-    output = "Error\r\n" + repr(e)
+if __name__ == "__main__":
+    try:
+        # The code to be compiled is passed in file in.txt
+        model = MoDeLFile("in.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+    except pyparsing.ParseException as e:
+        output = "Error\r\n" + str(e)
+    except Exception as e:
+        output = "Error\r\n" + repr(e)
 
-# Writes the output, compiled code or error message to file out.txt
-with open("out.txt", 'w') as f:
-    f.write(output)
+    # Writes the output, compiled code or error message to file out.txt
+    with open("out.txt", 'w') as f:
+        f.write(output)
 
-# In debug mode, also write the output directly to the console
-if len(sys.argv) > 1:
-    print output
+    # In debug mode, also write the output directly to the console
+    if len(sys.argv) > 1:
+        print output
