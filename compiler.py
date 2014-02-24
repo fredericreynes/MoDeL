@@ -31,7 +31,7 @@ class MoDeLFile:
         if os.path.splitext(filename)[-1] == '':
             filename += '.mdl'
         # Check for self-inclusion
-        if filename == self.filename and not master_file:
+        if os.path.basename(filename) == os.path.basename(self.filename) and not master_file:
             raise Error("A file cannot include itself")
         with open(filename, "r") as f:
             return lineparser.parse_lines(f.readlines())
