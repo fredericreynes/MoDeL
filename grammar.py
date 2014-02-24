@@ -66,7 +66,7 @@ def grouped(elem):
 
 iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | localName)).ast('iterator')
 
-options = oneOf('!pv !p !Pv !P').setParseAction(lambda toks: toks[0])
+options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').setParseAction(lambda toks: toks[0])
 
 formula << (Optional(options, default = None) +
             (equation | expression) +
