@@ -153,6 +153,11 @@ class TestCompiler(object):
         ast = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         assert traversal.compile_ast(ast).compiled == { 'list' : ['01', '02', '03', '05', '07'],
                                                         'loopCounters': [1, 2, 3, 5, 7] }
+        ast = grammar.lst.parseString("%variables")[0]
+        assert traversal.compile_ast(ast, heap = {'%variables': {'list': ['Q', 'CH', 'G', 'I', 'DS'],
+                                                                 'loopCounters': [1, 2, 3, 4, 5]} }).compiled == {'list': ['Q', 'CH', 'G', 'I', 'DS'],
+                                                                                                                  'loopCounters': [1, 2, 3, 4, 5]}
+
 
     def test_compiles_placeholder(self):
         ast = grammar.placeholder.parseString("|V|")[0]
@@ -173,7 +178,20 @@ class TestCompiler(object):
         ast = grammar.iter.parseString("V in %variables")[0]
         assert traversal.compile_ast(ast, heap = {'%variables': {'list': ['Q', 'CH', 'G', 'I', 'DS'],
                                                                  'loopCounters': [1, 2, 3, 4, 5]} }).compiled == {'names': ['V', '$V'],
-                                                                                                                'lists': [('Q', 1), ('CH', 2), ('G', 3), ('I', 4), ('DS', 5)]}
+                                                                                                                  'lists': [('Q', 1), ('CH', 2), ('G', 3), ('I', 4), ('DS', 5)]}
+        ast = grammar.iter.parseString("V in %variables \ CH I DS")[0]
+        assert traversal.compile_ast(ast, heap = {'%variables': {'list': ['Q', 'CH', 'G', 'I', 'DS'],
+                                                                 'loopCounters': [1, 2, 3, 4, 5]} }).compiled == {'names': ['V', '$V'],
+                                                                                                                  'lists': [('Q', 1), ('G', 3)]}
+        ast = grammar.iter.parseString("V in %variables \ %exclusion")[0]
+        assert traversal.compile_ast(ast, heap = {'%variables': {'list': ['Q', 'CH', 'G', 'I', 'DS'],
+                                                                 'loopCounters': [1, 2, 3, 4, 5]},
+                                                  '%exclusion': {'list': ['CH', 'I', 'DS'],
+                                                                 'loopCounters': [2, 4, 5]}}).compiled == {'names': ['V', '$V'],
+                                                                                                           'lists': [('Q', 1), ('G', 3)]}
+
+
+
 class TestGenerator(object):
     def test_generates_integer(self):
         ast = grammar.integer.parseString("42")[0]
@@ -337,6 +355,10 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("|V| = sum(|V|[c], c in 01 02 03), V in YQ M")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert '\n'.join(res) == expected
+        expected = "EMS_HH_BUIL_21_H01_CA = 42"
+        ast = grammar.formula.parseString("EMS_HH_BUIL[s, h, class] = 42, s in %list_sector, h in %list_household, class in %list_class")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_sector': '21', '%list_household': 'H01', '%list_class': 'CA' }))
+        assert '\n'.join(res) == expected
 
     def test_generates_assignment(self):
         ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]
@@ -350,6 +372,10 @@ class TestGenerator(object):
         res, heap = traversal.generate(traversal.compile_ast(ast))
         assert res == ""
         assert heap['%baseyear'] == '2006'
+        ast = grammar.assignment.parseString("%list_household := H01")[0]
+        res, heap = traversal.generate(traversal.compile_ast(ast))
+        assert res == ""
+        assert heap['%list_household'] == 'H01'
 
 
 class TestLineParser:

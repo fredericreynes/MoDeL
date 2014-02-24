@@ -59,12 +59,12 @@ equation = (expression + Suppress('=') + expression).ast('equation')
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
 lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
-lst = (lstBase + Optional(Suppress('\\') + lstBase, default = ASTNone)).ast('list')
+lst = ((lstBase | localName) + Optional(Suppress('\\') + (lstBase | localName), default = ASTNone)).ast('list')
 
 def grouped(elem):
     return (elem | (Suppress('(') + delimitedList(elem) + Suppress(')'))).ast('group')
 
-iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst | localName)).ast('iterator')
+iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst)).ast('iterator')
 
 options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').setParseAction(lambda toks: toks[0])
 

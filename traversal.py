@@ -163,12 +163,16 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
     elif ast.nodetype == "iterator":
         names = ast.children[0].children
         lists = ast.children[1].children
+
+        if isinstance(lists, basestring):
+            lists = [lists]
         # If the iterator is correctly defined, there are as many iterator names
         # as there are lists.
         if len(names) <> len(lists):
             raise SyntaxError("An iterator must have the same number of list names and list definitions")
         compiled_names = [compile_ast(c).compiled for c in ast.children[0].children]
         compiled_lists = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[1].children]
+
         # Ensure that all elements of compiled lists really are lists
         # This prevents bugs when a list is actually a singleton
         compiled_lists = [ {'list': [h], 'loopCounters': [1]} if isinstance(h, basestring)
@@ -184,21 +188,32 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         ast.compiled = [compile_ast(c).compiled for c in ast.children]
 
     elif ast.nodetype == "list":
-        base = compile_ast(ast.children[0]).compiled
-        excluded = compile_ast(ast.children[1]).compiled
+        base = compile_ast(ast.children[0], heap = heap, use_heap = True).compiled
+        excluded = compile_ast(ast.children[1], heap = heap, use_heap = True).compiled
 
-        # If there is just one element
-        if len(base) == 1:
-            ast.compiled = base[0]
-        else:
-            # WARNING ! Loop counters are based on the index of the base list
-            # This is because loop counters are often used
-            # to refer to columns in the calibration matrices
-            # When an item is excluded from the base list, it should not
-            # shift all the other columns
-            loopCounters = range(1, len(base) + 1)
-            ast.compiled = { 'list' : [e for e in base if e not in excluded],
-                             'loopCounters': [i for e, i in zip(base, loopCounters) if e not in excluded] }
+        # If the lists were defined as localNames,
+        # base and excluded are already compiled lists,
+        # not listBases.
+        # Must extract the lists themselves
+        if isinstance(base, dict) and 'list' in base:
+            base = base['list']
+        if isinstance(excluded, dict) and 'list' in excluded:
+            excluded = excluded['list']
+
+        # If base or excluded are strings (single-element lists)
+        if isinstance(base, basestring):
+            base = [base]
+        if isinstance(excluded, basestring):
+            excluded = [excluded]
+
+        # WARNING ! Loop counters are based on the index of the base list
+        # This is because loop counters are often used
+        # to refer to columns in the calibration matrices
+        # When an item is excluded from the base list, it should not
+        # shift all the other columns
+        loopCounters = range(1, len(base) + 1)
+        ast.compiled = { 'list' : [e for e in base if e not in excluded],
+                         'loopCounters': [i for e, i in zip(base, loopCounters) if e not in excluded] }
 
     elif ast.is_none:
         ast.compiled = ASTNone
@@ -275,7 +290,10 @@ def generate(ast, heap = {}):
     elif ast.nodetype == "assignment":
         generated = ""
         for (localName, value) in zip(ast.children[0].compiled, ast.children[1].compiled):
-            heap[localName.compiled] = value.compiled
+            if len(value.compiled['list']) == 1:
+                heap[localName.compiled] = value.compiled['list'][0]
+            else:
+                heap[localName.compiled] = value.compiled
 
     elif ast.is_none:
         generated = ""
