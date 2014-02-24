@@ -1,0 +1,18 @@
+#-------------------------------CO2 household emissions from housing use--------------------------------------------------
+
+include lists
+
+%baseyear := 2006
+
+# equation 6b.1
+
+d(log(EMS_HH_BUIL[ce2, h, class])) = (@year > %baseyear) * d(log(ENER_BUIL[h, class, ce2])) + (@year =< %baseyear) * (log(1 + STEADYSTATE(2,1))) if EMS_HH_BUIL[ce2, h, class] <> 0, ce2 in %list_com_E_CO2, h in %list_household, class in %list_ener_class
+
+# equation 6b.2
+
+EMS_HH_BUIL[ce2, h] = sum( EMS_HH_BUIL[ce2, h, class] if EMS_HH_BUIL[ce2, h, class] <> 0, class in %list_ener_class ), ce2 in %list_com_E_CO2, h in %list_household
+
+# equation 6b.3
+
+EMS_HH_BUIL[h, class] = sum( EMS_HH_BUIL[h, class, ce2] if EMS_HH_BUIL[h, class, ce2] <> 0, ce2 in %list_com_E_CO2 ), h in %list_household, class in %list_ener_class
+
