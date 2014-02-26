@@ -104,7 +104,11 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
                                       use_heap = True) for locals in all_bindings)
             # If price-value is set, should generate a second set of equations - but conditions should remain unchanged, thus we just repeat them
             if price_value:
-                conditions = chain(conditions, (compile_ast(ast.children[2], bindings = locals, use_bindings = True) for locals in all_bindings))
+                conditions = chain(conditions, (compile_ast(ast.children[2],
+                                                            bindings = locals,
+                                                            heap = heap,
+                                                            use_bindings = True,
+                                                            use_heap = True) for locals in all_bindings))
         else:
             conditions = []
 
@@ -117,7 +121,12 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
                                  as_value = as_value) for locals in all_bindings)
         # If price-value is set, should generate a second set of equations, in value form
         if price_value:
-            equations = chain(equations, (compile_ast(ast.children[1], bindings = locals, use_bindings = use_bindings, as_value = True) for locals in all_bindings))
+            equations = chain(equations, (compile_ast(ast.children[1],
+                                                      bindings = locals,
+                                                      heap = heap,
+                                                      use_bindings = use_bindings,
+                                                      use_heap = True,
+                                                      as_value = True) for locals in all_bindings))
 
         ast.compiled = { 'conditions': conditions,
                          'equations': equations }
