@@ -66,12 +66,12 @@ def grouped(elem):
 
 iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst)).ast('iterator')
 
-options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').setParseAction(lambda toks: toks[0])
+options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').ast('string')
 
-formula << (Optional(options, default = None) +
+formula << (Optional(options, default = ASTNone) +
             (equation | expression) +
-            Optional(condition, default = None) +
-            Optional(Suppress(',') + delimitedList(iter), default = None)).ast('formula')
+            Optional(condition, default = ASTNone) +
+            Optional(Suppress(',') + delimitedList(iter), default = ASTNone)).ast('formula')
 
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
 

@@ -51,6 +51,19 @@ class AST:
 
 ASTNone = AST('none', [])
 
+def variableNames_in_ast(ast):
+    print ast
+    if ast.is_immediate:
+        if ast.nodetype == "variableName":
+            return ast.immediate
+        else:
+            return []
+
+    elif ast.is_none:
+        return []
+
+    else:
+        return cat([variableNames_in_ast(c) for c in ast.children])
 
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
@@ -75,7 +88,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
     elif ast.nodetype == "formula":
         # First compile iterators
-        if not ast.children[3] is None:
+        if not ast.children[3].is_none:
             iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
             # Get the lists only
             all_lists = [iter['lists'] for iter in iterators]
@@ -93,10 +106,10 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             all_bindings = [merge(locals, bindings) for locals in all_bindings]
 
         # Check for the price-value option
-        price_value = not ast.children[0] is None
+        price_value = not ast.children[0].is_none
 
         # Then compile conditions
-        if not ast.children[2] is None:
+        if not ast.children[2].is_none:
             conditions = (compile_ast(ast.children[2],
                                       bindings = locals,
                                       heap = heap,

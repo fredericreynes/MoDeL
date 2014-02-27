@@ -116,13 +116,13 @@ class TestParser(object):
         self._expected(res, "iterator", 2, "group", "group")
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
-        self._expected(res, "formula", 5, None, "equation", None, "iterator", "iterator")
+        self._expected(res, "formula", 5, "none", "equation", "none", "iterator", "iterator")
         res = grammar.formula.parseString("Q = QD + QM")[0]
-        self._expected(res, "formula", 4, None, "equation", None, None)
+        self._expected(res, "formula", 4, "none", "equation", "none", "none")
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
-        self._expected(res, "formula", 5, None, "equation", "condition", "iterator", "iterator")
+        self._expected(res, "formula", 5, "none", "equation", "condition", "iterator", "iterator")
         res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
-        self._expected(res, "formula", 4, None, "equation", None, "iterator")
+        self._expected(res, "formula", 4, "none", "equation", "none", "iterator")
         self._expected(res.children[1].children[1], 'expression', 1, "function")
 
     def test_parses_assignment(self):
