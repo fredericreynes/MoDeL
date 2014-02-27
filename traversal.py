@@ -51,8 +51,16 @@ class AST:
 
 ASTNone = AST('none', [])
 
+# From http://stackoverflow.com/questions/5286541/how-can-i-flatten-lists-without-splitting-strings
+def flatten(foo):
+    for x in foo:
+        if hasattr(x, '__iter__'):
+            for y in flatten(x):
+                yield y
+        else:
+            yield x
+
 def variableNames_in_ast(ast):
-    print ast
     if ast.is_immediate:
         if ast.nodetype == "variableName":
             return ast.immediate
@@ -63,7 +71,7 @@ def variableNames_in_ast(ast):
         return []
 
     else:
-        return cat([variableNames_in_ast(c) for c in ast.children])
+        return list(flatten(variableNames_in_ast(c) for c in ast.children))
 
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value

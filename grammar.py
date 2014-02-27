@@ -76,3 +76,6 @@ formula << (Optional(options, default = ASTNone) +
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
 
 instruction = assignment | formula
+
+ast = expression.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
+print variableNames_in_ast(ast)
