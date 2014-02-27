@@ -71,7 +71,7 @@ def variableNames_in_ast(ast):
         return []
 
     else:
-        return list(flatten(variableNames_in_ast(c) for c in ast.children))
+        return set(flatten(variableNames_in_ast(c) for c in ast.children))
 
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
