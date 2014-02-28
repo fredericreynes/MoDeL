@@ -63,7 +63,7 @@ def flatten(foo):
 def variableNames_in_ast(ast):
     if ast.is_immediate:
         if ast.nodetype == "variableName":
-            return ast.immediate
+            return ast
         else:
             return []
 
@@ -71,7 +71,7 @@ def variableNames_in_ast(ast):
         return []
 
     else:
-        return set(flatten(variableNames_in_ast(c) for c in ast.children))
+        return flatten(variableNames_in_ast(c) for c in ast.children)
 
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
@@ -95,6 +95,15 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             ast.compiled = ast.children[0]
 
     elif ast.nodetype == "formula":
+        # Get all the variable names used in the equation
+        variableNames = set(variableNames_in_ast(ast.children[1]))
+
+        # Find the iterators that are in the heap
+        # and that are referenced in the equation
+        heapIteratorNames = [v.immediate for v in variableNames if v.immediate in heap]
+        # Get these iterators from the heap
+        heapIterators = [heap[v] for v in heapIteratorNames]
+
         # First compile iterators
         if not ast.children[3].is_none:
             iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
