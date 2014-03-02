@@ -60,18 +60,24 @@ def flatten(foo):
         else:
             yield x
 
-def variableNames_in_ast(ast):
+def variableNames_not_in_iterators(ast):
     if ast.is_immediate:
         if ast.nodetype == "variableName":
             return ast.immediate
         else:
             return []
 
+    # We must only return variables that are not defined in the formula's iterators
+    elif ast.nodetype == "formula":
+        var_in_equation = list(variableNames_not_in_iterators(ast.children[1]))
+        var_in_iterators = list(flatten(variableNames_not_in_iterators(a) for a in ast.children[3:]))
+        return [v for v in var_in_equation if v not in var_in_iterators]
+
     elif ast.is_none or ast.nodetype in ["loopCounter", "localName"]:
         return []
 
     else:
-        return flatten(variableNames_in_ast(c) for c in ast.children)
+        return flatten(variableNames_not_in_iterators(c) for c in ast.children)
 
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
@@ -96,7 +102,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
     elif ast.nodetype == "formula":
         # Get all the variable names used in the equation (as strings)
-        variableNames = set(variableNames_in_ast(ast.children[1]))
+        variableNames = set(variableNames_not_in_iterators(ast))
 
         # Find the iterators that are in the heap
         # and that are referenced in the equation

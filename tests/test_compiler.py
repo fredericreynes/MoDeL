@@ -388,6 +388,14 @@ class TestGenerator(object):
         iter = grammar.compile_ast(grammar.iter.parseString("s in 01 02 03")[0]).compiled
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': iter }))
         assert '\n'.join(res) == expected
+        expected = ("TCO_VAL_sec_21 = 0 + TCO_VAL_21_01 + TCO_VAL_21_02 + TCO_VAL_21_03\n"
+                    "TCO_VAL_sec_22 = 0 + TCO_VAL_22_01 + TCO_VAL_22_02 + TCO_VAL_22_03\n"
+                    "TCO_VAL_sec_24 = 0 + TCO_VAL_24_01 + TCO_VAL_24_02 + TCO_VAL_24_03")
+        ce2_iter = traversal.compile_ast(grammar.iter.parseString("ce2 in 21 22 24")[0]).compiled
+        s_iter = traversal.compile_ast(grammar.iter.parseString("s in 01 02 03")[0]).compiled
+        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s in 01 02 03)")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
+        assert '\n'.join(res) == expected
 
     def test_generates_assignment(self):
         ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]

@@ -76,3 +76,8 @@ formula << (Optional(options, default = ASTNone) +
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
 
 instruction = (iter | assignment | formula).ast('instruction')
+
+ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
+s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled
+ast = formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s in 01 02 03)")[0]
+print generate(compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
