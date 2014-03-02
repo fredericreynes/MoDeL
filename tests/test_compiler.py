@@ -275,7 +275,6 @@ class TestGenerator(object):
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': ['01', '02', '03']}))
         assert res == "0 + Q_01 + Q_02 + Q_03"
 
-
     def test_generates_equation(self):
         ast = grammar.equation.parseString("energy[com] = B[3]")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'com': '24'}))
@@ -381,6 +380,13 @@ class TestGenerator(object):
                     "PQ * Q = 0 + PQ_01 * Q_01 + PQ_02 * Q_02 + PQ_03 * Q_03")
         ast = grammar.formula.parseString("@pv Q = sum(Q[c], c in %list_com)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': {'list': ['01', '02', '03'], 'loopCounters': [1, 2, 3]} }))
+        assert '\n'.join(res) == expected
+        expected = ("d(log(EMS_01)) = d(log(E_01))\n"
+                    "d(log(EMS_02)) = d(log(E_02))\n"
+                    "d(log(EMS_03)) = d(log(E_03))")
+        ast = grammar.formula.parseString("d(log(EMS[s])) = d(log(E[s]))")[0]
+        iter = grammar.compile_ast(grammar.iter.parseString("s in 01 02 03")[0]).compiled
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': iter }))
         assert '\n'.join(res) == expected
 
     def test_generates_assignment(self):

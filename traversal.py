@@ -102,6 +102,10 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         # and that are referenced in the equation
         heapIteratorNames = [v for v in variableNames if v in heap and isinstance(heap[v], dict)]
 
+        # But iterators that are already defined
+        # in the bindings have priority
+        heapIteratorNames = [v for v in heapIteratorNames if v not in bindings]
+
         # Get these iterators from the heap
         heapIterators = [heap[v] for v in heapIteratorNames]
 
