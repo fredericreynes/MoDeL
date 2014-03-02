@@ -133,6 +133,16 @@ class TestParser(object):
         self._expected(res.children[0], "group", 2, "localName", "localName")
         self._expected(res.children[1], "group", 2, "list", "list")
 
+    def test_parses_instruction(self):
+        res = grammar.instruction.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        self._expected(res, "instruction", 1, "formula")
+        res = grammar.instruction.parseString("%test := 1 2 3")[0]
+        self._expected(res, "instruction", 1, "assignment")
+        res = grammar.instruction.parseString("s in 1 2 3")[0]
+        self._expected(res, "instruction", 1, "iterator")
+        res = grammar.instruction.parseString("s in %list_sec")[0]
+        self._expected(res, "instruction", 1, "iterator")
+
 class TestCompiler(object):
     def test_compiles_integer(self):
         ast = grammar.integer.parseString("42")[0]
