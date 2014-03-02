@@ -63,7 +63,7 @@ def flatten(foo):
 def variableNames_in_ast(ast):
     if ast.is_immediate:
         if ast.nodetype == "variableName":
-            return ast
+            return ast.immediate
         else:
             return []
 
@@ -100,13 +100,18 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
         # Find the iterators that are in the heap
         # and that are referenced in the equation
-        heapIteratorNames = [v for v in variableNames if v in heap and isinstance(heap[v], AST)]
+        heapIteratorNames = [v for v in variableNames if v in heap and isinstance(heap[v], dict)]
+
         # Get these iterators from the heap
         heapIterators = [heap[v] for v in heapIteratorNames]
 
         # First compile iterators
         if not ast.children[3].is_none or len(heapIteratorNames) > 0:
-            iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
+            if not ast.children[3].is_none:
+                iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
+            else:
+                iterators = []
+
             # Names of all the iterators and associated loop counters
             all_names = cat(iter['names'] for iter in iterators)
             # Iterators to be added from the heap
