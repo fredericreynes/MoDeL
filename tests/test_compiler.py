@@ -400,6 +400,14 @@ class TestGenerator(object):
         assert res == ""
         assert heap['%list_household'] == 'H01'
 
+    def test_generates_instruction(self):
+        ast = grammar.instruction.parseString("s in 1 2 3")[0]
+        res, heap = traversal.generate(traversal.compile_ast(ast))
+        assert res == ""
+        print heap['s']
+        assert heap['s'] == {'names': ['s', '$s'],
+                             'lists': [('1', 1), ('2', 2), ('3', 3)]}
+
 
 class TestLineParser:
     def test_parses_lines(self):

@@ -341,7 +341,11 @@ def generate(ast, heap = {}):
     elif ast.nodetype == "instruction":
         child = ast.children[0]
         if child.nodetype == "iterator":
-            heap[child.compiled["names"]] = child.compiled
+            # If a single iterator is defined, then :names contains
+            # only the iterator name, and its associated loop counter
+            if len(child.compiled["names"]) > 2:
+                raise SyntaxError("Parallel iterators are not allowed in global iterator definitions")
+            heap[child.compiled["names"][0]] = child.compiled
             generated = ""
         else:
             generated, heap = generate(child, heap)
