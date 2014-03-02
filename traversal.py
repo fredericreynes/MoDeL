@@ -67,7 +67,7 @@ def variableNames_in_ast(ast):
         else:
             return []
 
-    elif ast.is_none:
+    elif ast.is_none or ast.nodetype in ["loopCounter", "localName"]:
         return []
 
     else:
@@ -95,23 +95,27 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             ast.compiled = ast.children[0]
 
     elif ast.nodetype == "formula":
-        # Get all the variable names used in the equation
+        # Get all the variable names used in the equation (as strings)
         variableNames = set(variableNames_in_ast(ast.children[1]))
 
         # Find the iterators that are in the heap
         # and that are referenced in the equation
-        heapIteratorNames = [v.immediate for v in variableNames if v.immediate in heap]
+        heapIteratorNames = [v for v in variableNames if v in heap and isinstance(heap[v], AST)]
         # Get these iterators from the heap
         heapIterators = [heap[v] for v in heapIteratorNames]
 
         # First compile iterators
-        if not ast.children[3].is_none:
+        if not ast.children[3].is_none or len(heapIteratorNames) > 0:
             iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
+            # Names of all the iterators and associated loop counters
+            all_names = cat(iter['names'] for iter in iterators)
+            # Iterators to be added from the heap
+            iterators += [iter for iter in heapIterators if not iter['names'][0] in all_names]
             # Get the lists only
             all_lists = [iter['lists'] for iter in iterators]
             # Cartesian product of all the iterators' lists
             prod = product(*all_lists)
-            # Names of all the iterators and associated loop counters
+            # Updated names for all iterators, including those from the heap
             all_names = cat(iter['names'] for iter in iterators)
             # Build the final list containing all the bindings
             all_bindings = [dict(zip(all_names, cat(p))) for p in prod]
@@ -333,6 +337,14 @@ def generate(ast, heap = {}):
                 heap[localName.compiled] = value.compiled['list'][0]
             else:
                 heap[localName.compiled] = value.compiled
+
+    elif ast.nodetype == "instruction":
+        child = ast.children[0]
+        if child.nodetype == "iterator":
+            heap[child.compiled["names"]] = child.compiled
+            generated = ""
+        else:
+            generated, heap = generate(child, heap)
 
     elif ast.is_none:
         generated = ""
