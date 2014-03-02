@@ -380,7 +380,7 @@ class TestGenerator(object):
         expected = ("Q = 0 + Q_01 + Q_02 + Q_03\n"
                     "PQ * Q = 0 + PQ_01 * Q_01 + PQ_02 * Q_02 + PQ_03 * Q_03")
         ast = grammar.formula.parseString("@pv Q = sum(Q[c], c in %list_com)")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': ['01', '02', '03']}))
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': {'list': ['01', '02', '03'], 'loopCounters': [1, 2, 3]} }))
         assert '\n'.join(res) == expected
 
     def test_generates_assignment(self):
@@ -404,7 +404,11 @@ class TestGenerator(object):
         ast = grammar.instruction.parseString("s in 1 2 3")[0]
         res, heap = traversal.generate(traversal.compile_ast(ast))
         assert res == ""
-        print heap['s']
+        assert heap['s'] == {'names': ['s', '$s'],
+                             'lists': [('1', 1), ('2', 2), ('3', 3)]}
+        ast = grammar.instruction.parseString("s in %list_sec")[0]
+        res, heap = traversal.generate(traversal.compile_ast(ast, heap = {'%list_sec': {'list': ['1', '2', '3'], 'loopCounters': [1, 2, 3]} }))
+        assert res == ""
         assert heap['s'] == {'names': ['s', '$s'],
                              'lists': [('1', 1), ('2', 2), ('3', 3)]}
 
