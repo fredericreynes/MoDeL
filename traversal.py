@@ -37,7 +37,7 @@ class AST:
 
     @property
     def immediate(self):
-        if self.is_immediate:
+        if len(self.children) == 1:
             return self.children[0]
         else:
             raise TypeError
@@ -79,6 +79,12 @@ def variableNames_not_in_iterators(ast):
     else:
         return flatten(variableNames_not_in_iterators(c) for c in ast.children)
 
+def from_heap(key, heap):
+    if key in heap:
+        return heap[key]
+    else:
+        raise NameError("Variable '{0}' is not defined".format(key))
+
 def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = False, as_value = False):
     ast.as_value = as_value
 
@@ -92,11 +98,11 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             ast.compiled = imm
 
     elif ast.nodetype == "loopCounter":
-        ast.compiled = bindings[ast.children[0]]
+        ast.compiled = bindings[ast.immediate]
 
     elif ast.nodetype == "localName":
         if use_heap:
-            ast.compiled = heap[ast.children[0]]
+            ast.compiled = from_heap(ast.immediate, heap)
         else:
             ast.compiled = ast.children[0]
 
@@ -118,7 +124,8 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         # First compile iterators
         if not ast.children[3].is_none or len(heapIteratorNames) > 0:
             if not ast.children[3].is_none:
-                iterators = [compile_ast(c, heap = heap, use_heap = True).compiled for c in ast.children[3:]]
+                iterators = [compile_ast(c, heap = heap, use_heap = True).compiled if c.nodetype == "iterator"
+                             else from_heap(ast.immediate, heap) for c in ast.children[3:]]
             else:
                 iterators = []
 
