@@ -396,6 +396,9 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s in 01 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
         assert '\n'.join(res) == expected
+        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s)")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
+        assert '\n'.join(res) == expected
 
     def test_generates_assignment(self):
         ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]

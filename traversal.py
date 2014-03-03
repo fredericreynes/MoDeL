@@ -125,7 +125,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         if not ast.children[3].is_none or len(heapIteratorNames) > 0:
             if not ast.children[3].is_none:
                 iterators = [compile_ast(c, heap = heap, use_heap = True).compiled if c.nodetype == "iterator"
-                             else from_heap(ast.immediate, heap) for c in ast.children[3:]]
+                             else from_heap(c.immediate, heap) for c in ast.children[3:]]
             else:
                 iterators = []
 
