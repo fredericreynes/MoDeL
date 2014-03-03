@@ -1,4 +1,4 @@
-import os, sys, csv
+import os, sys, csv, logging
 
 from funcy import *
 
@@ -41,28 +41,36 @@ class MoDeLFile:
                     else [l]
                     for l in program])
 
-    def compile_line(self, line, heap):
+    def compile_line(self, line, heap, is_debug):
         ast = grammar.instruction.parseString(line)[0]
+        if is_debug:
+            logging.debug(ast)
         generated, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
         return '\n'.join(generated), heap
 
-    def compile_program(self):
+    def compile_program(self, is_debug):
         compiled = []
         for line in self.program:
-            compiled_line, self.heap = self.compile_line(line, self.heap)
+            compiled_line, self.heap = self.compile_line(line, self.heap, is_debug)
             compiled.append(compiled_line)
         return '\n'.join([l for l in compiled if len(l) > 0])
 
 
 if __name__ == "__main__":
+    is_debug = len(sys.argv) > 1
+    if is_debug:
+        logging.basicConfig(level=logging.DEBUG)
+
     try:
         # The code to be compiled is passed in file in.txt
         model = MoDeLFile("in.txt")
         # Compile and generate the output
-        output = model.compile_program()
+        output = model.compile_program(is_debug)
     except pyparsing.ParseException as e:
         output = "Error\r\n" + str(e)
     except Exception as e:
+        if is_debug:
+            logging.exception("Error")
         output = "Error\r\n" + repr(e)
 
     # Writes the output, compiled code or error message to file out.txt
@@ -70,5 +78,5 @@ if __name__ == "__main__":
         f.write(output)
 
     # In debug mode, also write the output directly to the console
-    if len(sys.argv) > 1:
-        print output
+    if is_debug:
+        logging.debug(output)
