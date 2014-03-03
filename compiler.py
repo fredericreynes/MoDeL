@@ -48,7 +48,7 @@ class MoDeLFile:
         generated, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
         return '\n'.join(generated), heap
 
-    def compile_program(self, is_debug):
+    def compile_program(self, is_debug = False):
         compiled = []
         for line in self.program:
             compiled_line, self.heap = self.compile_line(line, self.heap, is_debug)

@@ -115,13 +115,13 @@ class TestParser(object):
         res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
         self._expected(res, "iterator", 2, "group", "group")
     def test_parses_formula(self):
-        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] where V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         self._expected(res, "formula", 5, "none", "equation", "none", "iterator", "iterator")
         res = grammar.formula.parseString("Q = QD + QM")[0]
         self._expected(res, "formula", 4, "none", "equation", "none", "none")
-        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0, V in Q CH I, com in 01 02 07 08 09")[0]
+        res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if |V|[com] > 0 where V in Q CH I, com in 01 02 07 08 09")[0]
         self._expected(res, "formula", 5, "none", "equation", "condition", "iterator", "iterator")
-        res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        res = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03) where s in 10 11 12")[0]
         self._expected(res, "formula", 4, "none", "equation", "none", "iterator")
         self._expected(res.children[1].children[1], 'expression', 1, "function")
 
@@ -134,7 +134,7 @@ class TestParser(object):
         self._expected(res.children[1], "group", 2, "list", "list")
 
     def test_parses_instruction(self):
-        res = grammar.instruction.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        res = grammar.instruction.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03), s in 10 11 12")[0]
         self._expected(res, "instruction", 1, "formula")
         res = grammar.instruction.parseString("%test := 1 2 3")[0]
         self._expected(res, "instruction", 1, "assignment")
@@ -256,22 +256,22 @@ class TestGenerator(object):
         ast = grammar.func.parseString("ES_KLEM($s, 1)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'$s': 42}))
         assert res == "ES_KLEM(42, 1)"
-        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03)")[0]
+        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
         assert res == "0 + Q_01_10 + Q_03_10"
-        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0, c in 02 03)")[0]
+        ast = grammar.func.parseString("sum(Q[c, s] if Q[c, s] <> 0 where c in 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 0})
         assert res == "0"
         ast = grammar.func.parseString("value(QD[c] + ID[c])")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'c': '42'}))
         assert res == "PQD_42 * QD_42 + PID_42 * ID_42"
-        ast = grammar.func.parseString("sum(c1 - c2 if c1 <> c2, (c1, c2) in (01 02 03, 01 02 03))")[0]
+        ast = grammar.func.parseString("sum(c1 - c2 if c1 <> c2 where (c1, c2) in (01 02 03, 01 02 03))")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '10'}), {'Q_01_10': 15, 'Q_02_10': 0, 'Q_03_10': 20})
         assert res == "0"
-        ast = grammar.func.parseString("sum(|V|[c], c in 01 02 03)")[0]
+        ast = grammar.func.parseString("sum(|V|[c] where c in 01 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'V': 'Q'}))
         assert res == "0 + Q_01 + Q_02 + Q_03"
-        ast = grammar.func.parseString("sum(Q[c], c in %list_com)")[0]
+        ast = grammar.func.parseString("sum(Q[c] where c in %list_com)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': ['01', '02', '03']}))
         assert res == "0 + Q_01 + Q_02 + Q_03"
 
@@ -316,25 +316,25 @@ class TestGenerator(object):
                     "Q_02 = QD_02 + QM_02\n"
                     "CH_01 = CHD_01 + CHM_01\n"
                     "CH_02 = CHD_02 + CHM_02")
-        ast = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com], V in Q CH, com in 01 02")[0]
+        ast = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] where V in Q CH, com in 01 02")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert '\n'.join(res) == expected
         expected = ("Q_02 = QD_02 + QM_02\n"
                     "CH_02 = CHD_02 + CHM_02")
-        ast = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        ast = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0 where V in Q CH, com in 01 02")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})
         assert '\n'.join(res) == expected
         expected = ("Q_02 = QD_02 + QM_02\n"
                     "CH_02 = CHD_02 + CHM_02\n"
                     "PQ_02 * Q_02 = PQD_02 * QD_02 + PQM_02 * QM_02\n"
                     "PCH_02 * CH_02 = PCHD_02 * CHD_02 + PCHM_02 * CHM_02")
-        ast = grammar.formula.parseString("@pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0, V in Q CH, com in 01 02")[0]
+        ast = grammar.formula.parseString("@pv |V|[com] = |V|D[com] + |V|M[com] if CHD[com] > 0 where V in Q CH, com in 01 02")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})
         assert '\n'.join(res) == expected
         expected = ("Q_10 = 0 + Q_01_10 + Q_03_10\n"
                     "Q_11 = 0 + Q_01_11 + Q_02_11 + Q_03_11\n"
                     "Q_12 = 0 + Q_01_12 + Q_02_12")
-        ast = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11 12")[0]
+        ast = grammar.formula.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03) where s in 10 11 12")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast),
                                             {'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
                                              'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20,
@@ -344,7 +344,7 @@ class TestGenerator(object):
                     "Q_11 = 0 + Q_01_11 + Q_02_11 + Q_03_11\n"
                     "PQ_10 * Q_10 = 0 + PQ_01_10 * Q_01_10 + PQ_03_10 * Q_03_10\n"
                     "PQ_11 * Q_11 = 0 + PQ_01_11 * Q_01_11 + PQ_02_11 * Q_02_11 + PQ_03_11 * Q_03_11")
-        ast = grammar.formula.parseString("@pv Q[s] = sum(Q[c, s] if Q[c, s] <> 0, c in 01 02 03), s in 10 11")[0]
+        ast = grammar.formula.parseString("@pv Q[s] = sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03) where s in 10 11")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast),
                                     {'Q_01_10': 15, 'Q_02_10': 0,  'Q_03_10': 20,
                                      'Q_01_11': 15, 'Q_02_11': 42, 'Q_03_11': 20})
@@ -352,33 +352,33 @@ class TestGenerator(object):
         expected = ("Q_04 = Test_1 + 2 * 1\n"
                     "Q_05 = Test_2 + 2 * 2\n"
                     "Q_06 = Test_3 + 2 * 3")
-        ast = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c, c in 04 05 06")[0]
+        ast = grammar.formula.parseString("Q[c] = Test[$c] + 2 * $c where c in 04 05 06")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert '\n'.join(res) == expected
         expected = ("Q_04 = QD_04 + QM_04")
-        ast = grammar.formula.parseString("Q[c] = QD[c] + QM[c] if K_n[c] <> 0, c in 04 05")[0]
+        ast = grammar.formula.parseString("Q[c] = QD[c] + QM[c] if K_n[c] <> 0 where c in 04 05")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast), {'K_N_04': 15, 'K_N_05': 0})
         assert '\n'.join(res) == expected
         expected = ("PM_01 = PWD_01 * TC")
-        ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0, c in 01 02")[0]
+        ast = grammar.formula.parseString("PM[c] = PWD[c]*TC if M[c] <> 0 where c in 01 02")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast), {'M_01': 15, 'M_02': 0})
         assert '\n'.join(res) == expected
         expected = ("YQ = 0 + YQ_01 + YQ_02 + YQ_03\n"
                     "M = 0 + M_01 + M_02 + M_03")
-        ast = grammar.formula.parseString("|V| = sum(|V|[c], c in 01 02 03), V in YQ M")[0]
+        ast = grammar.formula.parseString("|V| = sum(|V|[c] where c in 01 02 03) where V in YQ M")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert '\n'.join(res) == expected
         expected = "EMS_HH_BUIL_21_H01_CA = 42"
-        ast = grammar.formula.parseString("EMS_HH_BUIL[s, h, class] = 42, s in %list_sector, h in %list_household, class in %list_class")[0]
+        ast = grammar.formula.parseString("EMS_HH_BUIL[s, h, class] = 42 where s in %list_sector, h in %list_household, class in %list_class")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_sector': '21', '%list_household': 'H01', '%list_class': 'CA' }))
         assert '\n'.join(res) == expected
         expected = "Q = 0 + Q_01 + Q_02 + Q_03"
-        ast = grammar.formula.parseString("Q = sum(Q[c], c in %list_com)")[0]
+        ast = grammar.formula.parseString("Q = sum(Q[c] where c in %list_com)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': ['01', '02', '03']}))
         assert '\n'.join(res) == expected
         expected = ("Q = 0 + Q_01 + Q_02 + Q_03\n"
                     "PQ * Q = 0 + PQ_01 * Q_01 + PQ_02 * Q_02 + PQ_03 * Q_03")
-        ast = grammar.formula.parseString("@pv Q = sum(Q[c], c in %list_com)")[0]
+        ast = grammar.formula.parseString("@pv Q = sum(Q[c] where c in %list_com)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%list_com': {'list': ['01', '02', '03'], 'loopCounters': [1, 2, 3]} }))
         assert '\n'.join(res) == expected
         expected = ("d(log(EMS_01)) = d(log(E_01))\n"
@@ -393,10 +393,10 @@ class TestGenerator(object):
                     "TCO_VAL_sec_24 = 0 + TCO_VAL_24_01 + TCO_VAL_24_02 + TCO_VAL_24_03")
         ce2_iter = traversal.compile_ast(grammar.iter.parseString("ce2 in 21 22 24")[0]).compiled
         s_iter = traversal.compile_ast(grammar.iter.parseString("s in 01 02 03")[0]).compiled
-        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s in 01 02 03)")[0]
+        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] where s in 01 02 03)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
         assert '\n'.join(res) == expected
-        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s], s)")[0]
+        ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] where s)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
         assert '\n'.join(res) == expected
 
@@ -459,12 +459,12 @@ class TestLineParser:
 
 test_files = {
     'in1.txt': r"""# First test file
-    Q[c] = Test[$c] + 2 * $c, c in 04 05 06
+    Q[c] = Test[$c] + 2 * $c where c in 04 05 06
     """,
 
     'in2.txt': r"""# Test comment
     %sectors := 04 05 06
-    Q[c] = Test[$c] + 2 * $c, c in %sectors
+    Q[c] = Test[$c] + 2 * $c where c in %sectors
     """ ,
 
     'lists.mdl': r"""# Files containing the lists
@@ -472,7 +472,7 @@ test_files = {
     'in3.mdl': r"""
     include lists
 
-    Q[c] = Test[$c] + 2 * $c, c in %sectors
+    Q[c] = Test[$c] + 2 * $c where c in %sectors
     """,
 
     'in4.txt': r"""
@@ -495,7 +495,7 @@ test_files = {
 
     # equation 6b.1
 
-    d(log(EMS_HH_BUIL[ce2, h, class])) = (@year > %baseyear) * d(log(ENER_BUIL[h, class, ce2])) + (@year =< %baseyear) * (log(1 + STEADYSTATE(2,1))) if EMS_HH_BUIL[ce2, h, class] <> 0, ce2 in %list_com_E_CO2, h in %list_household, class in %list_ener_class"""}
+    d(log(EMS_HH_BUIL[ce2, h, class])) = (@year > %baseyear) * d(log(ENER_BUIL[h, class, ce2])) + (@year =< %baseyear) * (log(1 + STEADYSTATE(2,1))) if EMS_HH_BUIL[ce2, h, class] <> 0 where ce2 in %list_com_E_CO2, h in %list_household, class in %list_ener_class"""}
 
 class TestFileCompiler:
     def setup(self):
