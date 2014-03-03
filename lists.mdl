@@ -23,3 +23,28 @@
 
 %list_household := H01 # H02 H03 H04 H05 #[h]
 %list_ener_class := cA cB cC cD cE cF cG #[ecl]
+
+
+# Default iterators
+s in %list_sec
+se in %list_sec_E
+
+c in %list_com
+cm in %list_com_MAT
+ce in %list_com_E
+ce2 in %list_com_E_CO2
+
+trsp in %list_trsp
+
+co in %list_com_oth
+
+coh in %list_coh
+age in %list_age
+sex in %list_sex
+
+h in %list_household
+ecl in %list_ener_class
+
+O in D M
+
+%baseyear := 2006

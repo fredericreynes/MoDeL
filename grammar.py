@@ -71,7 +71,7 @@ options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').ast('string')
 formula << (Optional(options, default = ASTNone) +
             (equation | expression) +
             Optional(condition, default = ASTNone) +
-            Optional(Suppress('where') + delimitedList(iter ^ variableName), default = ASTNone)).ast('formula')
+            Optional(Suppress(Keyword('where') | Keyword('on')) + delimitedList(iter ^ variableName), default = ASTNone)).ast('formula')
 
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
 
