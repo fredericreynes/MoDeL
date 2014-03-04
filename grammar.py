@@ -35,7 +35,7 @@ index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 array = Adjacent(identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
-operand = array | identifier | loopCounter | identifierTime | real | integer
+operand = array | identifierTime | identifier | loopCounter | real | integer
 
 unaryOperator = oneOf('+ -').ast('operator')
 

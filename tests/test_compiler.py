@@ -91,6 +91,8 @@ class TestParser(object):
         self._expected(res, "expression", 3, "literal", "expression", "literal")
         res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
         self._expected(res, "expression", 4, "operator", "function", "operator", "function")
+        # res = grammar.expression.parseString("-ES_KLEM(-1)")[0]
+        # self._expected(res, "expression", 2, "identifierTime")
 
     def test_parses_equation(self):
         res = grammar.equation.parseString("energy|O|[com] + _test|X||M|[sec] = log(B[j])")[0]
