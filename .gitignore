@@ -1,4 +1,5 @@
 env/*
+env-win32/*
 *.pyc
 .DS_Store
 dist/*
