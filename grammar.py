@@ -24,16 +24,18 @@ loopCounter = Word('$', varNameChars).ast('loopCounter')
 
 placeholder = Adjacent(Suppress('|') + (variableName | localName) + Suppress('|')).ast('placeholder')
 
+timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
+
 identifier = Adjacent( (variableName | localName | placeholder) + ZeroOrMore(variableName | localName | placeholder) ).ast('identifier')
+
+identifierTime = Adjacent( identifier + timeOffset ).ast('identifierTime')
 
 expression = Forward()
 index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
-timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
-
 array = Adjacent(identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
-operand = array | identifier | loopCounter | real | integer
+operand = array | identifier | loopCounter | identifierTime | real | integer
 
 unaryOperator = oneOf('+ -').ast('operator')
 

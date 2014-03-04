@@ -52,6 +52,10 @@ class TestParser(object):
         res = grammar.identifier.parseString("testVar")[0]
         self._expected(res, "identifier", 1, "variableName")
 
+    def test_parses_identifierTime(self):
+        res = grammar.identifierTime.parseString("test|X|_energy|O|(-1)")[0]
+        self._expected(res, "identifierTime", 2, "identifier", "timeOffset")
+
     def test_parses_timeOffset(self):
         res = grammar.timeOffset.parseString("(-1)")[0]
         self._expected(res, "timeOffset", 1, "integer")
@@ -228,6 +232,11 @@ class TestGenerator(object):
         ast = grammar.identifier.parseString("test|V|_energy|O|")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}, as_value = True))
         assert res == "PtestQ_energyM * testQ_energyM"
+
+    def test_generates_identifierTime(self):
+        ast = grammar.identifierTime.parseString("test|V|_energy|O|(-1)")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}))
+        assert res == "testQ_energyM(-1)"
 
     def test_generates_array(self):
         ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]

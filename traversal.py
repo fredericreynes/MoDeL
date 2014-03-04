@@ -315,7 +315,7 @@ def generate(ast, heap = {}):
             ret += generate(ast.children[2])[0]
         generated = value_form(ret, ast.as_value)
 
-    elif ast.nodetype == "identifier":
+    elif ast.nodetype in ["identifier", "identifierTime"]:
         generated = value_form(''.join(generate(c)[0] for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
