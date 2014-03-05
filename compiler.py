@@ -15,7 +15,7 @@ class MoDeLFile:
         # Load file
         self.program = self.read_file(filename, master_file = True)
         # Include external files
-        self.program = self.include_external(self.program)
+        self.program = self.include_external(os.path.dirname(os.path.abspath(filename)), self.program)
 
     def load_calibration(self):
         # Load values of all variables
@@ -33,13 +33,20 @@ class MoDeLFile:
         # Check for self-inclusion
         if os.path.basename(filename) == os.path.basename(self.filename) and not master_file:
             raise Error("A file cannot include itself")
+        # Update the current root for future possible includes
         with open(filename, "r") as f:
             return lineparser.parse_lines(f.readlines())
 
-    def include_external(self, program):
-        return cat([self.include_external(self.read_file(l[8:].strip())) if l[0:7] == "include"
-                    else [l]
-                    for l in program])
+    def include_external(self, abs_path, program):
+        ret = []
+        for l in program:
+            if l[0:7] == "include":
+                filename = os.path.join(abs_path, l[8:].strip())
+                next_abs_path = os.path.dirname(filename)
+                ret.append(self.include_external(next_abs_path, self.read_file(filename)))
+            else:
+                ret.append([l])
+        return cat(ret)
 
     def compile_line(self, line, heap, is_debug):
         ast = grammar.instruction.parseString(line)[0]
