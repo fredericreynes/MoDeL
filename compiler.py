@@ -1,11 +1,14 @@
 import os, sys, csv, logging
 
 from funcy import *
+from collections import namedtuple
 
 import pyparsing
 import lineparser
 import grammar
 import traversal
+
+ProgramLine = namedtuple('ProgramLine', ['line', 'is_series'])
 
 class MoDeLFile:
     def __init__(self, filename):
@@ -16,6 +19,9 @@ class MoDeLFile:
         self.program = self.read_file(filename, master_file = True)
         # Include external files
         self.program = self.include_external(os.path.dirname(os.path.abspath(filename)), self.program)
+
+    def replace_assignments(self):
+        self.program = [l.replace('==', '=') for l in self.program]
 
     def load_calibration(self):
         # Load values of all variables
@@ -35,13 +41,13 @@ class MoDeLFile:
             raise Error("A file cannot include itself")
         # Update the current root for future possible includes
         with open(filename, "r") as f:
-            return lineparser.parse_lines(f.readlines())
+            return [ProgramLine(l, False) for l in lineparser.parse_lines(f.readlines())]
 
     def include_external(self, abs_path, program):
         ret = []
         for l in program:
-            if l[0:7] == "include":
-                filename = os.path.join(abs_path, l[8:].strip())
+            if l.line[0:7] == "include":
+                filename = os.path.join(abs_path, l.line[8:].strip())
                 next_abs_path = os.path.dirname(filename)
                 ret.append(self.include_external(next_abs_path, self.read_file(filename)))
             else:
@@ -57,20 +63,27 @@ class MoDeLFile:
 
     def compile_program(self, is_debug = False):
         compiled = []
-        for line in self.program:
-            compiled_line, self.heap = self.compile_line(line, self.heap, is_debug)
+        for lp in self.program:
+            compiled_line, self.heap = self.compile_line(lp.line, self.heap, is_debug)
             compiled.append(compiled_line)
         return '\n'.join([l for l in compiled if len(l) > 0])
 
 
 if __name__ == "__main__":
-    is_debug = len(sys.argv) > 1
+    # Option parsing
+    is_debug = len(sys.argv) > 1 and sys.argv[1] == "debug"
+    compile_as_series = len(sys.argv) > 1 and sys.asrgv[1] == "series"
+
     if is_debug:
         logging.basicConfig(level=logging.DEBUG)
 
     try:
         # The code to be compiled is passed in file in.txt
         model = MoDeLFile("in.txt")
+        # If compiled as series, replace '==' with '='
+        # and compile normally
+        if compile_as_series:
+            model.replace_assignments()
         # Compile and generate the output
         output = model.compile_program(is_debug)
     except pyparsing.ParseException as e:
