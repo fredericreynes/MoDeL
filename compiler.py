@@ -20,9 +20,6 @@ class MoDeLFile:
         # Include external files
         self.program = self.include_external(os.path.dirname(os.path.abspath(filename)), self.program)
 
-    def replace_assignments(self):
-        self.program = [l.replace('==', '=') for l in self.program]
-
     def load_calibration(self):
         # Load values of all variables
         with open('_tmp_all_vars.csv', 'rb') as csvfile:
@@ -31,7 +28,7 @@ class MoDeLFile:
                         [float(e) if e != 'NA' else
                          None for e in rows[2]]))
 
-    def read_file(self, filename, master_file = False):
+    def read_file(self, filename, master_file = False, is_series = False):
         # If the filename has no extension,
         # appends the MoDeL extension to it
         if os.path.splitext(filename)[-1] == '':
@@ -41,7 +38,8 @@ class MoDeLFile:
             raise Error("A file cannot include itself")
         # Update the current root for future possible includes
         with open(filename, "r") as f:
-            return [ProgramLine(l, False) for l in lineparser.parse_lines(f.readlines())]
+            return [ProgramLine(l.replace(':=', '=') if is_series else l,
+                                is_series) for l in lineparser.parse_lines(f.readlines())]
 
     def include_external(self, abs_path, program):
         ret = []
@@ -50,6 +48,10 @@ class MoDeLFile:
                 filename = os.path.join(abs_path, l.line[8:].strip())
                 next_abs_path = os.path.dirname(filename)
                 ret.append(self.include_external(next_abs_path, self.read_file(filename)))
+            elif l.line[0:6] == "series":
+                filename = os.path.join(abs_path, l.line[7:].strip())
+                next_abs_path = os.path.dirname(filename)
+                ret.append(self.include_external(next_abs_path, self.read_file(filename, is_series = True)))
             else:
                 ret.append([l])
         return cat(ret)
@@ -65,14 +67,15 @@ class MoDeLFile:
         compiled = []
         for lp in self.program:
             compiled_line, self.heap = self.compile_line(lp.line, self.heap, is_debug)
-            compiled.append(compiled_line)
+            if lp.is_series and len(compiled_line) > 0:
+                compiled.append('\n'.join("series " + l for l in compiled_line.split('\n')))
+            else:
+                compiled.append(compiled_line)
         return '\n'.join([l for l in compiled if len(l) > 0])
 
 
 if __name__ == "__main__":
-    # Option parsing
     is_debug = len(sys.argv) > 1 and sys.argv[1] == "debug"
-    compile_as_series = len(sys.argv) > 1 and sys.asrgv[1] == "series"
 
     if is_debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -80,10 +83,6 @@ if __name__ == "__main__":
     try:
         # The code to be compiled is passed in file in.txt
         model = MoDeLFile("in.txt")
-        # If compiled as series, replace '==' with '='
-        # and compile normally
-        if compile_as_series:
-            model.replace_assignments()
         # Compile and generate the output
         output = model.compile_program(is_debug)
     except pyparsing.ParseException as e:

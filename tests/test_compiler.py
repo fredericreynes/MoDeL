@@ -480,6 +480,7 @@ test_files = {
 
     'lists.mdl': r"""# Files containing the lists
     %sectors := 04 05 06""",
+
     'in3.mdl': r"""
     include lists
 
@@ -496,6 +497,18 @@ test_files = {
     s in %sectors
 
     Q[s] = Test[$s] + 2 * $s
+    """,
+
+    'test_series.mdl': r"""
+    include lists
+
+    s in %sectors
+
+    Q[s] := Test[$s] + 2 * $s
+    """,
+
+    'in6.txt': r"""
+    series test_series
     """,
 
     'real.txt': r"""#---CO2 household emissions from housing use---
@@ -567,6 +580,16 @@ class TestFileCompiler:
                     "Q_06 = Test_3 + 2 * 3")
         # The code to be compiled is passed in file in.txt
         model = compiler.MoDeLFile("in5.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+        assert output == expected
+
+    def test_compiles_series_file(self):
+        expected = ("series Q_04 = Test_1 + 2 * 1\n"
+                    "series Q_05 = Test_2 + 2 * 2\n"
+                    "series Q_06 = Test_3 + 2 * 3")
+        # The code to be compiled is passed in file in.txt
+        model = compiler.MoDeLFile("in6.txt")
         # Compile and generate the output
         output = model.compile_program()
         assert output == expected
