@@ -93,7 +93,7 @@ if __name__ == "__main__":
         output = "Error\r\n" + repr(e)
 
     # Writes the output, compiled code or error message to file out.txt
-    with open("out.txt", 'w') as f:
+    with open("out.txt.prg", 'w') as f:
         f.write(output)
 
     # In debug mode, also write the output directly to the console
