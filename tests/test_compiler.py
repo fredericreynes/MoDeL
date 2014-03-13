@@ -110,6 +110,9 @@ class TestParser(object):
         res = grammar.lst.parseString("01 02 03 04 05 06 07")[0]
         self._expected(res, "list", 2, "listBase", traversal.ASTNone)
         assert res.children[0].children[3].immediate == "04"
+        res = grammar.lst.parseString("Q_Mtep Q_Mtep_ES")[0]
+        self._expected(res, "list", 2, "listBase", traversal.ASTNone)
+        assert res.children[0].children[1].immediate == "Q_Mtep_ES"
         res = grammar.lst.parseString("01 02 03 04 05 06 07 \ 04 06")[0]
         self._expected(res, "list", 2, "listBase", "listBase")
         assert res.children[0].children[3].immediate == "04"
@@ -120,6 +123,7 @@ class TestParser(object):
         self._expected(res, "iterator", 2, "group", "group")
         res = grammar.iter.parseString("(c, s) in (01 02 03, 04 05 06)")[0]
         self._expected(res, "iterator", 2, "group", "group")
+
     def test_parses_formula(self):
         res = grammar.formula.parseString("|V|[com] = |V|D[com] + |V|M[com] where V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
         self._expected(res, "formula", 5, "none", "equation", "none", "iterator", "iterator")

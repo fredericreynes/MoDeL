@@ -60,7 +60,7 @@ equation = (expression + Suppress('=') + expression).ast('equation')
 
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
-lstBase  = OneOrMore(Word(alphanums).ast('string')).ast('listBase')
+lstBase  = OneOrMore(Word(alphanums + '_').ast('string')).ast('listBase')
 lst = ((lstBase | localName) + Optional(Suppress('\\') + (lstBase | localName), default = ASTNone)).ast('list')
 
 def grouped(elem):
