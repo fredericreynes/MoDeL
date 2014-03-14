@@ -58,6 +58,8 @@ expression = expression.ast('expression')
 
 equation = (expression + Suppress('=') + expression).ast('equation')
 
+seriesDefinition = (expression + Suppress(':=') + expression).ast('equation')
+
 condition = (Suppress(Keyword('if')) + expression).ast('condition')
 
 lstBase  = OneOrMore(Word(alphanums + '_').ast('string')).ast('listBase')
@@ -70,14 +72,20 @@ iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst)).ast('ite
 
 options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').ast('string')
 
-formula << (Optional(options, default = ASTNone) +
-            (equation | expression) +
+def formulaPattern(inner):
+    return (Optional(options, default = ASTNone) +
+            inner +
             Optional(condition, default = ASTNone) +
-            Optional(Suppress(Keyword('where') | Keyword('on')) + delimitedList(iter ^ variableName), default = ASTNone)).ast('formula')
+            Optional(Suppress(Keyword('where') | Keyword('on')) + delimitedList(iter ^ variableName), default = ASTNone))
+
+
+formula << formulaPattern(equation | expression).ast('formula')
 
 assignment = (grouped(localName) + Suppress(':=') + grouped(lst | localName)).ast('assignment')
 
-instruction = (iter | assignment | formula).ast('instruction')
+seriesFormula = formulaPattern(seriesDefinition).ast('seriesFormula')
+
+instruction = (iter | assignment | seriesFormula | formula).ast('instruction')
 
 # ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
 # s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled

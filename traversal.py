@@ -106,7 +106,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         else:
             ast.compiled = ast.children[0]
 
-    elif ast.nodetype == "formula":
+    elif ast.nodetype in ["formula", "seriesFormula"]:
         # Get all the variable names used in the equation (as strings)
         variableNames = set(variableNames_not_in_iterators(ast))
 
@@ -335,6 +335,18 @@ def generate(ast, heap = {}):
             generated = [eq for eq, cond in zip(equations, conditions) if eval(cond, heap)]
         else:
             generated = equations
+
+    elif ast.nodetype == "seriesFormula":
+        conditions = [generate(cond, heap)[0] for cond in ast.compiled['conditions']]
+        equations = [generate(eq, heap)[0] for eq in ast.compiled['equations']]
+        if len(conditions) > 0:
+            # !!! HORRIBLE HACK: we suppose that all conditions are of the form
+            # 'Series > 0' or 'Series <> 0'
+            # In these cases, they are transformed into '@elem(Series)  > 0' or '@elem(Series) <> 0'
+            generated = ["if @elem({0}, %baseyear) {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq)
+                         for eq, cond in zip(equations, conditions)]
+        else:
+            generated = ["series {0}".format(eq) for eq in equations]
 
     elif ast.nodetype == "function":
         generated_args = [generate(a, heap)[0] for a in ast.compiled['arguments']]

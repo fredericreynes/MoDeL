@@ -135,6 +135,10 @@ class TestParser(object):
         self._expected(res, "formula", 4, "none", "equation", "none", "iterator")
         self._expected(res.children[1].children[1], 'expression', 1, "function")
 
+    def test_parses_formula(self):
+        res = grammar.seriesFormula.parseString("|V|[com] := |V|D[com] + |V|M[com] where V in Q CH G I DS, com in 01 02 03 04 05 06 07 08 09")[0]
+        self._expected(res, "seriesFormula", 5, "none", "equation", "none", "iterator", "iterator")
+
     def test_parses_assignment(self):
         res = grammar.assignment.parseString("%test := 1 2 3")[0]
         self._expected(res, "assignment", 2, "group", "group")
@@ -146,6 +150,8 @@ class TestParser(object):
     def test_parses_instruction(self):
         res = grammar.instruction.parseString("Q[s] = sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03), s in 10 11 12")[0]
         self._expected(res, "instruction", 1, "formula")
+        res = grammar.instruction.parseString("Q[s] := sum(Q[c, s] if Q[c, s] <> 0 where c in 01 02 03), s in 10 11 12")[0]
+        self._expected(res, "instruction", 1, "seriesFormula")
         res = grammar.instruction.parseString("%test := 1 2 3")[0]
         self._expected(res, "instruction", 1, "assignment")
         res = grammar.instruction.parseString("s in 1 2 3")[0]
@@ -414,6 +420,18 @@ class TestGenerator(object):
         ast = grammar.formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] where s)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
         assert '\n'.join(res) == expected
+
+    def test_generates_seriesFormula(self):
+        expected = ("if @elem(CHD_01, %baseyear)  > 0 then\n"
+                    "  series Q_01 = QD_01 + QM_01\n"
+                    "endif\n"
+                    "if @elem(CHD_02, %baseyear)  > 0 then\n"
+                    "  series Q_02 = QD_02 + QM_02\n"
+                    "endif")
+        ast = grammar.seriesFormula.parseString("Q[com] := QD[com] + QM[com] if CHD[com] > 0 where com in 01 02")[0]
+        res, _ = traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})
+        assert '\n'.join(res) == expected
+
 
     def test_generates_assignment(self):
         ast = grammar.assignment.parseString("(%test, %pouet) := (1 2 3, 15 12 3)")[0]
