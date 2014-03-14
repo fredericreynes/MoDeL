@@ -320,7 +320,7 @@ def generate(ast, heap = {}):
 
     elif ast.nodetype == "condition":
         # All variables in the heap should be uppercase
-        generated = eval(generate(ast.compiled[0])[0].upper(), heap)
+        generated = generate(ast.compiled[0])[0].upper()
 
     elif ast.nodetype == "expression":
         generated = ' '.join(generate(c, heap)[0] for c in ast.compiled)
@@ -332,7 +332,7 @@ def generate(ast, heap = {}):
         conditions = [generate(cond, heap)[0] for cond in ast.compiled['conditions']]
         equations = [generate(eq, heap)[0] for eq in ast.compiled['equations']]
         if len(conditions) > 0:
-            generated = [eq for eq, cond in zip(equations, conditions) if cond]
+            generated = [eq for eq, cond in zip(equations, conditions) if eval(cond, heap)]
         else:
             generated = equations
 

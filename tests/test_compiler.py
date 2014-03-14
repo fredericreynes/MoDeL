@@ -321,10 +321,10 @@ class TestGenerator(object):
     def test_generates_condition(self):
         ast= grammar.condition.parseString("if 2 * Q[com, sec] + 4 * X[com, sec] > 0")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}), {'Q_24_2403': 1, 'X_24_2403': 10})
-        assert res == True
+        assert res == "2 * Q_24_2403 + 4 * X_24_2403 > 0"
         ast = grammar.condition.parseString("if 2 * Q[com, sec] - X[com, sec] ^ 2 < 0")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}), {'Q_24_2403': 1, 'X_24_2403': 10})
-        assert res == True
+        assert res == "2 * Q_24_2403 - X_24_2403 ^ 2 < 0"
 
     def test_generates_formula(self):
         expected = ("Q_01 = QD_01 + QM_01\n"
