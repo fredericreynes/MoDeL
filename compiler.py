@@ -8,7 +8,7 @@ import lineparser
 import grammar
 import traversal
 
-ProgramLine = namedtuple('ProgramLine', ['line', 'is_series'])
+#ProgramLine = namedtuple('ProgramLine', ['line', 'is_series'])
 
 class MoDeLFile:
     def __init__(self, filename):
@@ -28,7 +28,7 @@ class MoDeLFile:
                         [float(e) if e != 'NA' else
                          None for e in rows[2]]))
 
-    def read_file(self, filename, master_file = False, is_series = False):
+    def read_file(self, filename, master_file = False):
         # If the filename has no extension,
         # appends the MoDeL extension to it
         if os.path.splitext(filename)[-1] == '':
@@ -38,20 +38,15 @@ class MoDeLFile:
             raise Error("A file cannot include itself")
         # Update the current root for future possible includes
         with open(filename, "r") as f:
-            return [ProgramLine(l.replace(':=', '=') if is_series else l,
-                                is_series) for l in lineparser.parse_lines(f.readlines())]
+            return lineparser.parse_lines(f.readlines())
 
     def include_external(self, abs_path, program):
         ret = []
         for l in program:
-            if l.line[0:7] == "include":
-                filename = os.path.join(abs_path, l.line[8:].strip())
+            if l[0:7] == "include":
+                filename = os.path.join(abs_path, l[8:].strip())
                 next_abs_path = os.path.dirname(filename)
                 ret.append(self.include_external(next_abs_path, self.read_file(filename)))
-            elif l.line[0:6] == "series":
-                filename = os.path.join(abs_path, l.line[7:].strip())
-                next_abs_path = os.path.dirname(filename)
-                ret.append(self.include_external(next_abs_path, self.read_file(filename, is_series = True)))
             else:
                 ret.append([l])
         return cat(ret)
@@ -65,12 +60,9 @@ class MoDeLFile:
 
     def compile_program(self, is_debug = False):
         compiled = []
-        for lp in self.program:
-            compiled_line, self.heap = self.compile_line(lp.line, self.heap, is_debug)
-            if lp.is_series and len(compiled_line) > 0:
-                compiled.append('\n'.join("series " + l for l in compiled_line.split('\n')))
-            else:
-                compiled.append(compiled_line)
+        for l in self.program:
+            compiled_line, self.heap = self.compile_line(l, self.heap, is_debug)
+            compiled.append(compiled_line)
         return '\n'.join([l for l in compiled if len(l) > 0])
 
 
