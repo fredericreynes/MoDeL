@@ -343,7 +343,7 @@ def generate(ast, heap = {}):
             # !!! HORRIBLE HACK: we suppose that all conditions are of the form
             # 'Series > 0' or 'Series <> 0'
             # In these cases, they are transformed into '@elem(Series)  > 0' or '@elem(Series) <> 0'
-            generated = ["if @elem({0}, %baseyear) {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq)
+            generated = ["if @elem({0}, \"{3}\") {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq, heap['%baseyear'])
                          for eq, cond in zip(equations, conditions)]
         else:
             generated = ["series {0}".format(eq) for eq in equations]

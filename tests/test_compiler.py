@@ -422,14 +422,14 @@ class TestGenerator(object):
         assert '\n'.join(res) == expected
 
     def test_generates_seriesFormula(self):
-        expected = ("if @elem(CHD_01, %baseyear)  > 0 then\n"
+        expected = ("if @elem(CHD_01, \"2006\")  > 0 then\n"
                     "  series Q_01 = QD_01 + QM_01\n"
                     "endif\n"
-                    "if @elem(CHD_02, %baseyear)  > 0 then\n"
+                    "if @elem(CHD_02, \"2006\")  > 0 then\n"
                     "  series Q_02 = QD_02 + QM_02\n"
                     "endif")
         ast = grammar.seriesFormula.parseString("Q[com] := QD[com] + QM[com] if CHD[com] > 0 where com in 01 02")[0]
-        res, _ = traversal.generate(traversal.compile_ast(ast), {"CHD_01": 0, "CHD_02": 15})
+        res, _ = traversal.generate(traversal.compile_ast(ast), {"%baseyear": 2006, "CHD_01": 0, "CHD_02": 15})
         assert '\n'.join(res) == expected
 
 
@@ -530,7 +530,7 @@ test_files = {
     """,
 
     'in6.txt': r"""
-    series test_series
+    include test_series
     """,
 
     'real.txt': r"""#---CO2 household emissions from housing use---
