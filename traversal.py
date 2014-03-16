@@ -7,6 +7,7 @@ class AST:
         self.nodetype = nodetype
         self.children = children
         self.compiled = None
+        self.generated = None
         self.as_value = False
 
     def __getitem__(self, i):
@@ -293,79 +294,89 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
     return ast
 
+
+def generated_variables(ast):
+    if ast.nodetype == "variable":
+        return [ast.generated]
+    elif ast.is_immediate:
+        return []
+    else
+        return cat([generated_variables(c) for c in ast.children])
+
 def value_form(str, flag):
     if flag:
         return 'P' + str + ' * ' + str
     else:
         return str
 
+
 def generate(ast, heap = {}):
     if ast.is_immediate or ast.nodetype in ["loopCounter", "localName"]:
         ret = str(ast.compiled)
         if ast.nodetype == "variableName":
-            generated = value_form(ret, ast.as_value)
+            ast.generated = value_form(ret, ast.as_value)
         else:
-            generated = ret
+            ast.generated = ret
 
     elif ast.nodetype == "array":
-        ret = generate(ast.children[0])[0]
+        ret = generate(ast.children[0])[0].generated
         if not ast.children[1].is_none:
-            ret += '_' + generate(ast.children[1])[0]
+            ret += '_' + generate(ast.children[1])[0].generated
         if not ast.children[2].is_none:
-            ret += generate(ast.children[2])[0]
-        generated = value_form(ret, ast.as_value)
+            ret += generate(ast.children[2])[0].generated
+        ast.generated = value_form(ret, ast.as_value)
 
     elif ast.nodetype in ["identifier", "identifierTime"]:
-        generated = value_form(''.join(generate(c)[0] for c in ast.compiled), ast.as_value)
+        ast.generated = value_form(''.join(generate(c)[0].generated for c in ast.compiled), ast.as_value)
 
     elif ast.nodetype == "condition":
         # All variables in the heap should be uppercase
-        generated = generate(ast.compiled[0])[0].upper()
+        ast.generated = generate(ast.compiled[0])[0].generated.upper()
 
     elif ast.nodetype == "expression":
-        generated = ' '.join(generate(c, heap)[0] for c in ast.compiled)
+        ast.generated = ' '.join(generate(c, heap)[0].generated for c in ast.compiled)
 
     elif ast.nodetype == "equation":
-        generated = generate(ast.children[0], heap)[0] + ' = ' + generate(ast.children[1], heap)[0]
+        ast.generated = generate(ast.children[0], heap)[0].generated + ' = ' + generate(ast.children[1], heap)[0].generated
 
     elif ast.nodetype == "formula":
-        conditions = [generate(cond, heap)[0] for cond in ast.compiled['conditions']]
-        equations = [generate(eq, heap)[0] for eq in ast.compiled['equations']]
+        conditions = [generate(cond, heap)[0].generated for cond in ast.compiled['conditions']]
+        equations = [generate(eq, heap)[0].generated for eq in ast.compiled['equations']]
         if len(conditions) > 0:
-            generated = [eq for eq, cond in zip(equations, conditions) if eval(cond, heap)]
+            ast.generated = [eq for eq, cond in zip(equations, conditions) if eval(cond, heap)]
         else:
-            generated = equations
+            ast.generated = equations
 
     elif ast.nodetype == "seriesFormula":
-        conditions = [generate(cond, heap)[0] for cond in ast.compiled['conditions']]
-        equations = [generate(eq, heap)[0] for eq in ast.compiled['equations']]
+        conditions = [generate(cond, heap)[0].generated for cond in ast.compiled['conditions']]
+        equations = [generate(eq, heap)[0].generated for eq in ast.compiled['equations']]
         if len(conditions) > 0:
             # !!! HORRIBLE HACK: we suppose that all conditions are of the form
             # 'Series > 0' or 'Series <> 0'
             # In these cases, they are transformed into '@elem(Series)  > 0' or '@elem(Series) <> 0'
-            generated = ["if @elem({0}, \"{3}\") {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq, heap['%baseyear'])
+            ast.generated = ["if @elem({0}, \"{3}\") {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq, heap['%baseyear'])
                          for eq, cond in zip(equations, conditions)]
         else:
-            generated = ["series {0}".format(eq) for eq in equations]
+            ast.generated = ["series {0}".format(eq) for eq in equations]
 
     elif ast.nodetype == "function":
-        generated_args = [generate(a, heap)[0] for a in ast.compiled['arguments']]
+        generated_args = [generate(a, heap)[0].generated for a in ast.compiled['arguments']]
         # Special case if there is only one argument, parsed as a formula but behaving like an expression
         if len(generated_args) == 1 and isinstance(generated_args[0], list):
             generated_args = generated_args[0]
-        generated = ast.compiled['generator'](generated_args)
+        ast.generated = ast.compiled['generator'](generated_args)
 
     elif ast.nodetype == "placeholder":
-        generated = ''.join(generate(c)[0] for c in ast.compiled)
+        ast.generated = ''.join(generate(c)[0].generated for c in ast.compiled)
 
     elif ast.nodetype == "index":
-        generated = '_'.join(generate(c, heap)[0] for c in ast.compiled)
+        ast.generated = '_'.join(generate(c, heap)[0].generated for c in ast.compiled)
 
     elif ast.nodetype == "timeOffset":
-        generated = '(' + generate(ast.children[0])[0] + ')'
+        ast.generated = '(' + generate(ast.children[0])[0].generated + ')'
 
     elif ast.nodetype == "assignment":
-        generated = ""
+        ast.generated = ""
         for (localName, value) in zip(ast.children[0].compiled, ast.children[1].compiled):
             if len(value.compiled['list']) == 1:
                 heap[localName.compiled] = value.compiled['list'][0]
@@ -380,11 +391,12 @@ def generate(ast, heap = {}):
             if len(child.compiled["names"]) > 2:
                 raise SyntaxError("Parallel iterators are not allowed in global iterator definitions")
             heap[child.compiled["names"][0]] = child.compiled
-            generated = ""
+            ast.generated = ""
         else:
-            generated, heap = generate(child, heap)
+            generated_instruction, heap = generate(child, heap)
+            ast.generated = generated_instruction.generated
 
     elif ast.is_none:
-        generated = ""
+        ast.generated = ""
 
-    return generated, heap
+    return ast, heap

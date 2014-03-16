@@ -55,8 +55,8 @@ class MoDeLFile:
         ast = grammar.instruction.parseString(line)[0]
         if is_debug:
             logging.debug(ast)
-        generated, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
-        return '\n'.join(generated), heap
+        generated_ast, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
+        return '\n'.join(generated_ast.generated), heap
 
     def compile_program(self, is_debug = False):
         compiled = []
