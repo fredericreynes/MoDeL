@@ -1,5 +1,6 @@
 from itertools import product, chain, tee
 from collections import Iterable
+from copy import deepcopy
 from funcy import *
 import code
 
@@ -52,6 +53,19 @@ class AST:
             return base + '(' + ', '.join([str(e) for e in self.children]) + ')'
 
 ASTNone = AST('none', [])
+
+def clone(obj):
+    if isinstance(obj, AST):
+        if obj.is_none:
+            cloned = ASTNone
+        else:
+            cloned = AST(obj.nodetype, [clone(c) for c in obj.children])
+            cloned.compiled = [clone(c) for c in obj.compiled] if not obj.compiled is None else None
+            cloned.generated = [clone(c) for c in obj.generated] if not obj.generated is None else None
+            cloned.as_value = obj.as_value
+    else:
+        cloned = obj
+    return cloned
 
 # From http://stackoverflow.com/questions/5286541/how-can-i-flatten-lists-without-splitting-strings
 def flatten(foo):
@@ -155,14 +169,14 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
         # Then compile conditions
         if not ast.children[2].is_none:
-            conditions = (compile_ast(ast.children[2],
+            conditions = (compile_ast(clone(ast.children[2]),
                                       bindings = locals,
                                       heap = heap,
                                       use_bindings = True,
                                       use_heap = True) for locals in all_bindings)
             # If price-value is set, should generate a second set of equations - but conditions should remain unchanged, thus we just repeat them
             if price_value:
-                conditions = chain(conditions, (compile_ast(ast.children[2],
+                conditions = chain(conditions, (compile_ast(clone(ast.children[2]),
                                                             bindings = locals,
                                                             heap = heap,
                                                             use_bindings = True,
@@ -171,7 +185,7 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             conditions = []
 
         # Finally compile the equation / expression for each binding
-        equations = (compile_ast(ast.children[1],
+        equations = (compile_ast(clone(ast.children[1]),
                                  bindings = locals,
                                  heap = heap,
                                  use_bindings = use_bindings,
@@ -179,15 +193,16 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
                                  as_value = as_value) for locals in all_bindings)
         # If price-value is set, should generate a second set of equations, in value form
         if price_value:
-            equations = chain(equations, (compile_ast(ast.children[1],
+            equations = chain(equations, (compile_ast(clone(ast.children[1]),
                                                       bindings = locals,
                                                       heap = heap,
                                                       use_bindings = use_bindings,
                                                       use_heap = True,
                                                       as_value = True) for locals in all_bindings))
 
-        ast.compiled = { 'conditions': conditions,
-                         'equations': equations }
+        print '\n', "Compiled a formula"
+        ast.compiled = { 'conditions': list(conditions),
+                         'equations': list(equations) }
 
     elif ast.nodetype == "function":
         name = compile_ast(ast.children[0]).compiled
@@ -297,11 +312,16 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
 
 def generated_variables(ast):
-    print '\n', ast
     if isinstance(ast, AST):
-        if ast.nodetype in ["function"]:
+        # Formula inside a function, all the terms must be combined
+        if ast.nodetype == "formula":
+            return cat([generated_variables(eq) for eq in ast.compiled["equations"]] +
+                       [generated_variables(cond) for cond in ast.compiled["conditions"]] )
+        # In a function, we only want the arguments
+        elif ast.nodetype in ["function"]:
             return generated_variables(ast.children[1])
-        if ast.nodetype in ["placeholder", "index"]:
+        # Placeholders and indices are internal to the compiler, and can be safely skipped
+        elif ast.nodetype in ["placeholder", "index"]:
             return []
         elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
             return [ast.generated]
@@ -313,6 +333,21 @@ def generated_variables(ast):
         return cat([generated_variables(c) for c in ast])
     else:
         return []
+
+
+def add_dependencies(ast, dependencies = {}):
+    # Can only be called on a top-level formula or seriesFormula node (ie not included inside a function)
+    if isinstance(ast, AST) and ast.nodetype in ["formula", "seriesFormula"] and ast.children[1].nodetype == "equation":
+        for eq in ast.compiled['equations']:
+            lvar = generated_variables(eq.children[0])
+            rvar = generated_variables(eq.children[1])
+            dependencies[lvar[0]] = cat([lvar[1:], rvar])
+    else:
+        if isinstance(ast, AST):
+            raise TypeError("Cannot call add_dependencies on a {0} node".format(ast.nodetype))
+        else:
+            raise TypeError("Must call add_dependencies on an AST node")
+    return dependencies
 
 def value_form(str, flag):
     if flag:
