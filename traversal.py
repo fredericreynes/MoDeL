@@ -1,4 +1,5 @@
 from itertools import product, chain, tee
+from collections import Iterable
 from funcy import *
 import code
 
@@ -296,11 +297,14 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
 
 def generated_variables(ast):
-    if ast.nodetype == "variable":
+    print ast
+    if isinstance(ast, AST) and ast.nodetype == "variable":
         return [ast.generated]
-    elif ast.is_immediate:
+    elif isinstance(ast, AST) and ast.is_immediate:
         return []
-    else
+    elif isinstance(ast, Iterable):
+        return cat([generated_variables(c) for c in ast])
+    else:
         return cat([generated_variables(c) for c in ast.children])
 
 def value_form(str, flag):
@@ -317,6 +321,9 @@ def generate(ast, heap = {}):
             ast.generated = value_form(ret, ast.as_value)
         else:
             ast.generated = ret
+
+    elif ast.nodetype == "variable":
+        ast.generated = generate(ast.children[0])[0].generated
 
     elif ast.nodetype == "array":
         ret = generate(ast.children[0])[0].generated
