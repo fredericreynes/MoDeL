@@ -297,15 +297,22 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
 
 
 def generated_variables(ast):
-    print ast
-    if isinstance(ast, AST) and ast.nodetype == "variable":
-        return [ast.generated]
-    elif isinstance(ast, AST) and ast.is_immediate:
-        return []
+    print '\n', ast
+    if isinstance(ast, AST):
+        if ast.nodetype in ["function"]:
+            return generated_variables(ast.children[1])
+        if ast.nodetype in ["placeholder", "index"]:
+            return []
+        elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
+            return [ast.generated]
+        elif ast.is_immediate:
+            return []
+        else:
+            return cat([generated_variables(c) for c in ast.children])
     elif isinstance(ast, Iterable):
         return cat([generated_variables(c) for c in ast])
     else:
-        return cat([generated_variables(c) for c in ast.children])
+        return []
 
 def value_form(str, flag):
     if flag:
@@ -371,6 +378,7 @@ def generate(ast, heap = {}):
         # Special case if there is only one argument, parsed as a formula but behaving like an expression
         if len(generated_args) == 1 and isinstance(generated_args[0], list):
             generated_args = generated_args[0]
+        ast.children[1].generated = generated_args
         ast.generated = ast.compiled['generator'](generated_args)
 
     elif ast.nodetype == "placeholder":

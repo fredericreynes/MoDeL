@@ -35,9 +35,7 @@ index = (Suppress('[') + delimitedList(expression) + Suppress(']')).ast('index')
 
 array = Adjacent(identifier + index + Optional(timeOffset, default = ASTNone)).ast('array')
 
-variable = (array | identifierTime | identifier).ast('variable')
-
-operand = variable | loopCounter | real | integer
+operand =  array | identifierTime | identifier | loopCounter | real | integer
 
 unaryOperator = oneOf('+ -').ast('operator')
 
@@ -89,9 +87,9 @@ seriesFormula = formulaPattern(seriesDefinition).ast('seriesFormula')
 
 instruction = (iter | assignment | seriesFormula | formula).ast('instruction')
 
-# ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
-# s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled
-# ast = formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] on s in 01 02 03)")[0]
-# ast = generate(compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
+ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
+s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled
+ast = formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] on s in 01 02 03)")[0]
+ast = generate(compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
 
-# print generated_variables(ast)
+print generated_variables(ast)

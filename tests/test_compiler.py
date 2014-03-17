@@ -84,7 +84,7 @@ class TestParser(object):
 
     def test_parses_expression(self):
         res = grammar.expression.parseString("D|O|[com, sec] + d(log(Q[com, sec])) - A / B")[0]
-        self._expected(res, "expression", 7, "variable", "operator", "function", "operator", "variable", "operator", "variable")
+        self._expected(res, "expression", 7, "array", "operator", "function", "operator", "identifier", "operator", "identifier")
         res = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         self._expected(res, "expression", 3, "literal", "expression", "literal")
         res = grammar.expression.parseString("( (CH[c]>=0) * CH[c] + (CH[c]=>0) * 1 )")[0]
