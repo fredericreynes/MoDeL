@@ -200,7 +200,6 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
                                                       use_heap = True,
                                                       as_value = True) for locals in all_bindings))
 
-        print '\n', "Compiled a formula"
         ast.compiled = { 'conditions': list(conditions),
                          'equations': list(equations) }
 
@@ -324,30 +323,36 @@ def generated_variables(ast):
         elif ast.nodetype in ["placeholder", "index"]:
             return []
         elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
-            return [ast.generated]
-        elif ast.is_immediate:
+            return [ast.generated] if ast.generated[0] <> '@' and not ast.generated.isdigit() else []
+        elif ast.is_immediate or ast.is_none or ast is None:
             return []
         else:
             return cat([generated_variables(c) for c in ast.children])
-    elif isinstance(ast, Iterable):
-        return cat([generated_variables(c) for c in ast])
     else:
         return []
 
 
-def add_dependencies(ast, dependencies = {}):
-    # Can only be called on a top-level formula or seriesFormula node (ie not included inside a function)
-    if isinstance(ast, AST) and ast.nodetype in ["formula", "seriesFormula"] and ast.children[1].nodetype == "equation":
-        for eq in ast.compiled['equations']:
-            lvar = generated_variables(eq.children[0])
-            rvar = generated_variables(eq.children[1])
-            dependencies[lvar[0]] = cat([lvar[1:], rvar])
+def dependencies(ast):
+    dep = {}
+    if isinstance(ast, AST):
+        if ast.nodetype == "instruction":
+            return dependencies(ast.children[0])
+        elif ast.nodetype in ["assignment", "iterator"]:
+            return []
+        # Can only be called on a top-level formula or seriesFormula node (ie not included inside a function)
+        elif ast.nodetype in ["formula", "seriesFormula"] and ast.children[1].nodetype == "equation":
+            for gen_eq, eq in zip(ast.generated, ast.compiled['equations']):
+                lvar = generated_variables(eq.children[0])
+                rvar = generated_variables(eq.children[1])
+                dep[lvar[0]] = {'equation': gen_eq, 'dependencies': cat([lvar[1:], rvar])}
+            return dep
+    elif ast == "":
+        return {}
     else:
         if isinstance(ast, AST):
-            raise TypeError("Cannot call add_dependencies on a {0} node".format(ast.nodetype))
+            raise TypeError("Cannot direcly compute dependencies of a {0} node".format(ast.nodetype))
         else:
-            raise TypeError("Must call add_dependencies on an AST node")
-    return dependencies
+            raise TypeError("Cannot compute dependencies of a {0}".format(ast.__class__.__name__))
 
 def value_form(str, flag):
     if flag:
@@ -398,13 +403,13 @@ def generate(ast, heap = {}):
 
     elif ast.nodetype == "seriesFormula":
         conditions = [generate(cond, heap)[0].generated for cond in ast.compiled['conditions']]
-        equations = [generate(eq, heap)[0].generated for eq in ast.compiled['equations']]
+        equations  = [generate(eq, heap)[0].generated for eq in ast.compiled['equations']]
         if len(conditions) > 0:
             # !!! HORRIBLE HACK: we suppose that all conditions are of the form
             # 'Series > 0' or 'Series <> 0'
             # In these cases, they are transformed into '@elem(Series)  > 0' or '@elem(Series) <> 0'
             ast.generated = ["if @elem({0}, \"{3}\") {1} then\n  series {2}\nendif".format(cond[:-4], cond[-4:], eq, heap['%baseyear'])
-                         for eq, cond in zip(equations, conditions)]
+                             for eq, cond in zip(equations, conditions)]
         else:
             ast.generated = ["series {0}".format(eq) for eq in equations]
 

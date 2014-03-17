@@ -3,6 +3,7 @@ import os, sys, csv, logging
 from funcy import *
 from collections import namedtuple
 
+import networkx as nx
 import pyparsing
 import lineparser
 import grammar
@@ -51,19 +52,29 @@ class MoDeLFile:
                 ret.append([l])
         return cat(ret)
 
+    def build_dependency_graph(self, program):
+        G = nx.DiGraph()
+        G.add_nodes_from(program.items())
+        variables = program.keys()
+        dependencies = [v['dependencies'] for v in program.values()]
+        # Compute all directed edges
+        edges = [ [start, d] if d in variables
+                  for start, deps in zip(variables, dependencies)
+                  for d in deps ]
+        G.add_edges_from(edges)
+
     def compile_line(self, line, heap, is_debug):
         ast = grammar.instruction.parseString(line)[0]
-        if is_debug:
-            logging.debug(ast)
         generated_ast, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
-        return '\n'.join(generated_ast.generated), heap
+        return generated_ast, heap
 
     def compile_program(self, is_debug = False):
-        compiled = []
+        program = {}
         for l in self.program:
-            compiled_line, self.heap = self.compile_line(l, self.heap, is_debug)
-            compiled.append(compiled_line)
-        return '\n'.join([l for l in compiled if len(l) > 0])
+            generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
+            program.update(traversal.dependencies(generated_ast))
+        graph = self.build_dependency_graph(program)
+        return '\n'.join([l['equation'] for l in program.values() if len(l['equation']) > 0])
 
 
 if __name__ == "__main__":

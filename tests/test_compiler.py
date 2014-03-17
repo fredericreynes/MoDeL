@@ -618,23 +618,23 @@ class TestFileCompiler:
 
     def test_compiles_file_real_case(self):
         expected = ("d(log(EMS_HH_BUIL_21_H01_cC)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cC_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_21_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_21_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_21_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_21_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cA)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cA_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cB)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cB_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cC)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cC_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_22_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cB)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cB_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cC)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cC_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
-        "d(log(EMS_HH_BUIL_24_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )")
+                    "d(log(EMS_HH_BUIL_21_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_21_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_21_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_21_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_21)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cA)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cA_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cB)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cB_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cC)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cC_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_22_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_22)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cC)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cC_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cB)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cB_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cF)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cF_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cE)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cE_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cD)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cD_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )\n"
+                    "d(log(EMS_HH_BUIL_24_H01_cG)) = ( @year > 2006 ) * d(log(ENER_BUIL_H01_cG_24)) + ( @year =< 2006 ) * ( log(1 + STEADYSTATE(2, 1)) )")
         # The code to be compiled is passed in file in.txt
         model = compiler.MoDeLFile("real.txt")
         # Compile and generate the output

@@ -87,14 +87,11 @@ seriesFormula = formulaPattern(seriesDefinition).ast('seriesFormula')
 
 instruction = (iter | assignment | seriesFormula | formula).ast('instruction')
 
-ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
-s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled
-ast = formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] on s in 01 02 03)")[0]
-# ast = formula.parseString("TCO_VAL_sec[s] = TCO_VAL[s] + Pouet)")[0]
-ast, _ = generate(compile_ast(ast, heap = {'s': s_iter, 'ce2': ce2_iter}))
-#print ast.generated
+# ce2_iter = compile_ast(iter.parseString("ce2 in 21 22 24")[0]).compiled
+# s_iter = compile_ast(iter.parseString("s in 01 02 03")[0]).compiled
+# #ast = formula.parseString("TCO_VAL_sec[ce2] = sum(TCO_VAL[ce2, s] on s in 01 02 03)")[0]
+# ast = formula.parseString("Q[c] = Test[$c] + 2 * $c where c in 04 05 06")[0]
+# ast, _ = generate(compile_ast(ast))
 
-# print ast
-dep = {}
-add_dependencies(ast, dep)
-print dep
+# dep = dependencies(ast)
+# print dep
