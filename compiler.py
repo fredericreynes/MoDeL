@@ -3,6 +3,7 @@ import os, sys, csv, logging
 from funcy import *
 from collections import namedtuple
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import pyparsing
 import lineparser
@@ -54,14 +55,15 @@ class MoDeLFile:
 
     def build_dependency_graph(self, program):
         G = nx.DiGraph()
-        G.add_nodes_from(program.items())
+        G.add_nodes_from([[k, {'equation': v['equation']}] for k, v in program.items()])
         variables = program.keys()
         dependencies = [v['dependencies'] for v in program.values()]
         # Compute all directed edges
-        edges = [ [start, d] if d in variables
+        edges = [ [start, d]
                   for start, deps in zip(variables, dependencies)
-                  for d in deps ]
+                  for d in deps if d in variables ]
         G.add_edges_from(edges)
+        return G
 
     def compile_line(self, line, heap, is_debug):
         ast = grammar.instruction.parseString(line)[0]
@@ -74,6 +76,7 @@ class MoDeLFile:
             generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
             program.update(traversal.dependencies(generated_ast))
         graph = self.build_dependency_graph(program)
+        nx.write_graphml(graph, 'dependency.graphml')
         return '\n'.join([l['equation'] for l in program.values() if len(l['equation']) > 0])
 
 
@@ -100,5 +103,5 @@ if __name__ == "__main__":
         f.write(output)
 
     # In debug mode, also write the output directly to the console
-    if is_debug:
-        logging.debug(output)
+    # if is_debug:
+    #     logging.debug(output)
