@@ -2,6 +2,7 @@ from itertools import product, chain, tee
 from collections import Iterable
 from copy import deepcopy
 from funcy import *
+import re
 import code
 
 class AST:
@@ -319,11 +320,15 @@ def generated_variables(ast):
         # In a function, we only want the arguments
         elif ast.nodetype in ["function"]:
             return generated_variables(ast.children[1])
+        elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
+            if ast.generated[0] <> '@' and not ast.generated.isdigit():
+                # We remove time offsets
+                return [re.sub(r"\(.+?\)", "", ast.generated)]
+            else:
+                return []
         # Placeholders and indices are internal to the compiler, and can be safely skipped
         elif ast.nodetype in ["placeholder", "index"]:
             return []
-        elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
-            return [ast.generated] if ast.generated[0] <> '@' and not ast.generated.isdigit() else []
         elif ast.is_immediate or ast.is_none or ast is None:
             return []
         else:
@@ -344,6 +349,11 @@ def dependencies(ast):
             for gen_eq, eq in zip(ast.generated, ast.compiled['equations']):
                 lvar = generated_variables(eq.children[0])
                 rvar = generated_variables(eq.children[1])
+                # Check for variable as value on the left-hand side
+                if '*' in lvar[0]:
+                    vars = lvar[0].split('*')
+                    lvar[0] = vars[0].strip()
+                    lvar.insert(1, vars[1].strip())
                 dep[lvar[0]] = {'equation': gen_eq, 'dependencies': cat([lvar[1:], rvar])}
             return dep
     elif ast == "":

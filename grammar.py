@@ -24,7 +24,7 @@ loopCounter = Word('$', varNameChars).ast('loopCounter')
 
 placeholder = Adjacent(Suppress('|') + (variableName | localName) + Suppress('|')).ast('placeholder')
 
-timeOffset = (Suppress('(') + (integer | variableName) + Suppress(')')).ast('timeOffset')
+timeOffset = (Suppress('{') + (integer | variableName) + Suppress('}')).ast('timeOffset')
 
 identifier = Adjacent( (variableName | localName | placeholder) + ZeroOrMore(variableName | localName | placeholder) ).ast('identifier')
 

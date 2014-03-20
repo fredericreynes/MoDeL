@@ -3,7 +3,6 @@ import os, sys, csv, logging
 from funcy import *
 from collections import namedtuple
 
-import matplotlib.pyplot as plt
 import networkx as nx
 import pyparsing
 import lineparser
@@ -58,10 +57,13 @@ class MoDeLFile:
         G.add_nodes_from([[k, {'equation': v['equation']}] for k, v in program.items()])
         variables = program.keys()
         dependencies = [v['dependencies'] for v in program.values()]
+        # Also add exogenous variables to the graph
+        exogenous_variables = set(cat(dependencies)) - set(variables)
+        G.add_nodes_from(exogenous_variables)
         # Compute all directed edges
         edges = [ [d, start]
                   for start, deps in zip(variables, dependencies)
-                  for d in deps if d in variables ]
+                  for d in deps ]
         G.add_edges_from(edges)
         return G
 
@@ -76,10 +78,15 @@ class MoDeLFile:
             generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
             program.update(traversal.dependencies(generated_ast))
         graph = self.build_dependency_graph(program)
-        sorted = nx.topological_sort(graph)
-        print sorted
+        sorted = graph.nodes() #nx.topological_sort(graph)
+        with open('keys.txt', 'w') as f:
+            for n in sorted:
+                f.write(n)
         nx.write_graphml(graph, 'dependency.graphml')
-        return '\n'.join([program[var]['equation'] for var in sorted if len(program[var]['equation']) > 0])
+        return '\n'.join([program[var]['equation']
+                          for var in sorted
+                          if var in program and len(program[var]['equation']) > 0])
+        #return '\n'.join([l['equation'] for l in program.values() if len(l['equation']) > 0])
 
 
 if __name__ == "__main__":

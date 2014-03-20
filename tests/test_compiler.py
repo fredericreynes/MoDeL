@@ -53,13 +53,13 @@ class TestParser(object):
         self._expected(res, "identifier", 1, "variableName")
 
     def test_parses_identifierTime(self):
-        res = grammar.identifierTime.parseString("test|X|_energy|O|(-1)")[0]
+        res = grammar.identifierTime.parseString("test|X|_energy|O|{-1}")[0]
         self._expected(res, "identifierTime", 2, "identifier", "timeOffset")
 
     def test_parses_timeOffset(self):
-        res = grammar.timeOffset.parseString("(-1)")[0]
+        res = grammar.timeOffset.parseString("{-1}")[0]
         self._expected(res, "timeOffset", 1, "integer")
-        res = grammar.timeOffset.parseString("(outOfTimeMan)")[0]
+        res = grammar.timeOffset.parseString("{outOfTimeMan}")[0]
         self._expected(res, "timeOffset", 1, "variableName")
 
     def test_parses_index(self):
@@ -69,7 +69,7 @@ class TestParser(object):
     def test_parses_array(self):
         res = grammar.array.parseString("|X|tes|M|_arrayName8[com, 5, sec]")[0]
         self._expected(res, "array", 3, "identifier", "index", traversal.ASTNone)
-        res = grammar.array.parseString("timeAry[5](-1)")[0]
+        res = grammar.array.parseString("timeAry[5]{-1}")[0]
         self._expected(res, "array", 3, "identifier", "index", "timeOffset")
 
     def test_parses_function(self):
@@ -91,7 +91,7 @@ class TestParser(object):
         self._expected(res, "expression", 3, "literal", "expression", "literal")
         res = grammar.expression.parseString("-ES_KLEM($s, 1) * d(log(CK[s]) - log(CL[s]))")[0]
         self._expected(res, "expression", 4, "operator", "function", "operator", "function")
-        # res = grammar.expression.parseString("-ES_KLEM(-1)")[0]
+        # res = grammar.expression.parseString("-ES_KLEM{-1}")[0]
         # self._expected(res, "expression", 2, "identifierTime")
 
     def test_parses_equation(self):
@@ -246,7 +246,7 @@ class TestGenerator(object):
         assert res.generated == "PtestQ_energyM * testQ_energyM"
 
     def test_generates_identifierTime(self):
-        ast = grammar.identifierTime.parseString("test|V|_energy|O|(-1)")[0]
+        ast = grammar.identifierTime.parseString("test|V|_energy|O|{-1}")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'V': 'Q', 'O': 'M'}))
         assert res.generated == "testQ_energyM(-1)"
 
@@ -254,7 +254,7 @@ class TestGenerator(object):
         ast = grammar.array.parseString("arrayName8[com, 5, sec]")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'com': '24', 'sec': '2403'}))
         assert res.generated == "arrayName8_24_5_2403"
-        ast = grammar.array.parseString("timeAry[5](-1)")[0]
+        ast = grammar.array.parseString("timeAry[5]{-1}")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast))
         assert res.generated == "timeAry_5(-1)"
         ast = grammar.array.parseString("test[$s]")[0]
@@ -271,7 +271,7 @@ class TestGenerator(object):
         ast = grammar.func.parseString("@elem(PK, %baseyear)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, heap = {'%baseyear': 2006}))
         assert res.generated == "@elem(PK, 2006)"
-        ast = grammar.func.parseString("@elem(PK[s](-1), %baseyear)")[0]
+        ast = grammar.func.parseString("@elem(PK[s]{-1}, %baseyear)")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': 13}, heap = {'%baseyear': 2006}))
         assert res.generated == "@elem(PK_13(-1), 2006)"
         ast = grammar.func.parseString("ES_KLEM($s, 1)")[0]
@@ -317,7 +317,7 @@ class TestGenerator(object):
         ast = grammar.expression.parseString("( (CH[c]>0) * CH[c] + (CH[c]<=0) * 1 )")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'c': '01'}))
         assert res.generated == "( ( CH_01 > 0 ) * CH_01 + ( CH_01 <= 0 ) * 1 )"
-        ast = grammar.expression.parseString("EBE[s] - @elem(PK[s](-1), %baseyear) * Tdec[s] * K[s](-1)")[0]
+        ast = grammar.expression.parseString("EBE[s] - @elem(PK[s]{-1}, %baseyear) * Tdec[s] * K[s]{-1}")[0]
         res, _ = traversal.generate(traversal.compile_ast(ast, {'s': '02'}, heap = {'%baseyear': 2006}))
         assert res.generated == "EBE_02 - @elem(PK_02(-1), 2006) * Tdec_02 * K_02(-1)"
         ast = grammar.expression.parseString("s")[0]
