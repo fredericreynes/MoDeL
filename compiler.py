@@ -59,7 +59,7 @@ class MoDeLFile:
         variables = program.keys()
         dependencies = [v['dependencies'] for v in program.values()]
         # Compute all directed edges
-        edges = [ [start, d]
+        edges = [ [d, start]
                   for start, deps in zip(variables, dependencies)
                   for d in deps if d in variables ]
         G.add_edges_from(edges)
@@ -76,8 +76,10 @@ class MoDeLFile:
             generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
             program.update(traversal.dependencies(generated_ast))
         graph = self.build_dependency_graph(program)
+        sorted = nx.topological_sort(graph)
+        print sorted
         nx.write_graphml(graph, 'dependency.graphml')
-        return '\n'.join([l['equation'] for l in program.values() if len(l['equation']) > 0])
+        return '\n'.join([program[var]['equation'] for var in sorted if len(program[var]['equation']) > 0])
 
 
 if __name__ == "__main__":
