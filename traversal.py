@@ -208,14 +208,18 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         name = compile_ast(ast.children[0]).compiled
 
         if name == "sum":
-            generator = lambda toks: "0 + " + ' + '.join(toks) if len(toks) > 0 else "0"
+            generator = lambda toks, heap: "0 + " + ' + '.join(toks) if len(toks) > 0 else "0"
+
         elif name == "value":
+            generator = lambda toks, heap: toks[0]
+            # We force all the arguments to be generated as values
             as_value = True
-            generator = lambda toks: toks[0]
+
         elif name == "if":
-            generator = lambda toks:
+            generator = lambda toks, heap: toks[1] if eval(toks[0], heap) else toks[2]
+
         else:
-            generator = lambda toks: ast.compiled['name'] + '(' + ', '.join(toks) + ')'
+            generator = lambda toks, heap: ast.compiled['name'] + '(' + ', '.join(toks) + ')'
 
         ast.compiled = { 'name': name,
                          'generator': generator,
