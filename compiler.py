@@ -54,16 +54,17 @@ class MoDeLFile:
 
     def build_dependency_graph(self, program):
         G = nx.DiGraph()
-        G.add_nodes_from([[k, {'equation': v['equation']}] for k, v in program.items()])
+        #G.add_nodes_from([[k, {'equation': v['equation']}] for k, v in program.items()])
         variables = program.keys()
         dependencies = [v['dependencies'] for v in program.values()]
         # Also add exogenous variables to the graph
-        exogenous_variables = set(cat(dependencies)) - set(variables)
-        G.add_nodes_from(exogenous_variables)
+        #exogenous_variables = set(cat(dependencies)) - set(variables)
+        #G.add_nodes_from(exogenous_variables)
         # Compute all directed edges
         edges = [ [d, start]
                   for start, deps in zip(variables, dependencies)
                   for d in deps ]
+        #G.add_nodes_from(set(cat(dependencies)))
         G.add_edges_from(edges)
         return G
 
@@ -74,19 +75,21 @@ class MoDeLFile:
 
     def compile_program(self, is_debug = False):
         program = {}
+        temp = []
         for l in self.program:
             generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
+            temp.append(generated_ast.generated)
             program.update(traversal.dependencies(generated_ast))
         graph = self.build_dependency_graph(program)
-        sorted = graph.nodes() #nx.topological_sort(graph)
-        with open('keys.txt', 'w') as f:
-            for n in sorted:
-                f.write(n)
+        sorted = nx.topological_sort(graph)
+        # with open('keys.txt', 'w') as f:
+        #     for n in sorted:
+        #         f.write(n + '\n')
         nx.write_graphml(graph, 'dependency.graphml')
         return '\n'.join([program[var]['equation']
                           for var in sorted
                           if var in program and len(program[var]['equation']) > 0])
-        #return '\n'.join([l['equation'] for l in program.values() if len(l['equation']) > 0])
+    #        return '\n'.join(cat([l for l in temp if len(l) > 0]))
 
 
 if __name__ == "__main__":
