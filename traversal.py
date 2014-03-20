@@ -212,6 +212,8 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
         elif name == "value":
             as_value = True
             generator = lambda toks: toks[0]
+        elif name == "if":
+            generator = lambda toks:
         else:
             generator = lambda toks: ast.compiled['name'] + '(' + ', '.join(toks) + ')'
 
@@ -349,7 +351,7 @@ def dependencies(ast):
         if ast.nodetype == "instruction":
             return dependencies(ast.children[0])
         elif ast.nodetype in ["assignment", "iterator"]:
-            return []
+            return {}
         # Can only be called on a top-level formula or seriesFormula node (ie not included inside a function)
         elif ast.nodetype in ["formula", "seriesFormula"] and ast.children[1].nodetype == "equation":
             for gen_eq, eq in zip(ast.generated, ast.compiled['equations']):
@@ -432,7 +434,7 @@ def generate(ast, heap = {}):
         if len(generated_args) == 1 and isinstance(generated_args[0], list):
             generated_args = generated_args[0]
         ast.children[1].generated = generated_args
-        ast.generated = ast.compiled['generator'](generated_args)
+        ast.generated = ast.compiled['generator'](generated_args, heap)
 
     elif ast.nodetype == "placeholder":
         ast.generated = ''.join(generate(c)[0].generated for c in ast.compiled)

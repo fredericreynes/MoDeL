@@ -79,7 +79,12 @@ class MoDeLFile:
         for l in self.program:
             generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
             temp.append(generated_ast.generated)
-            program.update(traversal.dependencies(generated_ast))
+            dependencies = traversal.dependencies(generated_ast)
+            # Check if this variable already has an equation
+            if len(dependencies.keys()) > 0 and dependencies.keys()[0] in program:
+                raise NameError("The equation for variable {0} has already been specified. Use the @override keyword if you want to explictly replace it.".format(dependencies.keys()[0]))
+            # Add this line to the program
+            program.update(dependencies)
         graph = self.build_dependency_graph(program)
         sorted = nx.topological_sort(graph)
         # with open('keys.txt', 'w') as f:
