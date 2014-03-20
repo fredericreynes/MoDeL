@@ -57,9 +57,8 @@ class MoDeLFile:
         #G.add_nodes_from([[k, {'equation': v['equation']}] for k, v in program.items()])
         variables = program.keys()
         dependencies = [v['dependencies'] for v in program.values()]
-        # Also add exogenous variables to the graph
-        #exogenous_variables = set(cat(dependencies)) - set(variables)
-        #G.add_nodes_from(exogenous_variables)
+        # Add all dependent variables (exogenous variables are implicitly added in edges)
+        G.add_nodes_from(variables)
         # Compute all directed edges
         edges = [ [d, start]
                   for start, deps in zip(variables, dependencies)
@@ -73,32 +72,40 @@ class MoDeLFile:
         generated_ast, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
         return generated_ast, heap
 
-    def compile_program(self, is_debug = False):
-        program = {}
-        temp = []
-        for l in self.program:
-            generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
-            temp.append(generated_ast.generated)
-            dependencies = traversal.dependencies(generated_ast)
-            # Check if this variable already has an equation
-            if len(dependencies.keys()) > 0 and dependencies.keys()[0] in program:
-                raise NameError("The equation for variable {0} has already been specified. Use the @override keyword if you want to explictly replace it.".format(dependencies.keys()[0]))
-            # Add this line to the program
-            program.update(dependencies)
-        graph = self.build_dependency_graph(program)
-        sorted = nx.topological_sort(graph)
-        # with open('keys.txt', 'w') as f:
-        #     for n in sorted:
-        #         f.write(n + '\n')
-        nx.write_graphml(graph, 'dependency.graphml')
-        return '\n'.join([program[var]['equation']
-                          for var in sorted
-                          if var in program and len(program[var]['equation']) > 0])
-    #        return '\n'.join(cat([l for l in temp if len(l) > 0]))
+    def compile_program(self, is_debug = False, use_dependencies = True):
+        if use_dependencies:
+            program = {}
+            for l in self.program:
+                generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
+                dependencies = traversal.dependencies(generated_ast)
+                # Check if this variable already has an equation
+                if len(dependencies.keys()) > 0 and dependencies.keys()[0] in program:
+                    raise NameError("The equation for variable {0} has already been specified. Use the @override keyword if you want to explictly replace it.".format(dependencies.keys()[0]))
+                # Add this line to the program
+                program.update(dependencies)
+
+            graph = self.build_dependency_graph(program)
+            try:
+                sorted = nx.topological_sort(graph)
+            except Exception as e:
+                sorted = graph.nodes()
+            nx.write_graphml(graph, 'dependency.graphml')
+
+            return '\n'.join([program[var]['equation']
+                              for var in sorted
+                              if var in program and len(program[var]['equation']) > 0])
+        else:
+            program = []
+            for l in self.program:
+                generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
+                # Add this line to the program
+                program.append(generated_ast.generated)
+            return '\n'.join(cat([l for l in program if len(l) > 0]))
 
 
 if __name__ == "__main__":
     is_debug = len(sys.argv) > 1 and sys.argv[1] == "debug"
+    use_dependencies = len(sys.argv) > 1 and sys.argv[1] == "dependencies"
 
     if is_debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -107,7 +114,7 @@ if __name__ == "__main__":
         # The code to be compiled is passed in file in.txt
         model = MoDeLFile("in.txt")
         # Compile and generate the output
-        output = model.compile_program(is_debug)
+        output = model.compile_program(is_debug, use_dependencies)
     except pyparsing.ParseException as e:
         output = "Error\r\n" + str(e)
     except Exception as e:
