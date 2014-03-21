@@ -14,6 +14,7 @@ import traversal
 class MoDeLFile:
     def __init__(self, filename):
         self.filename = filename
+        self.latest_line = ""
         # Load calibration
         self.heap = self.load_calibration()
         # Load file
@@ -76,6 +77,7 @@ class MoDeLFile:
         if use_dependencies:
             program = {}
             for l in self.program:
+                self.latest_line = l
                 generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
                 dependencies = traversal.dependencies(generated_ast)
                 # Check if this variable already has an equation
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     except Exception as e:
         if is_debug:
             logging.exception("Error")
-        output = "Error\r\n" + repr(e)
+        output = "Error\r\nOn '{0}'\r\n{1}".format(model.latest_line, repr(e))
 
     # Writes the output, compiled code or error message to file out.txt
     with open("out.txt.prg", 'w') as f:
