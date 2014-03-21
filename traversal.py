@@ -329,7 +329,7 @@ def generated_variables(ast):
                        [generated_variables(cond) for cond in ast.compiled["conditions"]] )
         # In a function, we only want the arguments
         elif ast.nodetype in ["function"]:
-            return generated_variables(ast.children[1])
+            return cat([generated_variables(c) for c in ast.children[1:]])
         elif ast.nodetype in ["variableName", "identifier", "identifierTime", "array"]:
             if ast.generated[0] <> '@' and not ast.generated.isdigit():
                 out = ast.generated.upper()
