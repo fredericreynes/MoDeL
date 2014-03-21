@@ -79,8 +79,9 @@ class MoDeLFile:
                 generated_ast, self.heap = self.compile_line(l, self.heap, is_debug)
                 dependencies = traversal.dependencies(generated_ast)
                 # Check if this variable already has an equation
-                if len(dependencies.keys()) > 0 and dependencies.keys()[0] in program:
-                    raise NameError("The equation for variable {0} has already been specified. Use the @override keyword if you want to explictly replace it.".format(dependencies.keys()[0]))
+                if not generated_ast.override:
+                    if len(dependencies.keys()) > 0 and dependencies.keys()[0] in program:
+                        raise NameError("The equation for variable {0} has already been specified. Use the @over keyword if you want to explictly replace it.".format(dependencies.keys()[0]))
                 # Add this line to the program
                 program.update(dependencies)
 
@@ -105,7 +106,7 @@ class MoDeLFile:
 
 if __name__ == "__main__":
     is_debug = len(sys.argv) > 1 and sys.argv[1] == "debug"
-    use_dependencies = len(sys.argv) > 1 and sys.argv[1] == "dependencies"
+    use_dependencies = True # len(sys.argv) > 1 and sys.argv[1] == "dependencies"
 
     if is_debug:
         logging.basicConfig(level=logging.DEBUG)

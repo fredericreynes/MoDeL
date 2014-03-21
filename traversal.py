@@ -12,6 +12,7 @@ class AST:
         self.compiled = None
         self.generated = None
         self.as_value = False
+        self.override = False
 
     def __getitem__(self, i):
         return self.children[i]
@@ -166,7 +167,10 @@ def compile_ast(ast, bindings = {}, heap = {}, use_bindings = False, use_heap = 
             all_bindings = [merge(locals, bindings) for locals in all_bindings]
 
         # Check for the price-value option
-        price_value = not ast.children[0].is_none
+        price_value = not ast.children[0].is_none and "@pv" in ast.children[0]
+
+        # Check for the override option
+        ast.override = not ast.children[0].is_none and "@over" in ast.children[0]
 
         # Then compile conditions
         if not ast.children[2].is_none:
@@ -468,6 +472,7 @@ def generate(ast, heap = {}):
             ast.generated = ""
         else:
             generated_instruction, heap = generate(child, heap)
+            ast.override = generated_instruction.override
             ast.generated = generated_instruction.generated
 
     elif ast.is_none:

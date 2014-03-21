@@ -70,10 +70,10 @@ def grouped(elem):
 
 iter = (grouped(variableName) + Suppress(Keyword('in')) + grouped(lst)).ast('iterator')
 
-options = oneOf('!pv !p !Pv !P @pv @PV @Pv @pV').ast('string')
+options = oneOf('@pv @over').ast('string')
 
 def formulaPattern(inner):
-    return (Optional(options, default = ASTNone) +
+    return (Optional(OneOrMore(options), default = ASTNone) +
             inner +
             Optional(condition, default = ASTNone) +
             Optional(Suppress(Keyword('where') | Keyword('on')) + delimitedList(iter ^ variableName), default = ASTNone))

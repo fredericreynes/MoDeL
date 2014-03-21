@@ -538,6 +538,15 @@ test_files = {
     include test_series
     """,
 
+    'in7.txt': r"""
+    include lists
+
+    s in %sectors
+
+    Q[s] = Test[$s] + 2 * $s
+    @over Q[s] = Test[$s] + 2 * $s
+    """,
+
     'real.txt': r"""#---CO2 household emissions from housing use---
 
     include _lists
@@ -618,6 +627,16 @@ class TestFileCompiler:
                     "series Q_04 = Test_1 + 2 * 1")
         # The code to be compiled is passed in file in.txt
         model = compiler.MoDeLFile("in6.txt")
+        # Compile and generate the output
+        output = model.compile_program()
+        assert output == expected
+
+    def test_compiles_override(self):
+        expected = ("Q_06 = Test_3 + 2 * 3\n"
+                    "Q_05 = Test_2 + 2 * 2\n"
+                    "Q_04 = Test_1 + 2 * 1")
+        # The code to be compiled is passed in file in.txt
+        model = compiler.MoDeLFile("in7.txt")
         # Compile and generate the output
         output = model.compile_program()
         assert output == expected
