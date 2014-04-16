@@ -87,6 +87,7 @@ class MoDeLFile:
                 # Add this line to the program
                 program.update(dependencies)
 
+
             graph = self.build_dependency_graph(program)
             try:
                 sorted = nx.topological_sort(graph)
@@ -113,9 +114,10 @@ if __name__ == "__main__":
     if is_debug:
         logging.basicConfig(level=logging.DEBUG)
 
+    # The code to be compiled is passed in file in.txt
+    model = MoDeLFile("in.txt")
+
     try:
-        # The code to be compiled is passed in file in.txt
-        model = MoDeLFile("in.txt")
         # Compile and generate the output
         output = model.compile_program(is_debug, use_dependencies)
     except pyparsing.ParseException as e:
