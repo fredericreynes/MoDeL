@@ -4,6 +4,7 @@ from copy import deepcopy
 from funcy import *
 import re
 import code
+import logging
 
 class AST:
     def __init__(self, nodetype, children):
@@ -13,6 +14,7 @@ class AST:
         self.generated = None
         self.as_value = False
         self.override = False
+        self.conditions = []
 
     def __getitem__(self, i):
         return self.children[i]
@@ -362,7 +364,15 @@ def dependencies(ast):
             return {}
         # Can only be called on a top-level formula or seriesFormula node (ie not included inside a function)
         elif ast.nodetype in ["formula", "seriesFormula"] and ast.children[1].nodetype == "equation":
-            for gen_eq, eq in zip(ast.generated, ast.compiled['equations']):
+            # When compiling the model, we filter by condition
+            if ast.nodetype == "formula":
+                compiled_equations = [eq for eq, cond in zip(ast.compiled['equations'], ast.conditions) if cond]
+            # When compiling data calibration, that's not necessary
+            # (and not possible since conditions are not checked at compile-time for calibration)
+            else:
+                compiled_equations = ast.compiled['equations']
+
+            for gen_eq, eq in zip(ast.generated, compiled_equations):
                 lvar = generated_variables(eq.children[0])
                 rvar = generated_variables(eq.children[1])
                 # Check for variable as value on the left-hand side
@@ -420,8 +430,10 @@ def generate(ast, heap = {}):
         conditions = [generate(cond, heap)[0].generated for cond in ast.compiled['conditions']]
         equations = [generate(eq, heap)[0].generated for eq in ast.compiled['equations']]
         if len(conditions) > 0:
-            ast.generated = [eq for eq, cond in zip(equations, conditions) if eval(cond, heap)]
+            ast.conditions = [eval(cond, heap) for cond in conditions]
+            ast.generated = [eq for eq, cond in zip(equations, ast.conditions) if cond]
         else:
+            ast.conditions = [True] * len(equations)
             ast.generated = equations
 
     elif ast.nodetype == "seriesFormula":
