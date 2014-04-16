@@ -1,0 +1,36 @@
+@over PY_n_21 = PM_21
+
+@over d(log(PVA_21)) = log(1+STEADYSTATE(15,1))  
+@over VA_21 * PVA_21 = PY_21 * Y_21 - PMAT_21 * MAT_21 - PE_21 * E_21
+
+@over d(log(PEBE_21)) = log(1+STEADYSTATE(15,1))  
+@over d(log(PRF_21)) = log(1+STEADYSTATE(15,1))  
+
+#@over |V|[21] = |V|_n[21] where V in L E MAT
+@over L_21 = L_n_21
+@over E_21 = E_n_21
+@over MAT_21 = MAT_n_21
+
+#@over d(log(|V|_e[s])) = ADJUST(1 + $V, 2) * d(log(|V|_e[s]{-1})) + ADJUST(1 +$V, 3) * d(log(|V|[s]{-1})) + ADJUST(1 + $V, 4) * d(log(|V|_n[s])) if |V|[s] <> 0 where V in L E MAT, s in 21
+
+# equation 3.68
+REC_VAL = DIV_GOV_VAL + IR_VAL + AIC_VAL + INC_GOV_OTH_net + REC_TCO_VAL - CL_S[sp] * L_S[sp] * PROG_L[sp] + _
+          value(Y[sp] + TAX + IY + IS + CSE_TOT + CSS_TOT - (E[sp] + MAT[sp] + IY[sp]))      
+
+# Total spending
+# equation 3.79
+DEP_VAL = CL_S[sp]*L_S[sp]*PROG_L[sp] + R_G{-1}*DEBT_G_VAL{-1} + TCO_VAL_HH + PRESOC_VAL + _
+          value(E[sp] + MAT[sp] + IY[sp] + IA[sp] + (G - G[sp]) - ((SUB - SUB_01) + (SY - SY_01)))
+
+# Substitution for transport margins
+d(SUBST_MT|O|_n[trsp, c]) = sum( -ES_TRANSP_MARG($c, cols_trsp(trsp, trsp_oth)) * d(log(PE[trsp]) - log(PE[trsp_oth])) * _
+                                 value(MT|O|[trsp_oth, c]{-1} / (MT|O|[trsp, c]{-1} + MT|O|[trsp_oth, c]{-1})) if trsp_oth <> trsp on trsp_oth in %list_trsp \ 15) _
+                            if MT|O|[trsp, c] <> 0 where trsp in %list_trsp \ 15, c in %list_com \ %list_trsp
+
+# Substitution for transport intermediaries
+# HACK: transport sectors 15 and 16 can't be substituted to each other
+# the pair is disabled manually in the sum with trsp*trsp_oth <> 240 (since 15 * 16 == 240)
+d(SUBST_MAT_n[trsp, s]) = sum( -ES_TRANSP_CI($s, cols_mat(trsp, trsp_oth)) * d(log(PMAT[trsp, s]) - log(PMAT[trsp_oth, s])) * _
+                               value(MAT[trsp_oth, s]{-1} / (MAT[s]{-1}) ) if (trsp_oth <> trsp) * (trsp*trsp_oth <> 240) on trsp_oth in %list_trsp) _
+                          if MAT[trsp_cond, s] <> 0 where (trsp, trsp_cond) in (%list_trsp, %list_trsp)
+

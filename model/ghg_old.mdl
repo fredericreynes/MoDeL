@@ -1,0 +1,123 @@
+# BLOCK 6 : GREEN HOUSE GASES EMISSIONS
+
+include ..\model\lists
+
+# equation 6.1
+  EMS_CH[s] = EMS_21[s]
+  EMS_PT[s] = EMS_22[s]
+  EMS_GZ[s] = EMS_24[s]
+#   
+  d(log(EMS_21[s])) = d(log(E_21[s])) if EMS_21[s] <> 0
+  d(log(EMS_22[s])) = d(log(E_22[s]) + log(PhiY_22_2201)) if EMS_22[s] <> 0
+  d(log(EMS_24[s])) = d(log(E_24[s]) + log(PhiY_24_2401)) if EMS_24[s] <> 0
+
+# equation 6.2
+ EMS[s] = sum(EMS_|V|[s] if EMS_|V|[s] <> 0 on V in GZ CH PT)
+
+  # PROBLEME! Agreger les secteurs energétiques en appellant la subroutine aggregate_energy
+  IC_21 = EMS_CH / (QD_21 + M_21 - X_21)
+  IC_22 = (EMS_PT / (QD_22 + M_22 - X_22)) * PhiY_22_2201
+  IC_24 = (EMS_GZ / (QD_24 + M_24 - X_24)) * PhiY_24_2401
+
+# ***CO2 SECTORS EMISSIONS***
+# equation 6.3
+ EMS_S = sum(EMS[s] if EMS[s] <> 0 on s)
+
+# DECARBONATION
+
+# equation 6.4
+ d(log(EMS_DC[c])) = d(log(MAT[c])) if EMS_DC[c] <> 0
+
+ EMS_DC = sum(EMS_DC[c] if EMS_DC[c] <> 0 on c)
+
+# EMISSIONS by energy source
+# equation 6.5
+ EMS_|V| = sum(EMS_|V|[s] if EMS_|V|[s] <> 0 on s) where V in GZ CH PT
+
+
+# ***CO2 HOUSEHOLDS EMISSIONS HYBRID***
+
+#  if %hybrid_household="yes" then #Load if "yes" in the main
+#    Call BLOCK_GHG_Hybrid
+
+# ***END CO2 HOUSEHOLDS EMISSIONS HYBRID***
+
+#  else
+
+# ***CO2 HOUSEHOLDS EMISSIONS***
+
+# equation 6.6
+#d(log(EMS_HH[ce2, h])) = d(log(EXP[ce2, h]))
+ EMS_HH[ce2] = sum(EMS_HH[ce2, h] on h)
+ EMS_HH = sum(EMS_HH[ce2] on ce2)
+
+ EMS_TOT = EMS_S + EMS_DC + EMS_HH
+
+# ***END CO2 HOUSEHOLDS EMISSIONS***
+
+#  endif
+
+# ***ENERGY PRODUCTION IN MTEP***
+
+  # equation 6.7
+  d(log(Q_Mtep_H[ce])) = d(log(EXP[ce]))
+  
+  # equation 6.8
+  d(phiY_22[se]) = d(phi_Mtep[se]) where se in %list_subsec_22
+  d(phiY_23[se]) = d(phi_Mtep[se]) where se in %list_subsec_23
+  d(phiY_24[se]) = d(phi_Mtep[se]) where se in %list_subsec_24
+
+  # equation 6.9
+  Q_Mtep_22 = sum(Q_Mtep[se] if Q_Mtep[se] <> 0 on se in %list_subsec_22)
+  Q_Mtep_23 = sum(Q_Mtep[se] if Q_Mtep[se] <> 0 on se in %list_subsec_23)
+  Q_Mtep_24 = sum(Q_Mtep[se] if Q_Mtep[se] <> 0 on se in %list_subsec_24)
+  
+  Q_Mtep = sum(Q_Mtep[se] if Q_Mtep[se] <> 0 on se)
+  
+  # Energy Production in primary energy
+  # equation 6.10
+  Q_Mtep_EP[se] = Q_Mtep[se] * fac_conv_EP[se]
+  
+  Q_Mtep_EP_22 = sum(Q_Mtep_EP[se] if Q_Mtep_EP[se] <> 0 on se in %list_subsec_22)
+  Q_Mtep_EP_23 = sum(Q_Mtep_EP[se] if Q_Mtep_EP[se] <> 0 on se in %list_subsec_23)
+  Q_Mtep_EP_24 = sum(Q_Mtep_EP[se] if Q_Mtep_EP[se] <> 0 on se in %list_subsec_24)
+  
+  Q_Mtep_EP = sum(Q_Mtep_EP[se] if Q_Mtep_EP[se] <> 0 on se)
+
+# Energy consumption from the activity sectors
+# equation 6.11
+E_SEC|O|[ce] = sum(E|O|[ce, cm] on cm)
+
+# equation 6.12
+E_SEC[ce] = sum(E_SEC|O|[ce] on O)
+
+ # equation 6.13
+  d(log(Q_Mtep_SEC[ce])) = d(log(E_SEC[ce])) if E_SEC[ce] <> 0
+
+  Q_Mtep_SEC = sum(Q_Mtep_SEC[ce] if Q_Mtep_SEC[ce] <> 0 on ce)
+
+  # equation 6.14
+  E_ESEC|O|[ce] = sum(E|O|[ce, se] on se)
+  E_ESEC[ce] = sum(E_ESEC|O|[ce] on O)
+
+  d(log(Q_Mtep_ESEC[ce])) = d(log(E_ESEC[ce])) if E_ESEC[ce] <> 0
+  Q_Mtep_ESEC = sum(Q_Mtep_ESEC[ce] if Q_Mtep_ESEC[ce] <> 0 on ce)
+  
+  # Energy final consumption
+  # equation 6.15
+  Q_Mtep_EF[ce] = Q_Mtep[ce] - Q_Mtep_ESEC[ce]
+  Q_Mtep_EF = sum(Q_Mtep_EF[ce] if Q_Mtep_EF[ce] <> 0 on ce)
+  
+  # Energy production by energy sector
+  #if %hybrid_household="yes" then
+  
+  # equation 6.16
+  Q_Mtep_21 = Q_Mtep_SEC_21 + Q_Mtep_H_21 + Q_Mtep_ESEC_21
+  
+  Q_Mtep[se] = phi_Mtep[se] * (Q_Mtep_H_22 + Q_Mtep_SEC_22 + Q_Mtep_ESEC_22) where se in %list_subsec_22
+  Q_Mtep[se] = phi_Mtep[se] * (Q_Mtep_H_23 + Q_Mtep_SEC_23 + Q_Mtep_ESEC_23) where se in %list_subsec_23
+  Q_Mtep[se] = phi_Mtep[se] * (Q_Mtep_H_24 + Q_Mtep_SEC_24 + Q_Mtep_ESEC_24) where se in %list_subsec_24
+
+
+EN_price_signal = sum(PTAX[ce] * TAX[ce] - PVAT[ce] * VAT[ce] on ce) / Q_Mtep_EP
+#series CO_VAL=1000000*(REC_TCO+CIDD+Bonus+Bonus_elec+CSPE)/(EMS_TOT*PGDP))# equation telle qu#elle est dans la version V1#

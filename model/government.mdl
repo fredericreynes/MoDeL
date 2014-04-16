@@ -63,25 +63,25 @@ OTHTM[c] = @elem(TOTHTM[c], %baseyear) * M[c] if OTHTM[c] <> 0
 TAX[c] = VAT[c] + ENERT[c] + OTHT[c] if TAX[c] <> 0
 
 # equation 3.26
-PTAX[c] * TAX[c] = PVAT[c] * VAT[c] + PENERT[c] * ENERT[c] + POTHT[c] * OTHT[c] + TCO_VAL_sec[c] + TCO_HH_VAL_com[c] if TAX[c] <> 0
+PTAX[c] * TAX[c] = PVAT[c] * VAT[c] + PENERT[c] * ENERT[c] + POTHT[c] * OTHT[c] + TCO_VAL_SOU[c] + TCO_VAL_HH_SOU[c] if TAX[c] <> 0
 
-# equations 3.27 & 3.28
+# equations 3.27 & 3.2
 @pv TAX = sum(TAX[c] if TAX[c] <> 0 on c)
 
 # Taxes on profits (by activity)
 
 # equation 3.29
-PIS[s] * IS[s] = TIS * PRF[s](-1) * RF[s](-1) * (RF[s](-1)>0) + 0.00000001 * (RF[s](-1) =< 0) if IS[s] <> 0
+PIS[s] * IS[s] = TIS * PRF[s]{-1} * RF[s]{-1} * (RF[s]{-1}>0) + 0.00000001 * (RF[s]{-1} =< 0) if IS[s] <> 0
 
 # equation 3.30
-IS[s] = @elem(TIS * PRF[s](-1), %baseyear) * RF[s](-1) * (RF[s](-1)>0) + 0.00000001 * (RF[s](-1) =< 0) if IS[s] <> 0
+IS[s] = @elem(TIS * PRF[s]{-1}, %baseyear) * RF[s]{-1} * (RF[s]{-1}>0) + 0.00000001 * (RF[s]{-1} =< 0) if IS[s] <> 0
 
 # equations 3.31 & 3.32
 @pv IS = sum(IS[s] if IS[s] <> 0 on s)
 
 # equations 3.33
 IR_VAL[h] = TIR[h] * DISPINC_AI_VAL[h]
-d(TIR[h]) = -d(PHIDI[h] * TCO_HH_VAL / DISPINC_AI_VAL[h])
+d(TIR[h]) = -d(PHIDI[h] * TCO_VAL_HH / DISPINC_AI_VAL[h])
 
 # equation 3.34
 IR_VAL = sum(IR_VAL[h] if IR_VAL[h] <> 0 on h)
@@ -128,14 +128,14 @@ PSY[s] * SY[s]  = TSYN[s] * PY[s] * Y[s] if SY[s] <> 0
 
 # For ETS sectors
 
-TCSE[s] = @elem(TCSE[s], %baseyear) - Rec_TCO_ETS / WAGES_ETS where s in %list_sec \ 01 02 03 11 12 13 14 15 16 17 19 20
+TCSE[s] = @elem(TCSE[s], %baseyear) - Rec_TCO_Val_ETS / WAGES_ETS where s in %list_ETS 
 
 # For non-ETS sectors
-TCSE[s] = @elem(TCSE[s], %baseyear) - Rec_TCO_NETS / WAGES_NETS where s in %list_sec \ 04 05 06 07 08 09 10 18 21 2201 2202 2301 2302 2303 2304 2305 2306 2307 2308 2401 2402 2403 2404 2405 2406
+TCSE[s] = @elem(TCSE[s], %baseyear) - Rec_TCO_Val_NETS / WAGES_NETS where s in %list_NETS 
 
 # equations 3.49 & 3.50
 CSE[s] * PCSE[s] = TCSE[s] * L_S[s] * W_S[s]
-PCSE[s] = PCH_19
+PCSE[s] = PCH[ccm]
 
 # equations 3.51 & 3.52
 @pv CSE = sum(CSE[s] if CSE[s] <> 0 on s)
@@ -144,7 +144,7 @@ PCSE[s] = PCH_19
 CSE_ROW*PCSE_ROW = TCSE_ROW*SB_ROW
 
 # equation 3.54
-PCSE_ROW = PCH_19
+PCSE_ROW = PCH[ccm]
 
 # equation 3.55
 PCSE_TOT*CSE_TOT = PCSE*CSE + PCSE_ROW*CSE_ROW
@@ -154,9 +154,9 @@ CSE_TOT = CSE + CSE_ROW
 
 # equations 3.57, 3.58, 3.59 & 3.60
 CSS[s] * PCSS[s] = TCSS * L_S[s] * W_S[s]
-PCSS[s] = PCH_19
+PCSS[s] = PCH[ccm]
 CSS_SE[s] * PCSS_SE[s] = TCSS_SE * L_SE[s] * W_SE[s]
-PCSS_SE[s] = PCH_19
+PCSS_SE[s] = PCH[ccm]
 
 # equations 3.61 & 3.62
 @pv CSS  = sum(CSS[s] if CSS[s] <> 0 on s)
@@ -173,9 +173,6 @@ CSS_TOT = CSS + CSS_SE + CSS_ROW
 # Total receipts
 DIV_GOV_VAL_n = alpha_GOV_FW*PRF_NET*RF_NET
 
-# equation 3.68
-REC_VAL = DIV_GOV_VAL + IR_VAL + AIC_VAL + INC_GOV_OTH_net + REC_TCO_VAL - CL_S_20 * L_S_20 * PROG_L_20 + _
-          value(Y_20 + TAX + IY + IS + CSE_TOT + CSS_TOT - (E_20 + MAT_20 + IY_20))
 
 # Public spending
 
@@ -183,10 +180,10 @@ REC_VAL = DIV_GOV_VAL + IR_VAL + AIC_VAL + INC_GOV_OTH_net + REC_TCO_VAL - CL_S_
 # Une fraction des prestations sociales (RSA; aide médicale généralisée etc... diminue avec le chômage et la pauvreté)
 
 # equation 3.69
-PRESOC_DOM_U_VAL = 0.3 * W_S * Un_TOT
+PRESOC_DOM_U_VAL = STEADYSTATE(54,1) * W_S * Un_TOT
 
 # equation 3.70
-d(log(PRESOC_DOM_Oth_VAL)) = eta_prest_1 * d(log(PROG_L)) + d(log(P)) + d(log(POP_tot))
+d(log(PRESOC_DOM_Oth_VAL)) = STEADYSTATE(53,1) * d(log(PROG_L)) + d(log(P)) + d(log(POP_tot))
 
 # equation 3.71
 PRESOC_DOM_VAL = PRESOC_DOM_Oth_VAL + PRESOC_DOM_U_VAL
@@ -202,17 +199,14 @@ d(log(EXPG[c])) = d(log(EXPG)) if EXPG[c] <> 0
 
 # equation 3.77
 d(log(GD[c])) = d(log(EXPG[c])) + d(SUBST_GD[c]) if GD[c] <> 0
-d(SUBST_GD_n[c]) = - ES_GOV(1, $c) * d(log(PGD[c]) - log(PGM[c])) * (PGM[c](-1) * GM[c](-1)/(PG[c](-1) * G[c](-1))) if GD[c] <> 0
+d(SUBST_GD_n[c]) = - ES_GOV(1, $c) * d(log(PGD[c]) - log(PGM[c])) * (PGM[c]{-1} * GM[c]{-1}/(PG[c]{-1} * G[c]{-1})) if GD[c] <> 0
 
 #equation 3.78
 GM[c] = (EXPG[c] - GD[c] > 0 ) * (EXPG[c]-GD[c]) + (EXPG[c]-GD[c] =< 0)*(0.00001) if GM[c] <> 0
-d(SUBST_GM_n[c])= - ES_GOV(1, $c) * d(log(PGM[c]) - log(PGD[c])) * (PGD[c](-1) * GD[c](-1)/(PG[c](-1) * G[c](-1))) if GM[c] <> 0
+d(SUBST_GM_n[c])= - ES_GOV(1, $c) * d(log(PGM[c]) - log(PGD[c])) * (PGD[c]{-1} * GD[c]{-1}/(PG[c]{-1} * G[c]{-1})) if GM[c] <> 0
 
-# Total spending
-# equation 3.79
-DEP_VAL = CL_S_20*L_S_20*PROG_L_20 + R_G(-1)*DEBT_G_VAL(-1) + TCO_HH_VAL + PRESOC_VAL + _
-          value(E_20 + MAT_20 + IY_20 + IA_20 + (G - G_20) - ((SUB - SUB_01) + (SY - SY_01)))
 
+                  
 # Deficit and Public Debt
 
 # Deficit
@@ -222,14 +216,14 @@ BF_G_VAL = DEP_VAL - REC_VAL
 # equation 3.81
 DP_G_VAL = BF_G_VAL / (PGDP*GDP)
 
-SP_G_VAL = BF_G_VAL - R_G(-1)*DEBT_G_VAL(-1)
+SP_G_VAL = BF_G_VAL - R_G{-1}*DEBT_G_VAL{-1}
 
 DP_SP_G_VAL = SP_G_VAL / (PGDP*GDP)
 
 # Public Debt
 # equation 3.82
-DEBT_G_VAL = DEBT_G_VAL(-1) + BF_G_VAL
+DEBT_G_VAL = DEBT_G_VAL{-1} + BF_G_VAL
 
-d(log(EXPG)) = ADJUST(69,1)*(d(log(EXPG_trend)) - STEADYSTATE(62,1)*(DP_G_VAL - DP_G_VAL_n)*PGDP(-1)*GDP(-1) / (PG(-1)*EXPG(-1))) + (1-ADJUST(69,1))*d(log(EXPG(-1)))
+d(log(EXPG)) = ADJUST(69,1)*(d(log(EXPG_trend)) - STEADYSTATE(62,1)*(DP_G_VAL - DP_G_VAL_n)*PGDP{-1}*GDP{-1} / (PG{-1}*EXPG{-1})) + (1-ADJUST(69,1))*d(log(EXPG{-1}))
 
 d(FISC) = STEADYSTATE(58,1)*(DP_G_VAL-@elem(DP_G_VAL,%baseyear)) - STEADYSTATE(59,1)*(UNR_TOT-(@elem(UNR_TOT,%baseyear)+DNAIRU))

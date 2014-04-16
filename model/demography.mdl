@@ -1,38 +1,38 @@
 # BLOCK 7: DEMOGRAPHY
 
 # equation 7.1
-d(log(empl[coh])) = d(log(L)) if empl[coh] <> 0
+d(log(empl[sex, age])) = d(log(L)) if empl[sex, age] <> 0
 
 # equation 7.2
-LF[coh] = PARTR[coh] * WAPop[coh]
+LF[sex, age] = PARTR[sex, age] * WAPop[sex, age]
 
 # equation 7.3
-d(PARTR_n[coh]) = d(PARTR_trend[coh]) + betaEmp[coh] * d(UnR[coh])
+d(PARTR_n[sex, age]) = d(PARTR_trend[sex, age]) + betaEmp[sex, age] * d(UnR[sex, age])
 
 # equation 7.4
-Un[coh] = LF[coh] - Empl[coh]
+Un[sex, age] = LF[sex, age] - Empl[sex, age]
 
 # equation 7.5
-UnR[coh] = Un[coh] / LF[coh]
-UnR[age] = Un[age] / LF[age]
-UnR[sex] = Un[sex] / LF[sex]
+UnR[sex, age] = Un[sex, age] / LF[sex, age] if LF[sex, age] <> 0
+UnR[age] = Un[age] / LF[age] if LF[age] <> 0 
+UnR[sex] = Un[sex] / LF[sex] if LF[sex] <> 0
 
 # equation 7.6
 UnR_TOT=Un_TOT/LF_TOT
 
 # equation 7.7
-UN_|age| = UN_M|age| + UN_W|age|
+UN[age] = sum(UN[sex, age] on sex)
 
 # equation 7.8
-UN_|sex| = sum(UN_|sex||age| on age)
+UN[sex] = sum(UN[sex, age] on age)
 
 # equation 7.9
 UN_TOT = sum(UN[sex] on sex)
 
 # equation 7.10
-LF_|age| = sum(LF_|sex||age| on sex)
+LF[age] = sum(LF[sex,age] on sex)
 
 # equation 7.11 & 7.12
-LF_|sex| = sum(LF_|sex||age| on age)
+LF[sex] = sum(LF[sex,age] on age)
 
-LF_TOT = sum(LF_|sex| on sex)
+LF_TOT = sum(LF[sex] on sex)

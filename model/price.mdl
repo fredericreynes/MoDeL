@@ -1,8 +1,7 @@
 # BLOCK 5: PRICES
 
 # equation 5.1
-PY_n[s]*Y[s] = (CK[s]*K_n[s]+ CL[s]*L_n[s]*PROG_L[s] + PE[s]*E_n[s] + PMAT[s]*MAT_n[s]) * (1 + TMD[s]) if Y[s] > 0 where s in %list_sec \ 21
-PY_n_21 = PM_21
+PY_n[s]*Y[s] = (CK[s]*K_n[s]+ CL[s]*L_n[s]*PROG_L[s] + PE[s]*E_n[s] + PMAT[s]*MAT_n[s]) * (1 + TMD[s]) if Y[s] > 0 where s in %list_sec
 
 # equation 5.2
 NCU[s]*Y[s] = CU[s]*Y[s] + PIY[s]*IY[s] + PSY[s]*SY[s] + PIS[s]*IS[s] if Y[s] > 0
@@ -14,18 +13,18 @@ CU[s]*Y[s] = CK[s]*K[s] + CL[s]*L[s]*PROG_L[s] + PE[s]*E[s] + PMAT[s]*MAT[s] if 
 CL[s]*L[s] = CL_S[s]*L_S[s] + CL_SE[s]*L_SE[s] if Y[s] > 0
 
 # equation 5.5
-d(log(1+TMD[s])) = STEADYSTATE(49,1) * ( d(log(Y[s])) - d(log(Y[s](-1))) ) if Y[s] > 0
+d(log(1+TMD[s])) = STEADYSTATE(49,1) * ( d(log(Y[s])) - d(log(Y[s]{-1})) ) if Y[s] > 0
 
 # equation 5.6
-d(log(YOPT[s])) = d(log(K[s])) * CK[s](-1) * K[s](-1) / (CU[s](-1) * Y[s](-1)) _
-		+ d(log(L[s] * PROG_L[s])) * CL[s](-1) * L[s](-1) * PROG_L[s](-1) / (CU[s](-1) * Y[s](-1)) _
-		+ d(log(E[s] + (E[s] >= 0) * (E[s] <= 0) * 0.0000000001)) * PE[s](-1) * E[s](-1) / (CU[s](-1) * Y[s](-1)) _
-		+ d(log(MAT[s])) * PMAT[s](-1) * MAT[s](-1) / (CU[s](-1) * Y[s](-1)) _
+d(log(YOPT[s])) = d(log(K[s])) * CK[s]{-1} * K[s]{-1} / (CU[s]{-1} * Y[s]{-1}) _
+		+ d(log(L[s] * PROG_L[s])) * CL[s]{-1} * L[s]{-1} * PROG_L[s]{-1} / (CU[s]{-1} * Y[s]{-1}) _
+		+ d(log(E[s] + (E[s] >= 0) * (E[s] <= 0) * 0.0000000001)) * PE[s]{-1} * E[s]{-1} / (CU[s]{-1} * Y[s]{-1}) _
+		+ d(log(MAT[s])) * PMAT[s]{-1} * MAT[s]{-1} / (CU[s]{-1} * Y[s]{-1}) _
 		  if YOPT[s] <> 0
 
 # equation 5.7 5.8 labor cost in activity a
 CL_S[s] =  W_S[s]*(1+TCSE[s]) / PROG_L[s] if L_S[s] > 0
-CL_SE[s] = W_SE[s] / PROG_L[s] if L_S[s] > 0
+CL_SE[s] = W_SE[s] / PROG_L[s] if L_SE[s] > 0
 
 # equation 5.9 5.10 capital cost in activity a
 CK[s] = PIA[s] * (Tdec[s] + r[s]) if K[s] > 0
@@ -96,7 +95,7 @@ PMTD[trsp, c] = YQ[trsp] / (YQ[trsp] + M[trsp]) * PYQS[trsp] + M[trsp] / (YQ[trs
 PMTM[trsp, c] = PMTD[trsp, c] if MTM[trsp, c] <> 0 where c in %list_com \ %list_trsp_services
 
 # equation 5.38
-PMCD[c] = YQ_19/(YQ_19 + M_19)*PYQS_19 + M_19/(YQ_19 + M_19)*PMS_19 if MCD[c] <> 0 where c in %list_com \ %list_trsp_services
+PMCD[c] = YQ[ccm]/(YQ[ccm] + M[ccm])*PYQS[ccm] + M[ccm]/(YQ[ccm] + M[ccm])*PMS[ccm] if MCD[c] <> 0 where c in %list_com \ %list_trsp_services
 
 # equation 5.39
 PMCM[c] = PMCD[c] if MCM[c] <> 0 where c in %list_com \ %list_trsp_services
@@ -104,14 +103,8 @@ PMCM[c] = PMCD[c] if MCM[c] <> 0 where c in %list_com \ %list_trsp_services
 # equation 5.40
 PM[c] = TC*PWD[c] if M[c] <> 0
 
-PM[s] = PM_22 where s in 2201 2202
-
-PM[s] = PM_23 where s in 2301 2302 2303 2304 2305 2306 2307 2308
-
-PM[s] = PM_24 where s in 2401 2402 2403 2404 2405 2406
-
 # equation 5.41
-d(log(W_S_n[s])) = RHO($s,1) + RHO($s,2)*d(log(P_e)) + RHO($s,3)*d(log(PROG_L[s])) - RHO($s,4)*d(log(PM[s])-log(PY[s])) - RHO($s,5)*UnR_TOT - RHO($s,6)*d(UnR_TOT) + RHO($s,7)*d(log(L_S[s]) - log(L))+DNAIRU*RHO($s,5) if W_S_n[s] <> 0
+d(log(W_S_n[s])) = RHO($s,1) + RHO($s,2)*d(log(P_e)) + RHO($s,3)*d(log(PROG_L[s])) - RHO($s,4)*(sum(Y[c, s]{-1}/Y[s]{-1}*M[c]{-1}/(YQ[c]{-1}+M[c]{-1})*d(log(PM[c]/PY[s])) if Y[c, s] <> 0 on c)) - RHO($s,5)*UnR_TOT - RHO($s,6)*d(UnR_TOT) + RHO($s,7)*d(log(L_S[s]) - log(L))+DNAIRU*RHO($s,5) if W_S_n[s] <> 0
 
 d(log(W_SE[s])) = d(log(W_S[s])) if W_SE[s] <> 0
 
@@ -124,11 +117,11 @@ d(R_G) = d(R)
 
 d(R_DIR) = STEADYSTATE(37,1)*(d(infl_ZE)-d(infl_ZE_target)) - STEADYSTATE(38,1)*(d(UnR_ZE)-d(UnR_ZE_target)) #"Original" rule
 
-infl_FR = d(P)/P(-1)
+infl_FR = d(P)/P{-1}
 
 infl_ZE = STEADYSTATE(42,1)*infl_FR + (1 - STEADYSTATE(42,1))*infl_HFR
 
-infl_HFR = STEADYSTATE(41,1)*infl_FR + (1 - STEADYSTATE(41,1))*infl_HFR(-1)
+infl_HFR = STEADYSTATE(41,1)*infl_FR + (1 - STEADYSTATE(41,1))*infl_HFR{-1}
 
 P = PCH
 
@@ -136,8 +129,8 @@ UnR_FR = UnR_TOT
 
 UnR_ZE = STEADYSTATE(42,1)*UnR_FR + (1 - STEADYSTATE(42,1))*UnR_HFR
 
-UnR_HFR = STEADYSTATE(41,1)*UnR_FR + (1 - STEADYSTATE(41,1))*UnR_HFR(-1)
+UnR_HFR = STEADYSTATE(41,1)*UnR_FR + (1 - STEADYSTATE(41,1))*UnR_HFR{-1}
 
 d(R[s]) = d(R)
 
-d(log(P_e)) = ADJUST(68,2)*d(log(P_e(-1))) + (1-ADJUST(68,2))*d(log(P(-1)))
+d(log(P_e)) = ADJUST(68,2)*d(log(P_e{-1})) + (1-ADJUST(68,2))*d(log(P{-1}))

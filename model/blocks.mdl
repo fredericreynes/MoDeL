@@ -1,10 +1,12 @@
-include lists
+include ..\model\lists
 
-include GHG
-include Consumer
-include Input_Output
-include Producer
-include Government
-include Price
-include Demography
-include Adjustments
+include ..\model\GHG
+include ..\model\Consumer
+include ..\model\Input_Output
+include ..\model\Producer
+include ..\model\Government
+include ..\model\Price
+include ..\model\Demography
+include ..\model\Adjustments
+include ..\model\Exceptions
+include ..\model\carbon_tax
