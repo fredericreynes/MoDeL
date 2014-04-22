@@ -1,5 +1,5 @@
 from plex import *
-from StringIO import StringIO
+from tempfile import NamedTemporaryFile
 
 class Lexer(Scanner):
     digit = Range("09")
@@ -17,8 +17,11 @@ class Lexer(Scanner):
     name = Rep1(Any("@_") | alpha | digit)
     local_name = Str("%") + name
 
-
     keywords = Str("if", "where", "on", "in", "include")
+    options = Str("@pv", "@over")
+
+    continuation = Str('_') + Str('\n')
+    newline = Str('\n') | Eof
     space = Any(" \t")
 
     lexicon = Lexicon([
@@ -27,6 +30,8 @@ class Lexer(Scanner):
         (operators, 'operator'),
         (equal, 'equal'),
         (assign, 'assign'),
+        (keywords, 'keyword'),
+        (options, 'option'),
         (name, 'name'),
         (local_name, 'local'),
         (Str('('), 'lparen'),
@@ -36,18 +41,22 @@ class Lexer(Scanner):
         (Str('{'), 'lcurly'),
         (Str('}'), 'rcurly'),
         (Str('|'), 'pipe'),
-        (space, IGNORE)
+        (Str(','), 'comma'),
+        (newline, 'newline'),
+        (space | continuation, IGNORE)
     ])
-
-    def read_all(self):
-        ret = []
-        token = self.read()
-        while not (token[0] is None):
-            ret.append(token)
-            token = self.read()
-        return ret
 
     def __init__(self, file):
         Scanner.__init__(self, self.lexicon, file)
 
-# print Lexer(StringIO("PRF[sm]{-1}")).read_all()
+
+#lex = Lexer(StringIO("@pv VA = sum(VA[s] on s)"))
+f = NamedTemporaryFile(delete = False)
+f.write("@pv VA = sum(VA[s] on s)")
+f.close()
+print repr(open(f.name, 'rb').read())
+lex = Lexer(open(f.name, 'rU'))
+tok = lex.read()
+while tok[0] <> None:
+    print tok
+    tok = lex.read()
