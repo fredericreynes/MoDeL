@@ -3,14 +3,18 @@ from StringIO import StringIO
 
 class Lexer(Scanner):
     digit = Range("09")
-    integer = Rep1(digit)
+    int = Rep1(digit)
+    real = Rep1(digit) + Str('.') + Rep1(digit)
 
 
-    lexicon = Lexicon([ (integer, 'int') ])
+    lexicon = Lexicon([
+        (int, 'int'),
+        (real, 'real'),
+    ])
 
     def __init__(self, file):
         Scanner.__init__(self, self.lexicon, file)
 
 
-lexer = Lexer(StringIO("56"))
+lexer = Lexer(StringIO("50"))
 print lexer.read()
