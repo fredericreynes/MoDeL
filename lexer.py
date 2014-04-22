@@ -5,17 +5,28 @@ class Lexer(Scanner):
     digit = Range("09")
     integer = Opt(Str('-')) + Rep1(digit)
     real = Opt(Str('-')) + Rep1(digit) + Str('.') + Rep1(digit)
-    operators = Any("+-*/")
+
+    arithmetics = Any("+-*/^")
+    comparisons = Str("<>", "<", "<=", "=<", ">", ">=", "=>", "==")
+    booleans = Str("and", "or", "xor")
+    operators = arithmetics | comparisons | booleans
+    equal = Str("=")
+    assign = Str(":=")
+
     alpha = NoCase(Range("az"))
     name = Rep1(Any("@_") | alpha | digit)
     local_name = Str("%") + name
 
-    space = Any(" \t\n")
+
+    keywords = Str("if", "where", "on", "in", "include")
+    space = Any(" \t")
 
     lexicon = Lexicon([
         (integer, 'integer'),
         (real, 'real'),
         (operators, 'operator'),
+        (equal, 'equal'),
+        (assign, 'assign'),
         (name, 'name'),
         (local_name, 'local'),
         (Str('('), 'lparen'),
@@ -24,6 +35,7 @@ class Lexer(Scanner):
         (Str(']'), 'rbracket'),
         (Str('{'), 'lcurly'),
         (Str('}'), 'rcurly'),
+        (Str('|'), 'pipe'),
         (space, IGNORE)
     ])
 

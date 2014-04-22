@@ -18,13 +18,39 @@ class TestLexer:
     def test_scans_operator(self):
         self._test("+", ('operator', '+'))
 
-    def test_scans_arithmetic_expression(self):
+    def test_scans_expressions(self):
         self._test_all("42 + 3.14159 / 1981",
                        [('integer', '42'),
                         ('operator', '+'),
                         ('real', '3.14159'),
                         ('operator', '/'),
                         ('integer', '1981')])
+        self._test_all("42 and 3.14159 or 1981",
+                       [('integer', '42'),
+                        ('operator', 'and'),
+                        ('real', '3.14159'),
+                        ('operator', 'or'),
+                        ('integer', '1981')])
+        self._test_all("K_n[s] <> 0",
+                       [('name', 'K_n'),
+                        ('lbracket', '['),
+                        ('name', 's'),
+                        ('rbracket', ']'),
+                        ('operator', '<>'),
+                        ('integer', '0')])
+
+    def test_scans_functions(self):
+        self._test_all("d(log(Y[s]))",
+                       [('name', 'd'),
+                        ('lparen', '('),
+                        ('name', 'log'),
+                        ('lparen', '('),
+                        ('name', 'Y'),
+                        ('lbracket', '['),
+                        ('name', 's'),
+                        ('rbracket', ']'),
+                        ('rparen', ')'),
+                        ('rparen', ')')])
 
     def test_scans_names(self):
         self._test("P", ('name', 'P'))
@@ -49,3 +75,10 @@ class TestLexer:
                         ('lcurly', '{'),
                         ('integer', '-1'),
                         ('rcurly', '}')])
+        self._test_all("|V||O|",
+                       [('pipe', '|'),
+                        ('name', 'V'),
+                        ('pipe', '|'),
+                        ('pipe', '|'),
+                        ('name', 'O'),
+                        ('pipe', '|')])
