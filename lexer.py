@@ -37,6 +37,7 @@ class Lexer(Scanner):
         (assign, 'assign'),
         (keywords, 'keyword'),
         (options, 'option'),
+        (Str('\\'), 'backlash'),
         (name, 'name'),
         (string, 'string'),
         (local_name, 'local'),
@@ -56,13 +57,14 @@ class Lexer(Scanner):
         Scanner.__init__(self, self.lexicon, file)
 
 
-# test = """GDP = 0
+# # test = """GDP = 0
 
-#         #Comment
+# #         #Comment
 
-#         Another := 15 123
-#         """
+# #         Another := 15 123
+# #         """
 
+# test = "01 02 03 04 \ 01 02"
 # lex = Lexer(StringIO(test))
 
 # # f = NamedTemporaryFile(delete = False)

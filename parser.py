@@ -7,8 +7,6 @@ class Compiler:
         # Init tokens
         self.token = self.lexer.read()
         self.nextToken = self.lexer.read()
-        print self.token
-        print self.nextToken
         self.Instruction()
 
     def advance(self):
@@ -32,6 +30,19 @@ class Compiler:
     def expected(self, tokenType):
         raise SyntaxError("Syntax error: Expected {0}".format(tokenType))
 
+    def readList(self, term):
+        """
+        <list> ::= (<integer> | <name>)*
+        """
+        ret = []
+        while self.token[0] <> term:
+            if self.token[0] == "integer" or self.token[0] == "name":
+                ret.append(self.token[1])
+                self.advance()
+            else:
+                self.expected("integer or string")
+        return ret
+
     def Instruction(self):
         """
         <instruction> ::= <assignment> | <include> | <iter> | <formula>
@@ -54,15 +65,11 @@ class Compiler:
         list = self.readList('newline')
         self.heap[local] = list
 
-    def readList(self, term):
+    def Formula(self):
         """
-        <list> ::= (<integer> | <name>)*
+        <formula> ::= <expression> "=" <expression> [ (<iter>)* ]
         """
-        ret = []
-        while self.token[0] <> term:
-            if self.token[0] == "integer" or self.token[0] == "name":
-                ret.append(self.token[1])
-                self.advance()
-            else:
-                self.expected("integer or string")
-        return ret
+        local = self.read('local')
+        self.match('assign')
+        list = self.readList('newline')
+        self.heap[local] = list

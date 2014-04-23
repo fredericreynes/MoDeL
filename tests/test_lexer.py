@@ -26,6 +26,17 @@ class TestLexer:
     def test_scans_operator(self):
         self._test("+", ('operator', '+'))
 
+    def test_scans_lists(self):
+        self._test_all("01 02 03 04 \ 01 02",
+                       [('integer', '01'),
+                        ('integer', '02'),
+                        ('integer', '03'),
+                        ('integer', '04'),
+                        ('backlash', '\\'),
+                        ('integer', '01'),
+                        ('integer', '02'),
+                        ('newline', '')])
+
     def test_scans_expressions(self):
         self._test_all("42 + 3.14159 / 1981",
                        [('integer', '42'),
