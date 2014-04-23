@@ -1,5 +1,7 @@
 from plex import *
+from plex.traditional import re
 from tempfile import NamedTemporaryFile
+from StringIO import StringIO
 
 class Lexer(Scanner):
     digit = Range("09")
@@ -15,14 +17,17 @@ class Lexer(Scanner):
 
     alpha = NoCase(Range("az"))
     name = Rep1(Any("@_") | alpha | digit)
+    string = Rep1(Any(".\\_@") | alpha | digit)
     local_name = Str("%") + name
 
     keywords = Str("if", "where", "on", "in", "include")
     options = Str("@pv", "@over")
 
+    comment = Str('#') + Rep(AnyBut('\n'))
     continuation = Str('_') + Str('\n')
-    newline = Str('\n') | Eof
+    newline = Rep1(Str('\n') | re("$"))
     space = Any(" \t")
+    blank_line = Rep(space) + Opt(comment) + newline
 
     lexicon = Lexicon([
         (integer, 'integer'),
@@ -33,6 +38,7 @@ class Lexer(Scanner):
         (keywords, 'keyword'),
         (options, 'option'),
         (name, 'name'),
+        (string, 'string'),
         (local_name, 'local'),
         (Str('('), 'lparen'),
         (Str(')'), 'rparen'),
@@ -43,20 +49,32 @@ class Lexer(Scanner):
         (Str('|'), 'pipe'),
         (Str(','), 'comma'),
         (newline, 'newline'),
-        (space | continuation, IGNORE)
+        (space | continuation | blank_line, IGNORE)
     ])
 
     def __init__(self, file):
         Scanner.__init__(self, self.lexicon, file)
 
 
-#lex = Lexer(StringIO("@pv VA = sum(VA[s] on s)"))
-f = NamedTemporaryFile(delete = False)
-f.write("@pv VA = sum(VA[s] on s)")
-f.close()
-print repr(open(f.name, 'rb').read())
-lex = Lexer(open(f.name, 'rU'))
-tok = lex.read()
-while tok[0] <> None:
-    print tok
-    tok = lex.read()
+# test = """GDP = 0
+
+#         #Comment
+
+#         Another := 15 123
+#         """
+
+# lex = Lexer(StringIO(test))
+
+# # f = NamedTemporaryFile(delete = False)
+# # f.write("@pv VA = sum(VA[s] on s)")
+# # f.close()
+# # # fw = open(f.name, 'a')
+# # # fw.write('\n')
+# # # fw.close()
+# # f.name = "pouet.txt"
+# # print repr(open(f.name, 'rb').read())
+# # lex = Lexer(open(f.name, 'rU'))
+# tok = lex.read()
+# while tok[0] <> None:
+#     print tok
+#     tok = lex.read()

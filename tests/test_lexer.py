@@ -32,20 +32,23 @@ class TestLexer:
                         ('operator', '+'),
                         ('real', '3.14159'),
                         ('operator', '/'),
-                        ('integer', '1981')])
+                        ('integer', '1981'),
+                        ('newline', '')])
         self._test_all("42 and 3.14159 or 1981",
                        [('integer', '42'),
                         ('operator', 'and'),
                         ('real', '3.14159'),
                         ('operator', 'or'),
-                        ('integer', '1981')])
+                        ('integer', '1981'),
+                        ('newline', '')])
         self._test_all("K_n[s] <> 0",
                        [('name', 'K_n'),
                         ('lbracket', '['),
                         ('name', 's'),
                         ('rbracket', ']'),
                         ('operator', '<>'),
-                        ('integer', '0')])
+                        ('integer', '0'),
+                        ('newline', '')])
 
     def test_scans_functions(self):
         self._test_all("d(log(Y[s]))",
@@ -58,7 +61,8 @@ class TestLexer:
                         ('name', 's'),
                         ('rbracket', ']'),
                         ('rparen', ')'),
-                        ('rparen', ')')])
+                        ('rparen', ')'),
+                        ('newline', '')])
 
     def test_scans_names(self):
         self._test("P", ('name', 'P'))
@@ -74,7 +78,8 @@ class TestLexer:
                        [('name', 'P'),
                         ('lbracket', '['),
                         ('name', 'c'),
-                        ('rbracket', ']')])
+                        ('rbracket', ']'),
+                        ('newline', '')])
         self._test_all("PRF[sm]{-1}",
                        [('name', 'PRF'),
                         ('lbracket', '['),
@@ -82,18 +87,20 @@ class TestLexer:
                         ('rbracket', ']'),
                         ('lcurly', '{'),
                         ('integer', '-1'),
-                        ('rcurly', '}')])
+                        ('rcurly', '}'),
+                        ('newline', '')])
         self._test_all("|V||O|",
                        [('pipe', '|'),
                         ('name', 'V'),
                         ('pipe', '|'),
                         ('pipe', '|'),
                         ('name', 'O'),
-                        ('pipe', '|')])
+                        ('pipe', '|'),
+                        ('newline', '')])
 
     def test_scans_formulas(self):
         self._test_all("@pv VA = sum(VA[s] on s)",
-                       [('name', '@pv'),
+                       [('option', '@pv'),
                         ('name', 'VA'),
                         ('equal', '='),
                         ('name', 'sum'),
@@ -104,4 +111,27 @@ class TestLexer:
                         ('rbracket', ']'),
                         ('keyword', 'on'),
                         ('name', 's'),
-                        ('rparen', ')')])
+                        ('rparen', ')'),
+                        ('newline', '')])
+
+    def test_scans_strings(self):
+        self._test("..\\model\\blocks", ('string', "..\\model\\blocks"))
+
+
+    def test_scans_blocks(self):
+        test = """GDP = 0
+
+        #Comment
+
+        Another := 15 123
+        """
+        self._test_all(test,
+                       [('name', 'GDP'),
+                        ('equal', '='),
+                        ('integer', '0'),
+                        ('newline', '\n\n'),
+                        ('name', 'Another'),
+                        ('assign', ':='),
+                        ('integer', '15'),
+                        ('integer', '123'),
+                        ('newline', '\n')])
