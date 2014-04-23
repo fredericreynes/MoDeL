@@ -16,7 +16,7 @@ class Lexer(Scanner):
     assign = Str(":=")
 
     alpha = NoCase(Range("az"))
-    name = Rep1(Any("@_") | alpha | digit)
+    name = Rep1(Any("$@_") | alpha | digit)
     string = Rep1(Any(".\\_@") | alpha | digit)
     local_name = Str("%") + name
 
