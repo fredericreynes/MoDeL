@@ -70,6 +70,7 @@ class MoDeLFile:
 
     def compile_line(self, line, heap, is_debug):
         ast = grammar.instruction.parseString(line)[0]
+        logging.debug(ast.__str__())
         generated_ast, heap = traversal.generate(traversal.compile_ast(ast, heap = heap), heap)
         return generated_ast, heap
 

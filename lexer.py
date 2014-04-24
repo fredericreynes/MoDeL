@@ -16,9 +16,10 @@ class Lexer(Scanner):
     assign = Str(":=")
 
     alpha = NoCase(Range("az"))
-    name = Rep1(Any("$@_") | alpha | digit)
+    name = Rep1(Any("@_") | alpha | digit)
     string = Rep1(Any(".\\_@") | alpha | digit)
     local_name = Str("%") + name
+    loop_counter = Str("$") + Rep1(alpha | digit)
 
     keywords = Str("if", "where", "on", "in", "include")
     options = Str("@pv", "@over")
@@ -41,6 +42,7 @@ class Lexer(Scanner):
         (name, 'name'),
         (string, 'string'),
         (local_name, 'local'),
+        (loop_counter, 'counter'),
         (Str('('), 'lparen'),
         (Str(')'), 'rparen'),
         (Str('['), 'lbracket'),
