@@ -7,17 +7,31 @@ class DefaultGenerator:
 
 class Compiler:
     def __init__(self, file, generator = DefaultGenerator):
-        self.lexer = lexer.Lexer(file)
+        self.tokens = self.lex_all(file)
+        self.tokens.append((None, ''))
+        print self.tokens
         self.heap = {}
         self.generator = generator
         # Init tokens
-        self.token = self.lexer.read()
-        self.nextToken = self.lexer.read()
+        self.seek_token(0)
         self.Instruction()
 
+    def lex_all(self, file):
+        lex = lexer.Lexer(file)
+        tokens = [lex.read()]
+        tok = tokens[0]
+        while tok[0] <> None:
+            tok = lex.read()
+            tokens.append(tok)
+        return tokens
+
+    def seek_token(self, tok_pos):
+        self.tok_pos = tok_pos
+        self.token = self.tokens[tok_pos]
+        self.next_token = self.tokens[tok_pos + 1]
+
     def advance(self):
-        self.token = self.nextToken
-        self.nextToken = self.lexer.read()
+        self.seek_token(self.tok_pos + 1)
 
     def match(self, tokenType):
         if self.token[0] == tokenType:
@@ -57,7 +71,7 @@ class Compiler:
             self.readAssignment()
         elif self.token[0] == 'include':
             self.Include()
-        elif self.nextToken[1] == "in":
+        elif self.next_token[1] == "in":
             self.Iter()
         else:
             self.readFormula()
@@ -101,7 +115,7 @@ class Compiler:
         iterators = set()
         identifiers = None
 
-        if self.token[0] == 'name' and self.nextToken[0] == 'lparen':
+        if self.token[0] == 'name' and self.next_token[0] == 'lparen':
             compiled, iterators, identifiers = self.readFunction()
         elif self.token[0] == 'lparen':
             self.match('lparen')
