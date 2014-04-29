@@ -9,7 +9,6 @@ class Compiler:
     def __init__(self, file, generator = DefaultGenerator):
         self.tokens = self.lex_all(file)
         self.tokens.append((None, ''))
-        print self.tokens
         self.heap = {}
         self.generator = generator
         # Init tokens
@@ -89,8 +88,12 @@ class Compiler:
         """
         <expression> ::= <term> (<operator> <term>)*
         """
-        compiled, all_iterators, all_identifiers = self.readTerm()
-        all_terms = [compiled]
+        all_terms = []
+        all_iterators = set()
+        all_identifiers = []
+
+        if not self.isTerm():
+            self.expected('term')
 
         while self.isTerm() or self.token[0] == 'operator':
             if self.token[0] == 'operator':
@@ -99,21 +102,21 @@ class Compiler:
                 compiled, iterators, identifiers = self.readTerm()
                 all_terms.append(compiled)
                 all_iterators.update(iterators)
-                all_identifiers.update(identifiers)
+                all_identifiers.append(identifiers)
 
         return (' '.join(all_terms),
                 all_iterators,
                 all_identifiers)
 
     def isTerm(self):
-        return self.token[0] == 'name' or self.token[0] == 'lparen' or self.token[0] == 'local' or self.token[0] == 'counter' or self.token[0] == 'real' or self.token[0] == 'integer'
+        return self.token[0] == 'name' or self.token[0] == 'pipe' or self.token[0] == 'lparen' or self.token[0] == 'local' or self.token[0] == 'counter' or self.token[0] == 'real' or self.token[0] == 'integer'
 
     def readTerm(self):
         """
         <term> ::= <function> | <lparen> <expression> <rparen> | <local> | <counter> | <real> | <integer> | <identifier>
         """
         iterators = set()
-        identifiers = None
+        identifiers = set()
 
         if self.token[0] == 'name' and self.next_token[0] == 'lparen':
             compiled, iterators, identifiers = self.readFunction()
@@ -122,17 +125,18 @@ class Compiler:
             compiled, iterators, identifiers = self.readExpression()
             self.match('rparen')
         elif self.token[0] == 'local':
-            compiled = self.read('local')
+            compiled = "%({0})s".format(self.read('local'))
         elif self.token[0] == 'counter':
             compiled = self.read('counter')
-            iterators.add(compiled[1:])
+            iterators.add(compiled)
+            compiled = "%({0})s".format(compiled)
         elif self.token[0] == 'real':
             compiled = self.read('real')
         elif self.token[0] == 'integer':
             compiled = self.read('integer')
         else:
             compiled, iterators = self.readIdentifier()
-            identifiers = set([compiled])
+            identifiers = compiled
 
         return (compiled, iterators, identifiers)
 
