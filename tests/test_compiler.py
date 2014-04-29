@@ -11,4 +11,9 @@ class TestCompiler:
         assert out.heap == {'%test': ['01', '02', '03', '04']}
 
     def test_compiles_placeholder(self):
-        out = self._compile("test = |V|")
+        self._compile("test = |V|")
+        self._compile("test = |V||O|")
+        self._compile("test = test|V||O|")
+
+    def test_compiles_expression(self):
+        self._compile("test = a + b - c")

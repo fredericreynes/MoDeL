@@ -1,8 +1,9 @@
 import lexer
 
 class DefaultGenerator:
-    def self.index(self, expressions):
-        return '_' + '_'.join(expressions)
+    @staticmethod
+    def index(components):
+        return '_' + '_'.join(components)
 
 class Compiler:
     def __init__(self, file, generator = DefaultGenerator):
@@ -72,24 +73,61 @@ class Compiler:
 
     def readExpression(self):
         """
-        <expression> ::= <function> | <lparen> <expression> <rparen> | <term>
+        <expression> ::= <term> (<operator> <term>)*
         """
-        return self.readTerm()
+        compiled, all_iterators, all_identifiers = self.readTerm()
+        all_terms = [compiled]
 
+        while self.isTerm() or self.token[0] == 'operator':
+            if self.token[0] == 'operator':
+                all_terms.append(self.read('operator'))
+            else:
+                compiled, iterators, identifiers = self.readTerm()
+                all_terms.append(compiled)
+                all_iterators.update(iterators)
+                all_identifiers.update(identifiers)
+
+        return (' '.join(all_terms),
+                all_iterators,
+                all_identifiers)
+
+    def isTerm(self):
+        return self.token[0] == 'name' or self.token[0] == 'lparen' or self.token[0] == 'local' or self.token[0] == 'counter' or self.token[0] == 'real' or self.token[0] == 'integer'
 
     def readTerm(self):
         """
-        <term> ::= <identifier> | <local> | <counter> | <real> | <integer>
+        <term> ::= <function> | <lparen> <expression> <rparen> | <local> | <counter> | <real> | <integer> | <identifier>
         """
-        return self.readIdentifier()
+        iterators = set()
+        identifiers = None
 
+        if self.token[0] == 'name' and self.nextToken[0] == 'lparen':
+            compiled, iterators, identifiers = self.readFunction()
+        elif self.token[0] == 'lparen':
+            self.match('lparen')
+            compiled, iterators, identifiers = self.readExpression()
+            self.match('rparen')
+        elif self.token[0] == 'local':
+            compiled = self.read('local')
+        elif self.token[0] == 'counter':
+            compiled = self.read('counter')
+            iterators.add(compiled[1:])
+        elif self.token[0] == 'real':
+            compiled = self.read('real')
+        elif self.token[0] == 'integer':
+            compiled = self.read('integer')
+        else:
+            compiled, iterators = self.readIdentifier()
+            identifiers = set([compiled])
+
+        return (compiled, iterators, identifiers)
 
     def readIdentifier(self):
         """
         <identifier> ::= (<name> | <placeholder>)+ [<index>] [<time>]
         """
         components = []
-        iterators = []
+        iterators = set()
 
         if not self.token[0] in ['name', 'pipe']:
             self.expected('name or placeholder')
@@ -99,14 +137,18 @@ class Compiler:
                 components.append(self.read('name'))
             elif self.token[0] == 'pipe':
                 placeholder = self.readPlaceholder()
-                iterators.append(placeholder)
-                components.append(placeholder)
+                components.append(placeholder[0])
+                iterators.add(placeholder[1])
 
         if self.token[0] == 'lbracket':
-            index = self.readIndex()
+            index, index_iterators = self.readIndex()
+            components.append(index)
+            iterators.update(index_iterators)
 
         if self.token[0] == 'lcurly':
             time = self.readTime()
+
+        return (''.join(components), iterators)
 
 
     def readPlaceholder(self):
@@ -116,16 +158,39 @@ class Compiler:
         self.match('pipe')
         name = self.read('name')
         self.match('pipe')
-        return name
+        return ("%({0})s".format(name), name)
 
     def readIndex(self):
         """
-        <index> ::= <lbracket> <expression> (<comma> <expression>)+ <rbracket>
+        <index> ::= <lbracket> (<name> | <integer>) (<comma> (<name> | <integer>))+ <rbracket>
         """
+        components = []
+        iterators = set()
+
         self.match('lbracket')
-        expression = self.readExpression()
+
+        if self.token[0] == 'name':
+            name = self.read('name')
+            components.append("%({0})s".format(name))
+            iterators.add(name)
+        elif self.token[0] == 'integer':
+            components.append(self.read('integer'))
+        else:
+            self.expected('iterator name or integer')
+
+        while self.token[0] == 'comma':
+            self.match('comma')
+            if self.token[0] == 'name':
+                name = self.read('name')
+                components.append("%({0})s".format(name))
+                iterators.add(name)
+            elif self.token[0] == 'integer':
+                components.append(self.read('integer'))
+            else:
+                self.expected('iterator name or integer')
+
         self.match('rbracket')
-        return expression
+        return (self.generator.index(components), iterators)
 
     def readFormula(self):
         """
@@ -134,3 +199,5 @@ class Compiler:
         lhs = self.readExpression()
         self.match('equal')
         rhs = self.readExpression()
+
+        print lhs, rhs
