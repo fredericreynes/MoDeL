@@ -111,6 +111,9 @@ class Compiler:
     def isTerm(self):
         return self.token[0] == 'name' or self.token[0] == 'pipe' or self.token[0] == 'lparen' or self.token[0] == 'local' or self.token[0] == 'counter' or self.token[0] == 'real' or self.token[0] == 'integer'
 
+    def readFunction(self):
+
+
     def readTerm(self):
         """
         <term> ::= <function> | <lparen> <expression> <rparen> | <local> | <counter> | <real> | <integer> | <identifier>

@@ -18,3 +18,5 @@ class TestCompiler:
     def test_compiles_expression(self):
         self._compile("test = a + b - c")
         self._compile("test = %a + b[c]")
+        self._compile("test = %a + b[c, g, j]")
+        self._compile("test = %a + b[c, g, j]")
