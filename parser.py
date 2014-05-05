@@ -112,7 +112,14 @@ class Compiler:
         return self.token[0] == 'name' or self.token[0] == 'pipe' or self.token[0] == 'lparen' or self.token[0] == 'local' or self.token[0] == 'counter' or self.token[0] == 'real' or self.token[0] == 'integer'
 
     def readFunction(self):
-
+        """
+        <function> ::= <name> <lparen> (<expression> [<comma> <expression>]*) <rparen>
+        """
+        name = self.read('name')
+        self.match('lparen')
+        compiled, iterators, identifiers = self.readExpression()
+        self.match('rparen')
+        return ('{0}({1})').format(name, compiled), iterators, identifiers
 
     def readTerm(self):
         """
