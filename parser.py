@@ -22,9 +22,14 @@ class Compiler:
             self.iterators = iterators
 
         self.generator = generator
+        self.dependencies = {}
         # Init tokens
         self.seek_token(0)
         self.Instruction()
+
+    @property
+    def equations(self):
+        return [l[0] for l in self.dependencies.values()]
 
     def lex_all(self, file):
         lex = lexer.Lexer(file)
@@ -262,8 +267,16 @@ class Compiler:
         # Cartesian product
         values = (self.iterators[i] for i in iter_names)
         product = list(itertools.product(*values))
-        keys = [dict(zip(iter_names, p)) for p in product]
+        values = [dict(zip(iter_names, p)) for p in product]
 
-        compiled = [compiled % k for k in keys]
+        # Generate all equations, with their associated identifiers
+        compiled = [compiled % v for v in values]
+        identifiers = zip(*[[i % v for v in values] for i in identifiers])
 
-        print (compiled, iterators, identifiers)
+        # print (compiled, iterators, identifiers)
+
+        # Add the equations to the dependency graph
+        for eq, ids in zip(compiled, identifiers):
+            if ids[0] in self.dependencies:
+                raise NameError("An equation for variable `{0}` has already been defined (`{1}`). Use the @over keyword to override the previous equation and use `{2}` instead.".format(ids[0], self.dependencies[ids[0]][0], eq))
+            self.dependencies[ids[0]] = [eq, ids[1:]]
