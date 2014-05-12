@@ -1,4 +1,5 @@
 import lexer
+import itertools
 
 class DefaultGenerator:
     @staticmethod
@@ -6,13 +7,20 @@ class DefaultGenerator:
         return '_' + '_'.join(components)
 
 class Compiler:
-    def __init__(self, file, generator = DefaultGenerator, heap = None):
+    def __init__(self, file, generator = DefaultGenerator, heap = None, iterators = None):
         self.tokens = self.lex_all(file)
         self.tokens.append((None, ''))
+
         if heap is None:
             self.heap = {}
         else:
             self.heap = heap
+
+        if iterators is None:
+            self.iterators = {}
+        else:
+            self.iterators = iterators
+
         self.generator = generator
         # Init tokens
         self.seek_token(0)
@@ -243,4 +251,19 @@ class Compiler:
         <formula> ::= <expression> <equal> <expression> [ (<iter>)* ]
         """
         compiled, iterators, identifiers = self.readEquation()
+
+        # Cartesian product of all iterators
+
+        # Check that they have all been declared
+        iter_names = list(iterators)
+        for i in iter_names:
+            if not i in self.iterators:
+                raise NameError("Undefined iterator: {0}".format(i))
+        # Cartesian product
+        values = (self.iterators[i] for i in iter_names)
+        product = list(itertools.product(*values))
+        keys = [dict(zip(iter_names, p)) for p in product]
+
+        compiled = [compiled % k for k in keys]
+
         print (compiled, iterators, identifiers)
