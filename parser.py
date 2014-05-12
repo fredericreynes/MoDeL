@@ -102,7 +102,7 @@ class Compiler:
                 compiled, iterators, identifiers = self.readTerm()
                 all_terms.append(compiled)
                 all_iterators.update(iterators)
-                all_identifiers.append(identifiers)
+                all_identifiers += identifiers
 
         return (' '.join(all_terms),
                 all_iterators,
@@ -126,7 +126,7 @@ class Compiler:
         <term> ::= <function> | <lparen> <expression> <rparen> | <local> | <counter> | <real> | <integer> | <identifier>
         """
         iterators = set()
-        identifiers = set()
+        identifiers = []
 
         if self.token[0] == 'name' and self.next_token[0] == 'lparen':
             compiled, iterators, identifiers = self.readFunction()
@@ -146,7 +146,7 @@ class Compiler:
             compiled = self.read('integer')
         else:
             compiled, iterators = self.readIdentifier()
-            identifiers = compiled
+            identifiers = [compiled]
 
         return (compiled, iterators, identifiers)
 
@@ -220,12 +220,21 @@ class Compiler:
         self.match('rbracket')
         return (self.generator.index(components), iterators)
 
+    def readEquation(self):
+        """
+        <equation> ::= <expression> <equal> <expression>
+        """
+        l_compiled, l_iterators, l_identifiers = self.readExpression()
+        self.match('equal')
+        r_compiled, r_iterators, r_identifiers = self.readExpression()
+        return ('{0} = {1}'.format(l_compiled, r_compiled),
+                l_iterators.union(r_iterators),
+                l_identifiers + r_identifiers)
+
+
     def readFormula(self):
         """
         <formula> ::= <expression> <equal> <expression> [ (<iter>)* ]
         """
-        lhs = self.readExpression()
-        self.match('equal')
-        rhs = self.readExpression()
-
-        print lhs, rhs
+        compiled, iterators, identifiers = self.readEquation()
+        print (compiled, iterators, identifiers)
