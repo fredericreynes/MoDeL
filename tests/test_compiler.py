@@ -39,3 +39,7 @@ class TestCompiler:
                                           'test_02_03_06 = 2006 + b_02_03_06',
                                           'test_01_04_06 = 2006 + b_01_04_06',
                                           'test_02_04_06 = 2006 + b_02_04_06'])
+
+    def test_compiles_function(self):
+        res = self._compile("test = testfunc(args)")
+        assert res.equations == ['test = testfunc(args)']

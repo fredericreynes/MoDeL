@@ -239,6 +239,12 @@ class Compiler:
         self.match('rbracket')
         return (self.generator.index(components), iterators)
 
+    def readIterators():
+        """
+        <iterator> ::= <name> "in" <list>
+        """
+        pass
+
     def readEquation(self):
         """
         <equation> ::= <expression> <equal> <expression>
@@ -257,9 +263,14 @@ class Compiler:
         """
         compiled, iterators, identifiers = self.readEquation()
 
-        # Cartesian product of all iterators
+        if self.token[0] == 'keyword' and self.token[1] == 'if':
+            cond_compiled, cond_iterators, cond_identifiers = self.readCondition()
 
-        # Check that they have all been declared
+        if self.token[0] == 'keyword' and (self.token[1] == 'where' or self.token[1] == 'on'):
+            self.match('keyword')
+
+        # Cartesian product of all iterators
+        # Check that all iterators been declared
         iter_names = list(iterators)
         for i in iter_names:
             if not i in self.iterators:
