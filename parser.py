@@ -6,10 +6,13 @@ class DefaultGenerator:
         return '_' + '_'.join(components)
 
 class Compiler:
-    def __init__(self, file, generator = DefaultGenerator):
+    def __init__(self, file, generator = DefaultGenerator, heap = None):
         self.tokens = self.lex_all(file)
         self.tokens.append((None, ''))
-        self.heap = {}
+        if heap is None:
+            self.heap = {}
+        else:
+            self.heap = heap
         self.generator = generator
         # Init tokens
         self.seek_token(0)
@@ -135,7 +138,10 @@ class Compiler:
             compiled, iterators, identifiers = self.readExpression()
             self.match('rparen')
         elif self.token[0] == 'local':
-            compiled = "%({0})s".format(self.read('local'))
+            name = self.read('local')
+            if not name in self.heap:
+                raise NameError("Local variable {0} is used before having been declared.".format(name))
+            compiled = self.heap[name]
         elif self.token[0] == 'counter':
             compiled = self.read('counter')
             iterators.add(compiled)

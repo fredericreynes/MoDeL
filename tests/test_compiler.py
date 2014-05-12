@@ -3,8 +3,8 @@ from StringIO import StringIO
 
 class TestCompiler:
 
-    def _compile(self, str):
-        return parser.Compiler(StringIO(str))
+    def _compile(self, str, heap = None):
+        return parser.Compiler(StringIO(str), heap = heap)
 
     def test_compiles_assignments(self):
         out = self._compile("%test := 01 02 03 04")
@@ -17,7 +17,7 @@ class TestCompiler:
 
     def test_compiles_expression(self):
         self._compile("test = a + b - c")
-        self._compile("test = %a + b[c]")
-        self._compile("test = %a + b[c, g, j]")
-        self._compile("test = %a + b[c, g, j]")
-        self._compile("test = a + func(pouet) - c")
+        self._compile("test = %a + b[c]", {'%a': '2006'})
+        self._compile("test = %a + b[c, g, j]", {'%a': '2006'})
+        self._compile("test = %a + b[c, g, j]", {'%a': '2006'})
+        self._compile("test = a + func(args) - c")
