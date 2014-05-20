@@ -65,18 +65,25 @@ class Compiler:
     def expected(self, tokenType):
         raise SyntaxError("Expected {0}".format(tokenType))
 
+    def fetch_in_heap(self, key):
+        if not key in self.heap:
+            raise NameError("Local variable {0} is used before having been declared.".format(key))
+        return self.heap[key]
+
     def readList(self, term):
         """
-        <list> ::= (<integer> | <name>)*
+        <list> ::= (<integer>* | <name>) [<backlash> (<integer>* | <name>)]
         """
-        ret = []
-        while self.token[0] <> term:
-            if self.token[0] == "integer" or self.token[0] == "name":
-                ret.append(self.token[1])
+        base_list = []
+        if self.token[0] == "name":
+            base_list = self.fetch_in_heap(self.token[1])
+        elif self.token[0] == "integer":
+            while self.token[0] == "integer":
+                base_list.append(self.token[1])
                 self.advance()
-            else:
-                self.expected("integer or string")
-        return ret
+        else:
+            self.expected("integer or string")
+        return base_list
 
     def Instruction(self):
         """
@@ -152,9 +159,7 @@ class Compiler:
             self.match('rparen')
         elif self.token[0] == 'local':
             name = self.read('local')
-            if not name in self.heap:
-                raise NameError("Local variable {0} is used before having been declared.".format(name))
-            compiled = self.heap[name]
+            compiled = self.fetch_in_heap(name)
         elif self.token[0] == 'counter':
             compiled = self.read('counter')
             iterators.add(compiled)
