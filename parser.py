@@ -256,14 +256,14 @@ class Compiler:
         self.match('rbracket')
         return (self.generator.index(components), iterators)
 
-    def readIterators():
+    def readIterator():
         """
         <iterator> ::= <name> "in" <list>
         """
         name = self.read('name')
         self.match('in')
-        #list =
-        pass
+        return (name, self.readList())
+
 
     def readEquation(self):
         """
