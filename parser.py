@@ -243,6 +243,9 @@ class Compiler:
         """
         <iterator> ::= <name> "in" <list>
         """
+        name = self.read('name')
+        self.match('in')
+        #list =
         pass
 
     def readEquation(self):
