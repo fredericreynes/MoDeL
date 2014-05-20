@@ -6,6 +6,11 @@ class DefaultGenerator:
     def index(components):
         return '_' + '_'.join(components)
 
+    @staticmethod
+    def format_name(name):
+        return "%({0})s".format(name)
+
+
 class Compiler:
     def __init__(self, file, generator = DefaultGenerator, heap = None, iterators = None):
         self.tokens = self.lex_all(file)
@@ -233,30 +238,25 @@ class Compiler:
 
         self.match('lbracket')
 
-        if self.token[0] == 'name':
-            name = self.read('name')
-            components.append("%({0})s".format(name))
-            iterators.add(name)
-        elif self.token[0] == 'integer':
-            components.append(self.read('integer'))
-        else:
-            self.expected('iterator name or integer')
-
-        while self.token[0] == 'comma':
-            self.match('comma')
+        while True:
             if self.token[0] == 'name':
                 name = self.read('name')
-                components.append("%({0})s".format(name))
+                components.append(self.generator.format_name(name))
                 iterators.add(name)
             elif self.token[0] == 'integer':
                 components.append(self.read('integer'))
             else:
                 self.expected('iterator name or integer')
 
+            if self.token[0] == 'comma':
+                self.match('comma')
+            else:
+                break
+
         self.match('rbracket')
         return (self.generator.index(components), iterators)
 
-    def readIterator():
+    def readIterator(self):
         """
         <iterator> ::= <name> "in" <list>
         """
@@ -264,6 +264,12 @@ class Compiler:
         self.match('in')
         return (name, self.readList())
 
+    def readDelimitedList(self, reader):
+        delimited_list = [reader()]
+        while self.token[0] == 'comma':
+            self.match('comma')
+            delimited_list.append(reader())
+        return delimited_list
 
     def readEquation(self):
         """
