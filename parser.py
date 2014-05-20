@@ -292,8 +292,10 @@ class Compiler:
         if self.token[0] == 'keyword' and self.token[1] == 'if':
             cond_compiled, cond_iterators, cond_identifiers = self.readCondition()
 
+        local_iterators = {}
         if self.token[0] == 'keyword' and (self.token[1] == 'where' or self.token[1] == 'on'):
             self.match('keyword')
+            local_iterators = dict(self.readDelimitedList(self.readIterator))
 
         # Cartesian product of all iterators
         # Check that all iterators been declared
