@@ -8,7 +8,15 @@ class TestCompiler:
 
     def test_compiles_assignments(self):
         res = self._compile("%test := 01 02 03 04")
-        assert res.heap == {'%test': ['01', '02', '03', '04']}
+        assert res.heap == {'%test': (['01', '02', '03', '04'], [1, 2, 3, 4])}
+        res = self._compile("%test := 01 02 03 04 \ 01 02")
+        assert res.heap == {'%test': (['03', '04'], [3, 4])}
+        res = self._compile("%test := %oth_lst", {'%oth_lst': (['01', '02', '03', '04'], [1, 2, 3, 4])})
+        assert res.heap['%test'] == (['01', '02', '03', '04'], [1, 2, 3, 4])
+        res = self._compile("%test := %oth_lst \ %excl",
+                            {'%oth_lst': (['01', '02', '03', '04'], [1, 2, 3, 4]),
+                             '%excl': (['01', '02'], [1, 2])})
+        assert res.heap['%test'] == (['03', '04'], [3, 4])
 
     def test_compiles_placeholder(self):
         res = self._compile("test = a + b - c", iterators = {'V': ['X', 'CH', 'I']})

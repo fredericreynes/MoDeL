@@ -72,18 +72,30 @@ class Compiler:
 
     def readList(self, term):
         """
-        <list> ::= (<integer>* | <name>) [<backlash> (<integer>* | <name>)]
+        <list> ::= (<integer>* | <local>) [<backlash> (<integer>* | <local>)]
         """
         base_list = []
-        if self.token[0] == "name":
-            base_list = self.fetch_in_heap(self.token[1])
+        if self.token[0] == "local":
+            base_list = self.fetch_in_heap(self.read('local'))[0]
         elif self.token[0] == "integer":
             while self.token[0] == "integer":
-                base_list.append(self.token[1])
-                self.advance()
+                base_list.append(self.read('integer'))
         else:
-            self.expected("integer or string")
-        return base_list
+            self.expected("integer or local variable name")
+
+        excluded_list = []
+        if self.token[0] == "backlash":
+            self.advance()
+            if self.token[0] == "local":
+                excluded_list = self.fetch_in_heap(self.read('local'))[0]
+            elif self.token[0] == "integer":
+                while self.token[0] == "integer":
+                    excluded_list.append(self.read('integer'))
+            else:
+                self.expected("integer or local variable name")
+
+        return ([e for e in base_list if not e in excluded_list],
+                [i for i, e in enumerate(base_list, 1) if e not in excluded_list])
 
     def Instruction(self):
         """
