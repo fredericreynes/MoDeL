@@ -70,7 +70,7 @@ class Compiler:
             raise NameError("Local variable {0} is used before having been declared.".format(key))
         return self.heap[key]
 
-    def readList(self, term):
+    def readList(self):
         """
         <list> ::= (<integer>* | <local>) [<backlash> (<integer>* | <local>)]
         """
@@ -116,7 +116,7 @@ class Compiler:
         """
         local = self.read('local')
         self.match('assign')
-        list = self.readList('newline')
+        list = self.readList()
         self.heap[local] = list
 
     def readExpression(self):
