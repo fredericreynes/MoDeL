@@ -261,14 +261,15 @@ class Compiler:
         <iterator> ::= <name> "in" <list>
         """
         name = self.read('name')
-        self.match('in')
-        return (name, self.readList())
+        self.match('keyword')
+        lists = self.readList()
+        return [(name, lists[0]), ('$' + name, lists[1])]
 
     def readDelimitedList(self, reader):
-        delimited_list = [reader()]
+        delimited_list = reader()
         while self.token[0] == 'comma':
             self.match('comma')
-            delimited_list.append(reader())
+            delimited_list.extend(reader())
         return delimited_list
 
     def readEquation(self):
@@ -285,7 +286,7 @@ class Compiler:
 
     def readFormula(self):
         """
-        <formula> ::= <expression> <equal> <expression> [ (<iter>)* ]
+        <formula> ::= <equation> [ <if> <condition> ] [ (<where> | <on>) (<iter>)* ]
         """
         compiled, iterators, identifiers = self.readEquation()
 
@@ -297,14 +298,18 @@ class Compiler:
             self.match('keyword')
             local_iterators = dict(self.readDelimitedList(self.readIterator))
 
+        # Merge global and local iterators
+        local_iterators = dict(self.iterators.items() + local_iterators.items())
+
         # Cartesian product of all iterators
         # Check that all iterators been declared
         iter_names = list(iterators)
         for i in iter_names:
-            if not i in self.iterators:
+            if not i in local_iterators:
                 raise NameError("Undefined iterator: {0}".format(i))
+
         # Cartesian product
-        values = (self.iterators[i] for i in iter_names)
+        values = (local_iterators[i] for i in iter_names)
         product = list(itertools.product(*values))
         values = [dict(zip(iter_names, p)) for p in product]
 
