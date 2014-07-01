@@ -113,7 +113,7 @@ class Compiler:
         elif self.next_token[1] == "in":
             self.Iter()
         else:
-            self.readFormula()
+            self.readFormula(self.readEquation)
 
     def readAssignment(self):
         """
@@ -284,11 +284,11 @@ class Compiler:
                 l_identifiers + r_identifiers)
 
 
-    def readFormula(self):
+    def readFormula(self, reader):
         """
         <formula> ::= <equation> [ <if> <condition> ] [ (<where> | <on>) (<iter>)* ]
         """
-        compiled, iterators, identifiers = self.readEquation()
+        compiled, iterators, identifiers = reader()
 
         if self.token[0] == 'keyword' and self.token[1] == 'if':
             cond_compiled, cond_iterators, cond_identifiers = self.readCondition()
