@@ -16,7 +16,7 @@ real =  Combine(Optional('-') + Word(nums) + '.' + Word(nums)).setParseAction(la
 
 varNameChars = alphanums + '_'
 
-variableName = Word(alphas + '_@', varNameChars).ast('variableName')
+variableName = Word(alphas + '!_@', varNameChars).ast('variableName')
 
 localName = Word('%', varNameChars).ast('localName')
 
