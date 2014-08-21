@@ -6,6 +6,11 @@ class DefaultGenerator:
     def index(components):
         return '_' + '_'.join(components)
 
+    @staticmethod
+    def format_name(name):
+        return "%({0})s".format(name)
+
+
 class Compiler:
     def __init__(self, file, generator = DefaultGenerator, heap = None, iterators = None):
         self.tokens = self.lex_all(file)
@@ -65,18 +70,37 @@ class Compiler:
     def expected(self, tokenType):
         raise SyntaxError("Expected {0}".format(tokenType))
 
-    def readList(self, term):
+    def fetch_in_heap(self, key):
+        if not key in self.heap:
+            raise NameError("Local variable {0} is used before having been declared.".format(key))
+        return self.heap[key]
+
+    def readList(self):
         """
-        <list> ::= (<integer> | <name>)*
+        <list> ::= (<integer>* | <local>) [<backlash> (<integer>* | <local>)]
         """
-        ret = []
-        while self.token[0] <> term:
-            if self.token[0] == "integer" or self.token[0] == "name":
-                ret.append(self.token[1])
-                self.advance()
+        base_list = []
+        if self.token[0] == "local":
+            base_list = self.fetch_in_heap(self.read('local'))[0]
+        elif self.token[0] == "integer":
+            while self.token[0] == "integer":
+                base_list.append(self.read('integer'))
+        else:
+            self.expected("integer or local variable name")
+
+        excluded_list = []
+        if self.token[0] == "backlash":
+            self.advance()
+            if self.token[0] == "local":
+                excluded_list = self.fetch_in_heap(self.read('local'))[0]
+            elif self.token[0] == "integer":
+                while self.token[0] == "integer":
+                    excluded_list.append(self.read('integer'))
             else:
-                self.expected("integer or string")
-        return ret
+                self.expected("integer or local variable name")
+
+        return ([e for e in base_list if not e in excluded_list],
+                [i for i, e in enumerate(base_list, 1) if e not in excluded_list])
 
     def Instruction(self):
         """
@@ -89,7 +113,7 @@ class Compiler:
         elif self.next_token[1] == "in":
             self.Iter()
         else:
-            self.readFormula()
+            self.readFormula(self.readEquation)
 
     def readAssignment(self):
         """
@@ -97,7 +121,7 @@ class Compiler:
         """
         local = self.read('local')
         self.match('assign')
-        list = self.readList('newline')
+        list = self.readList()
         self.heap[local] = list
 
     def readExpression(self):
@@ -152,9 +176,7 @@ class Compiler:
             self.match('rparen')
         elif self.token[0] == 'local':
             name = self.read('local')
-            if not name in self.heap:
-                raise NameError("Local variable {0} is used before having been declared.".format(name))
-            compiled = self.heap[name]
+            compiled = self.fetch_in_heap(name)
         elif self.token[0] == 'counter':
             compiled = self.read('counter')
             iterators.add(compiled)
@@ -216,34 +238,39 @@ class Compiler:
 
         self.match('lbracket')
 
-        if self.token[0] == 'name':
-            name = self.read('name')
-            components.append("%({0})s".format(name))
-            iterators.add(name)
-        elif self.token[0] == 'integer':
-            components.append(self.read('integer'))
-        else:
-            self.expected('iterator name or integer')
-
-        while self.token[0] == 'comma':
-            self.match('comma')
+        while True:
             if self.token[0] == 'name':
                 name = self.read('name')
-                components.append("%({0})s".format(name))
+                components.append(self.generator.format_name(name))
                 iterators.add(name)
             elif self.token[0] == 'integer':
                 components.append(self.read('integer'))
             else:
                 self.expected('iterator name or integer')
 
+            if self.token[0] == 'comma':
+                self.match('comma')
+            else:
+                break
+
         self.match('rbracket')
         return (self.generator.index(components), iterators)
 
-    def readIterators():
+    def readIterator(self):
         """
         <iterator> ::= <name> "in" <list>
         """
-        pass
+        name = self.read('name')
+        self.match('keyword')
+        lists = self.readList()
+        return [(name, lists[0]), ('$' + name, lists[1])]
+
+    def readDelimitedList(self, reader):
+        delimited_list = reader()
+        while self.token[0] == 'comma':
+            self.match('comma')
+            delimited_list.extend(reader())
+        return delimited_list
 
     def readEquation(self):
         """
@@ -257,26 +284,32 @@ class Compiler:
                 l_identifiers + r_identifiers)
 
 
-    def readFormula(self):
+    def readFormula(self, reader):
         """
-        <formula> ::= <expression> <equal> <expression> [ (<iter>)* ]
+        <formula> ::= <equation> [ <if> <condition> ] [ (<where> | <on>) (<iter>)* ]
         """
-        compiled, iterators, identifiers = self.readEquation()
+        compiled, iterators, identifiers = reader()
 
         if self.token[0] == 'keyword' and self.token[1] == 'if':
             cond_compiled, cond_iterators, cond_identifiers = self.readCondition()
 
+        local_iterators = {}
         if self.token[0] == 'keyword' and (self.token[1] == 'where' or self.token[1] == 'on'):
             self.match('keyword')
+            local_iterators = dict(self.readDelimitedList(self.readIterator))
+
+        # Merge global and local iterators
+        local_iterators = dict(self.iterators.items() + local_iterators.items())
 
         # Cartesian product of all iterators
         # Check that all iterators been declared
         iter_names = list(iterators)
         for i in iter_names:
-            if not i in self.iterators:
+            if not i in local_iterators:
                 raise NameError("Undefined iterator: {0}".format(i))
+
         # Cartesian product
-        values = (self.iterators[i] for i in iter_names)
+        values = (local_iterators[i] for i in iter_names)
         product = list(itertools.product(*values))
         values = [dict(zip(iter_names, p)) for p in product]
 
