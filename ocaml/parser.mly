@@ -13,16 +13,16 @@ open Ast
 %type <Ast.ast> main
 %%
 main:
-    expr EOL                { $1 }
+  e = expr EOL                  { e }
 ;
 number:
-  INT                       { $1 }
+  i = INT                       { i }
 expr:
-    number                  { Number $1 }
-  | LPAREN expr RPAREN      { $2 }
-  | expr PLUS expr          { BinOp(Plus, $1, $3) }
-  | expr MINUS expr         { BinOp(Minus, $1, $3) }
-  | expr TIMES expr         { BinOp(Times, $1, $3) }
-  | expr DIV expr           { BinOp(Div, $1, $3) }
-  | MINUS expr %prec UMINUS { UnOp(Minus, $2) }
+    n = number                  { Number n }
+  | LPAREN e = expr RPAREN      { e }
+  | e = expr PLUS f = expr      { BinOp(Plus, e, f) }
+  | e = expr MINUS f = expr     { BinOp(Minus, e, f) }
+  | e = expr TIMES f = expr     { BinOp(Times, e, f) }
+  | e = expr DIV f = expr       { BinOp(Div, e, f) }
+  | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
 ;
