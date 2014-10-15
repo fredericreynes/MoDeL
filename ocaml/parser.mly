@@ -1,16 +1,20 @@
-/* File parser.mly */
 %{
 open Ast
 %}
+
 %token <int> INT
 %token PLUS MINUS TIMES DIV
 %token LPAREN RPAREN
 %token EOL EOF
+%token EQUAL ASSIGN
+
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
+
 %start main             /* the entry point */
-%type <Ast.ast> main
+%type <Ast.expr> main
+
 %%
 main:
   e = expr EOL                  { e }
@@ -27,3 +31,5 @@ expr:
   | e = expr DIV f = expr       { BinOp(Div, e, f) }
   | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
 ;
+assignment:
+  rhs = expr ASSIGN lhs = expr  { Assign(rhs, lhs) }

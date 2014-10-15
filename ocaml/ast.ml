@@ -4,10 +4,13 @@ type operator =
   | Times
   | Div
 
-type ast =
+type expr =
   | Number of int
-  | UnOp of operator * ast
-  | BinOp of operator * ast * ast
+  | UnOp of operator * expr
+  | BinOp of operator * expr * expr
+
+type assign = Assign of expr * expr
+type equal = Equal of expr * expr
 
 let test = BinOp (Plus, BinOp (Times, Number 4, Number 2), Number 3)
 

@@ -4,9 +4,9 @@ type operator =
 | Times
 | Div
 
-type ast =
+type expr =
   Number of int
-| UnOp of operator * ast
-| BinOp of operator * ast * ast
+| UnOp of operator * expr
+| BinOp of operator * expr * expr
 
-val string_of_ast: ast -> string
+val string_of_ast: expr -> string

@@ -12,4 +12,6 @@ rule token = parse
 | '/'            { DIV }
 | '('            { LPAREN }
 | ')'            { RPAREN }
+| '='            { EQUAL }
+| ":="           { ASSIGN }
 | eof            { EOF }
