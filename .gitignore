@@ -11,3 +11,14 @@ in.txt
 out.txt
 *.graphml
 *.txt.prg
+
+
+*.annot
+*.cmo
+*.cma
+*.cmi
+*.a
+*.o
+*.cmx
+*.cmxs
+*.cmxa
