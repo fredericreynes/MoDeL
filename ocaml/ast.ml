@@ -22,4 +22,4 @@ let rec string_of_ast = function
   | UnOp(op, x) -> String.concat " " ["-("; string_of_ast x; ")"]
   | BinOp(op, x, y) -> String.concat " " ["("; string_of_ast x; string_of_operator op; string_of_ast y; ")"]
 
-let () = print_endline (string_of_ast test)
+(* let () = print_endline (string_of_ast test) *)

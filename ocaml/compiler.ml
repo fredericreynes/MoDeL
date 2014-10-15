@@ -1,12 +1,7 @@
-(* File calc.ml *)
 open Ast
 
+let parse_string s = Parser.main Lexer.token (Lexing.from_string (s ^ "\n"))
+let compile_string s = string_of_ast (parse_string s)
+
 let _ =
-  try
-    let lexbuf = Lexing.from_channel stdin in
-    while true do
-      let result = Parser.main Lexer.token lexbuf in
-      print_endline (string_of_ast result) (* ; flush stdout *)
-    done
-  with Lexer.Eof ->
-    exit 0
+  print_endline (compile_string "4 + 2 * 3")
