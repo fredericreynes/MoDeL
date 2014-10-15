@@ -22,3 +22,6 @@ out.txt
 *.cmx
 *.cmxs
 *.cmxa
+parser.ml
+parser.mli
+lexer.ml

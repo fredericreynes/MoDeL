@@ -1,4 +1,0 @@
-#!/bin/bash
-
-ocamlc -c ast.ml
-ocamlc -o ast ast.cmo
