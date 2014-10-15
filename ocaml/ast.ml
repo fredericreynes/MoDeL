@@ -6,6 +6,7 @@ type operator =
 
 type ast =
   | Number of int
+  | UnOp of operator * ast
   | BinOp of operator * ast * ast
 
 let test = BinOp (Plus, BinOp (Times, Number 4, Number 2), Number 3)
@@ -18,6 +19,7 @@ let string_of_operator = function
 
 let rec string_of_ast = function
     Number x -> string_of_int x
+  | UnOp(op, x) -> String.concat " " ["-("; string_of_ast x; ")"]
   | BinOp(op, x, y) -> String.concat " " ["("; string_of_ast x; string_of_operator op; string_of_ast y; ")"]
 
 let () = print_endline (string_of_ast test)

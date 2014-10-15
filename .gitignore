@@ -25,3 +25,5 @@ out.txt
 parser.ml
 parser.mli
 lexer.ml
+_build/
+*.byte
