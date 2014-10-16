@@ -1,3 +1,7 @@
+type id_part =
+  | Id of string
+  | Placeholder of string
+
 type operator =
   | Plus
   | Minus
@@ -9,6 +13,7 @@ type expr =
   | UnOp of operator * expr
   | BinOp of operator * expr * expr
   | Function of string * expr list
+  | Variable of id_part list * expr list * expr option
 
 type line =
   | Equation of expr * expr

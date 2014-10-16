@@ -6,6 +6,9 @@ open Ast
 %token <string> ID
 %token PLUS MINUS TIMES DIV
 %token LPAREN RPAREN
+%token LBRACKET RBRACKET
+%token LCURLY RCURLY
+%token PIPE
 %token COMMA
 %token EOL EOF
 %token EQUAL ASSIGN
@@ -38,6 +41,17 @@ expr:
   | e = expr DIV f = expr       { BinOp(Div, e, f) }
   | LPAREN e = expr RPAREN      { e }
   | f = func                    { f }
+  | var = variable              { var }
+;
+id_part:
+    id = ID                     { Id id }
+  | PIPE id = ID PIPE           { Placeholder id }
+;
+variable:
+  ident = nonempty_list(id_part)
+  index = loption(delimited(LBRACKET, separated_nonempty_list(COMMA, expr), RBRACKET))
+  time = option(delimited(LCURLY, expr, RCURLY))
+  { Variable(ident, index, time) }
 ;
 assignment:
   rhs = expr ASSIGN lhs = expr  { Assignment(rhs, lhs) }
