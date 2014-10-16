@@ -3,8 +3,10 @@ open Ast
 %}
 
 %token <int> INT
+%token <string> ID
 %token PLUS MINUS TIMES DIV
 %token LPAREN RPAREN
+%token COMMA
 %token EOL EOF
 %token EQUAL ASSIGN
 
@@ -29,16 +31,20 @@ number:
 ;
 expr:
     n = number                  { Number n }
-  | LPAREN e = expr RPAREN      { e }
+  | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
   | e = expr PLUS f = expr      { BinOp(Plus, e, f) }
   | e = expr MINUS f = expr     { BinOp(Minus, e, f) }
   | e = expr TIMES f = expr     { BinOp(Times, e, f) }
   | e = expr DIV f = expr       { BinOp(Div, e, f) }
-  | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
+  | LPAREN e = expr RPAREN      { e }
+  | f = func                    { f }
 ;
 assignment:
   rhs = expr ASSIGN lhs = expr  { Assignment(rhs, lhs) }
 ;
 equation:
   rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) }
+;
+func:
+  id = ID params = delimited(LPAREN, separated_nonempty_list(COMMA, expr), RPAREN)       { Function(id, params) }
 ;

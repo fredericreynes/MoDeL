@@ -8,6 +8,7 @@ type expr =
   | Number of int
   | UnOp of operator * expr
   | BinOp of operator * expr * expr
+  | Function of string * expr list
 
 type line =
   | Equation of expr * expr
