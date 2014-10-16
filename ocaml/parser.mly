@@ -13,11 +13,16 @@ open Ast
 %nonassoc UMINUS        /* highest precedence */
 
 %start main             /* the entry point */
-%type <Ast.expr> main
+%type <Ast.line list> main
 
 %%
 main:
-  e = expr EOL                  { e }
+    l = line EOF                { [l] }
+  | l = line m = main           { l :: m }
+;
+line:
+    l = assignment EOL          { l }
+  | l = equation EOL            { l }
 ;
 number:
   i = INT                       { i }
@@ -32,4 +37,8 @@ expr:
   | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
 ;
 assignment:
-  rhs = expr ASSIGN lhs = expr  { Assign(rhs, lhs) }
+  rhs = expr ASSIGN lhs = expr  { Assignment(rhs, lhs) }
+;
+equation:
+  rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) }
+;

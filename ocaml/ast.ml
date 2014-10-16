@@ -9,8 +9,9 @@ type expr =
   | UnOp of operator * expr
   | BinOp of operator * expr * expr
 
-type assign = Assign of expr * expr
-type equal = Equal of expr * expr
+type line =
+  | Equation of expr * expr
+  | Assignment of expr * expr
 
 let test = BinOp (Plus, BinOp (Times, Number 4, Number 2), Number 3)
 

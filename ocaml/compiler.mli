@@ -1,1 +1,1 @@
-val compile_string: string -> string
+(* val compile_string: string -> string *)
