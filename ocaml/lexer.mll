@@ -1,24 +1,33 @@
 (* File lexer.mll *)
 {
   open Parser        (* The type token is defined in parser.mli *)
+  open Lexing
+
+  let next_line lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <-
+      { pos with pos_bol = pos.pos_cnum;
+		 pos_lnum = pos.pos_lnum + 1
+      }
 }
 rule token = parse
-| [' ' '\t']     { token lexbuf }     (* skip blanks *)
-| ['\n' ]        { EOL }
-| ['0'-'9']+ as lxm      { INT(int_of_string lxm) }
-| ['a'-'z''A'-'Z']+ as id { ID(id) }
-| '+'            { PLUS }
-| '-'            { MINUS }
-| '*'            { TIMES }
-| '/'            { DIV }
-| '('            { LPAREN }
-| ')'            { RPAREN }
-| '['            { LBRACKET }
-| ']'            { RBRACKET }
-| '{'            { LCURLY }
-| '}'            { RCURLY }
-| '|'            { PIPE }
-| ','            { COMMA }
-| '='            { EQUAL }
-| ":="           { ASSIGN }
-| eof            { EOF }
+| ['0'-'9']+ as lxm                    { INT(lxm) }
+| ['a'-'z''A'-'Z''0'-'9']+ as id       { ID(id) }
+| [' ' '\t']*'+'[' ' '\t']*            { PLUS }
+| [' ' '\t']*'-'[' ' '\t']*            { MINUS }
+| [' ' '\t']*'*'[' ' '\t']*            { TIMES }
+| [' ' '\t']*'/'[' ' '\t']*            { DIV }
+|            '('[' ' '\t']*            { LPAREN }
+| [' ' '\t']*')'                       { RPAREN }
+|            '['[' ' '\t']*            { LBRACKET }
+| [' ' '\t']*']'                       { RBRACKET }
+|            '{'[' ' '\t']*            { LCURLY }
+| [' ' '\t']*'}'                       { RCURLY }
+| '|'                                  { PIPE }
+| [' ' '\t']*','[' ' '\t']*            { COMMA }
+| [' ' '\t']*'='[' ' '\t']*            { EQUAL }
+| [' ' '\t']*":="[' ' '\t']*           { ASSIGN }
+| [' ' '\t']+                          { WS }
+| '\n'                                 { next_line lexbuf; EOL }
+| '\r''\n'                             { next_line lexbuf; EOL }
+| eof                                  { EOF }
