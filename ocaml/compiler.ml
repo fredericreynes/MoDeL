@@ -5,5 +5,26 @@ let parse_string s = Parser.main Lexer.token (Lexing.from_string (s ^ "\n"))
 (* let compile_string s = string_of_ast (parse_string s) *)
 
 let _ =
-  (* print_endline (compile_string "4 + 2 * 3") *)
-  print_endline (dump (parse_string "45 := |V|[5 + d]{2006} * X|O| - f(4 + 2 * 3, 42)"))
+  (* let filename = "test_parser.txt" in *)
+  (* let input = open_in filename in *)
+  (* let lines  = List.of_enum (File.lines_of filename) in *)
+  (* let lexbuf = Lexing.from_input input in *)
+  let s = "45 := 42 + 6\nl := 06 15 test pouet\n45 := |V|[5 + d]{2006} * X|O| - f(4 + 2 * 3, 42)" in
+  let lines = String.nsplit s "\n" in
+  let lexbuf = Lexing.from_string s in
+  try
+    let parsed = Parser.main Lexer.token lexbuf in
+    print_endline (dump parsed)
+  with
+  (* | Lexer.Error msg -> *)
+  (*     Printf.eprintf "%s%!" msg *)
+  | Parser.Error ->
+     let pos = Lexing.lexeme_start_p lexbuf in
+     (* print_endline (List.nth lines 3); *)
+     print_endline (String.slice ~first:(max 0 (pos.pos_cnum - pos.pos_bol - 10))
+				 ~last:(pos.pos_cnum - pos.pos_bol + 10)
+				 (List.nth lines (pos.pos_lnum - 1)));
+     print_endline "          ^";
+     Printf.printf "At line %d, character %d: syntax error.\n%!" pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
+     ;
+  (* IO.close_in input *)
