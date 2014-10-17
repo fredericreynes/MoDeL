@@ -2,6 +2,10 @@ type id_part =
   | Id of string
   | Placeholder of string
 
+type str_or_int =
+  | Str of string
+  | Intg of int
+
 type operator =
   | Plus
   | Minus
@@ -9,15 +13,19 @@ type operator =
   | Div
 
 type expr =
+  | None
   | Number of int
   | UnOp of operator * expr
   | BinOp of operator * expr * expr
   | Function of string * expr list
   | Variable of id_part list * expr list * expr option
 
-type line =
+type lst = string list
+
+type statement =
   | Equation of expr * expr
-  | Assignment of expr * expr
+  | AssignExpr of expr * expr
+  | AssignLst of expr * lst
 
 let test = BinOp (Plus, BinOp (Times, Number 4, Number 2), Number 3)
 
