@@ -2,38 +2,42 @@
 open Ast
 %}
 
-%token <int> INT
+%token <string> INT
 %token <string> ID
 %token PLUS MINUS TIMES DIV
+%token EQUAL ASSIGN
 %token LPAREN RPAREN
 %token LBRACKET RBRACKET
 %token LCURLY RCURLY
 %token PIPE
 %token COMMA
+%token WS
 %token EOL EOF
-%token EQUAL ASSIGN
 
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
 
 %start main             /* the entry point */
-%type <Ast.line list> main
+%type <Ast.statement list> main
 
 %%
 main:
-    l = line EOF                { [l] }
-  | l = line m = main           { l :: m }
+                                    { [] }
+  | s = statement EOF               { [s] }
+  | s = statement EOL m = main      { s :: m }
 ;
-line:
-    l = assignment EOL          { l }
-  | l = equation EOL            { l }
+statement:
+    s = assign_expr                 { s }
+  | s = assign_list                 { s }
+  (* | rhs = expr ASSIGN lhs = lst   { AssignLst(rhs, lhs) } *)
+  (* | rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) } *)
 ;
 number:
   i = INT                       { i }
 ;
 expr:
-    n = number                  { Number n }
+    n = number                  { Number (int_of_string n) }
   | MINUS e = expr %prec UMINUS { UnOp(Minus, e) }
   | e = expr PLUS f = expr      { BinOp(Plus, e, f) }
   | e = expr MINUS f = expr     { BinOp(Minus, e, f) }
@@ -53,11 +57,18 @@ variable:
   time = option(delimited(LCURLY, expr, RCURLY))
   { Variable(ident, index, time) }
 ;
-assignment:
-  rhs = expr ASSIGN lhs = expr  { Assignment(rhs, lhs) }
+assign_expr:
+    rhs = expr ASSIGN lhs = expr  { AssignExpr(rhs, lhs) }
 ;
-equation:
-  rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) }
+assign_list:
+    rhs = expr ASSIGN lhs = lst  { AssignLst(rhs, lhs) }
+;
+str_or_int:
+    str = ID                    { str }
+  | int = INT                   { int }
+;
+%inline lst:
+   h = str_or_int WS t = separated_nonempty_list(WS, str_or_int)                  { h :: t }
 ;
 func:
   id = ID params = delimited(LPAREN, separated_nonempty_list(COMMA, expr), RPAREN)       { Function(id, params) }
