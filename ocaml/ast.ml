@@ -27,17 +27,14 @@ type statement =
   | AssignExpr of expr * expr
   | AssignLst of expr * lst
 
-let test = BinOp (Plus, BinOp (Times, Number 4, Number 2), Number 3)
 
-let string_of_operator = function
-    Plus -> "+"
-  | Minus -> "-"
-  | Times -> "*"
-  | Div -> "/"
+module Heap = Map.Make(String)
 
-let rec string_of_ast = function
-    Number x -> string_of_int x
-  | UnOp(op, x) -> String.concat " " ["-("; string_of_ast x; ")"]
-  | BinOp(op, x, y) -> String.concat " " ["("; string_of_ast x; string_of_operator op; string_of_ast y; ")"]
+let h = Heap.empty
 
-(* let () = print_endline (string_of_ast test) *)
+(* let apply_assignments stmts = *)
+(*   List.iter (fun s -> *)
+(* 	    | AssignExpr e -> *)
+(* 	       let (lhs, rhs) = e in *)
+
+(* 	    ) stmts *)

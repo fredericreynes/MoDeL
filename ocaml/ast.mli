@@ -26,5 +26,3 @@ type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr
   | AssignLst of expr * lst
-
-val string_of_ast: expr -> string

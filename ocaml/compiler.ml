@@ -1,9 +1,6 @@
 open Batteries
 open Ast
 
-let parse_string s = Parser.main Lexer.token (Lexing.from_string (s ^ "\n"))
-(* let compile_string s = string_of_ast (parse_string s) *)
-
 let _ =
   (* let filename = "test_parser.txt" in *)
   (* let input = open_in filename in *)
@@ -16,11 +13,8 @@ let _ =
     let parsed = Parser.main Lexer.token lexbuf in
     print_endline (dump parsed)
   with
-  (* | Lexer.Error msg -> *)
-  (*     Printf.eprintf "%s%!" msg *)
   | Parser.Error ->
      let pos = Lexing.lexeme_start_p lexbuf in
-     (* print_endline (List.nth lines 3); *)
      print_endline (String.slice ~first:(max 0 (pos.pos_cnum - pos.pos_bol - 10))
 				 ~last:(pos.pos_cnum - pos.pos_bol + 10)
 				 (List.nth lines (pos.pos_lnum - 1)));
