@@ -19,6 +19,7 @@ type expr =
   | BinOp of operator * expr * expr
   | Function of string * expr list
   | Variable of id_part list * expr list * expr option
+  | Local of string
 
 type lst = string list
 

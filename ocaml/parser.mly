@@ -4,6 +4,7 @@ open Ast
 
 %token <string> INT
 %token <string> ID
+%token <string> LOCAL
 %token PLUS MINUS TIMES DIV
 %token EQUAL ASSIGN
 %token LPAREN RPAREN
@@ -46,6 +47,7 @@ expr:
   | LPAREN e = expr RPAREN      { e }
   | f = func                    { f }
   | var = variable              { var }
+  | local = LOCAL               { Local local }
 ;
 id_part:
     id = ID                     { Id id }

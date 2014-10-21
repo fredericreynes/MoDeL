@@ -12,7 +12,8 @@
 }
 rule token = parse
 | ['0'-'9']+ as lxm                    { INT(lxm) }
-| ['a'-'z''A'-'Z''0'-'9']+ as id       { ID(id) }
+| ['_' 'a'-'z''A'-'Z''0'-'9']+ as id   { ID(id) }
+| '%'['_' 'a'-'z''A'-'Z''0'-'9']+ as l { LOCAL(l) }
 | [' ' '\t']*'+'[' ' '\t']*            { PLUS }
 | [' ' '\t']*'-'[' ' '\t']*            { MINUS }
 | [' ' '\t']*'*'[' ' '\t']*            { TIMES }

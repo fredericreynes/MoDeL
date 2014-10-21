@@ -6,7 +6,7 @@ let _ =
   (* let input = open_in filename in *)
   (* let lines  = List.of_enum (File.lines_of filename) in *)
   (* let lexbuf = Lexing.from_input input in *)
-  let s = "45 := 42 + 6\nl := 06 15 test pouet\n45 := |V|[5 + d]{2006} * X|O| - f(4 + 2 * 3, 42)" in
+  let s = "45 := 42 + 6\nl := 06 15 test pouet\n45 := |V|[5 + d]{2006} * X|O| - f(4 + 2 * 3, 42)\n%pouet  := 42" in
   let lines = String.nsplit s "\n" in
   let lexbuf = Lexing.from_string s in
   try
