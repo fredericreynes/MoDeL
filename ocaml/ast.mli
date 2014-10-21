@@ -21,7 +21,7 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type lst = string list
+type lst = Lst of string list * string list option
 
 type statement =
   | Equation of expr * expr

@@ -11,6 +11,7 @@ open Ast
 %token LBRACKET RBRACKET
 %token LCURLY RCURLY
 %token PIPE
+%token BACKSLASH
 %token COMMA
 %token WS
 %token EOL EOF
@@ -65,13 +66,25 @@ assign_expr:
 assign_list:
     rhs = expr ASSIGN lhs = lst  { AssignLst(rhs, lhs) }
 ;
+
+
 str_or_int:
     str = ID                    { str }
   | int = INT                   { int }
 ;
-%inline lst:
-   h = str_or_int WS t = separated_nonempty_list(WS, str_or_int)                  { h :: t }
+base_lst:
+   h = str_or_int WS
+   t = separated_nonempty_list(WS, str_or_int)
+   { h :: t }
 ;
+exclude_lst:
+  BACKSLASH exclude_lst = base_lst  { exclude_lst }
+;
+lst:
+  main_lst = base_lst exclude_lst = option(exclude_lst) { Lst(main_lst, exclude_lst) }
+;
+
+
 func:
   id = ID params = delimited(LPAREN, separated_nonempty_list(COMMA, expr), RPAREN)       { Function(id, params) }
 ;

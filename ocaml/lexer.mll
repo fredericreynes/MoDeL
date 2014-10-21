@@ -25,6 +25,7 @@ rule token = parse
 |            '{'[' ' '\t']*            { LCURLY }
 | [' ' '\t']*'}'                       { RCURLY }
 | '|'                                  { PIPE }
+| [' ' '\t']*'\\'[' ' '\t']*            { BACKSLASH }
 | [' ' '\t']*','[' ' '\t']*            { COMMA }
 | [' ' '\t']*'='[' ' '\t']*            { EQUAL }
 | [' ' '\t']*":="[' ' '\t']*           { ASSIGN }
