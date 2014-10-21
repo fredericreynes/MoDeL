@@ -27,3 +27,7 @@ type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr
   | AssignLst of expr * lst
+
+val apply_assignments : statement list -> unit
+
+val heap : (string, lst) Hashtbl.t

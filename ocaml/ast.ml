@@ -29,13 +29,16 @@ type statement =
   | AssignLst of expr * lst
 
 
-module Heap = Map.Make(String)
+let heap = Hashtbl.create 10000
 
-let h = Heap.empty
+(* let h = Heap.add "Test" ["world"; "42"]  h *)
 
-(* let apply_assignments stmts = *)
-(*   List.iter (fun s -> *)
-(* 	    | AssignExpr e -> *)
-(* 	       let (lhs, rhs) = e in *)
+let string_of_expr = function
+    Local id -> id
+  | _ -> "Not a local variable"
 
-(* 	    ) stmts *)
+let apply_assignments stmts =
+  List.iter (fun s -> match s with
+		      | AssignLst (lhs, rhs) -> Hashtbl.add heap (string_of_expr lhs) rhs
+		      | _ -> print_endline "Not an assignment"
+	    ) stmts
