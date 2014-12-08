@@ -14,7 +14,6 @@ open Ast
 %token PIPE
 %token BACKSLASH
 %token COMMA
-%token WS
 %token EOL EOF
 
 %left PLUS MINUS        /* lowest precedence */

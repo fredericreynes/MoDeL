@@ -14,25 +14,24 @@ rule token = parse
 | ['0'-'9']+ as lxm                    { INT(lxm) }
 | ['_' 'a'-'z''A'-'Z''0'-'9']+ as id   { ID(id) }
 | '%'['_' 'a'-'z''A'-'Z''0'-'9']+ as l { LOCAL(l) }
-| [' ' '\t']*'+'[' ' '\t']*            { PLUS }
-| [' ' '\t']*'-'[' ' '\t']*            { MINUS }
-| [' ' '\t']*'*'[' ' '\t']*            { TIMES }
-| [' ' '\t']*'/'[' ' '\t']*            { DIV }
-|            '('[' ' '\t']*            { LPAREN }
-| [' ' '\t']*')'                       { RPAREN }
-|            '['[' ' '\t']*            { LBRACKET }
-| [' ' '\t']*']'                       { RBRACKET }
-|            '{'[' ' '\t']*            { LCURLY }
-| [' ' '\t']*'}'                       { RCURLY }
+| '+'                                  { PLUS }
+| '-'                                  { MINUS }
+| '*'                                  { TIMES }
+| '/'                                  { DIV }
+| '('                                  { LPAREN }
+| ')'                                  { RPAREN }
+| '['                                  { LBRACKET }
+| ']'                                  { RBRACKET }
+| '{'                                  { LCURLY }
+| '}'                                  { RCURLY }
 | '|'                                  { PIPE }
-| [' ' '\t']*'\\'[' ' '\t']*           { BACKSLASH }
+| '\\'                                 { BACKSLASH }
 | '\''                                 { read_string (Buffer.create 17) lexbuf }
-| [' ' '\t']*','[' ' '\t']*            { COMMA }
-| [' ' '\t']*'='[' ' '\t']*            { EQUAL }
-| [' ' '\t']*":="[' ' '\t']*           { ASSIGN }
-| [' ' '\t']+                          { WS }
-| '\n'                                 { next_line lexbuf; EOL }
-| '\r''\n'                             { next_line lexbuf; EOL }
+| ','                                  { COMMA }
+| '='                                  { EQUAL }
+| ":="                                 { ASSIGN }
+| [' ' '\t']+                          { token lexbuf }
+| '\n' | '\r' | "\r\n"                 { next_line lexbuf; EOL }
 | eof                                  { EOF }
 and read_string buf =
   parse
