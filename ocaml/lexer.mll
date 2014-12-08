@@ -25,7 +25,8 @@ rule token = parse
 |            '{'[' ' '\t']*            { LCURLY }
 | [' ' '\t']*'}'                       { RCURLY }
 | '|'                                  { PIPE }
-| [' ' '\t']*'\\'[' ' '\t']*            { BACKSLASH }
+| [' ' '\t']*'\\'[' ' '\t']*           { BACKSLASH }
+| '\''                                 { read_string (Buffer.create 17) lexbuf }
 | [' ' '\t']*','[' ' '\t']*            { COMMA }
 | [' ' '\t']*'='[' ' '\t']*            { EQUAL }
 | [' ' '\t']*":="[' ' '\t']*           { ASSIGN }
@@ -33,3 +34,19 @@ rule token = parse
 | '\n'                                 { next_line lexbuf; EOL }
 | '\r''\n'                             { next_line lexbuf; EOL }
 | eof                                  { EOF }
+and read_string buf =
+  parse
+  | '\''      { STRING (Buffer.contents buf) }
+  | '\\' '/'  { Buffer.add_char buf '/'; read_string buf lexbuf }
+  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf }
+  | '\\' 'b'  { Buffer.add_char buf '\b'; read_string buf lexbuf }
+  | '\\' 'f'  { Buffer.add_char buf '\012'; read_string buf lexbuf }
+  | '\\' 'n'  { Buffer.add_char buf '\n'; read_string buf lexbuf }
+  | '\\' 'r'  { Buffer.add_char buf '\r'; read_string buf lexbuf }
+  | '\\' 't'  { Buffer.add_char buf '\t'; read_string buf lexbuf }
+  | [^ '\'' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      read_string buf lexbuf
+    }
+  (* | _ { raise (SyntaxError ("Illegal string character: " ^ Lexing.lexeme lexbuf)) } *)
+  (* | eof { raise (SyntaxError ("String is not terminated")) } *)

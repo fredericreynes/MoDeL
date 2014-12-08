@@ -5,6 +5,7 @@ open Ast
 %token <string> INT
 %token <string> ID
 %token <string> LOCAL
+%token <string> STRING
 %token PLUS MINUS TIMES DIV
 %token EQUAL ASSIGN
 %token LPAREN RPAREN
@@ -69,13 +70,14 @@ assign_list:
 
 
 str_or_int:
-    str = ID                    { str }
+    str = STRING                { str }
   | int = INT                   { int }
 ;
 base_lst:
-   h = str_or_int WS
-   t = separated_nonempty_list(WS, str_or_int)
-   { h :: t }
+   LCURLY
+   lst = separated_nonempty_list(COMMA, str_or_int)
+   RCURLY
+   { lst }
 ;
 exclude_lst:
   BACKSLASH exclude_lst = base_lst  { exclude_lst }
