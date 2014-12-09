@@ -52,24 +52,24 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type sset = StringSet.t
+type lst = string list
 
-type sset_expr =
-  | SSet of sset
-  | BinOp of operator * sset_expr * sset_expr
+type lst_expr =
+  | Lst of lst
+  | BinOp of operator * lst_expr * lst_expr
   | Local of string
 
 type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr
-  | AssignSSet of expr * sset_expr
+  | AssignLst of expr * lst_expr
 
 val apply_assignments : statement list -> unit
 
 val string_of_expr : expr -> string
 
-val compile_sset_expr : sset_expr -> sset
+val compile_lst_expr : lst_expr -> lst
 
-val sset_of_lst : StringSet.elt list -> StringSet.t
+val set_of_lst : StringSet.elt list -> StringSet.t
 
-val heap : (string, StringSet.t) Hashtbl.t
+val heap : (string, lst) Hashtbl.t

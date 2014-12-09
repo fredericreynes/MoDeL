@@ -32,7 +32,7 @@ main:
 ;
 statement:
     s = assign_expr                 { s }
-  | s = assign_sset                 { s }
+  | s = assign_list                 { s }
   (* | rhs = expr ASSIGN lhs = lst   { AssignLst(rhs, lhs) } *)
   (* | rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) } *)
 ;
@@ -64,8 +64,8 @@ variable:
 assign_expr:
     rhs = expr ASSIGN lhs = expr  { AssignExpr(rhs, lhs) }
 ;
-assign_sset:
-    rhs = expr ASSIGN lhs = sset_expr  { AssignSSet(rhs, lhs) }
+assign_list:
+    rhs = expr ASSIGN lhs = lst_expr  { AssignLst(rhs, lhs) }
 ;
 
 
@@ -73,18 +73,18 @@ str_or_int:
     str = STRING                { str }
   | int = INT                   { int }
 ;
-sset:
+lst:
    LCURLY
    l = separated_nonempty_list(COMMA, str_or_int)
    RCURLY
-   { sset_of_lst l }
+   { l }
 ;
-sset_expr:
-    ss = sset                                        { SSet ss }
-  | ssel = sset_expr PLUS sser = sset_expr           { BinOp(Plus, ssel, sser) }
-  | ssel = sset_expr BACKSLASH sser = sset_expr      { BinOp(Minus, ssel, sser) }
-  | LPAREN sse = sset_expr RPAREN                    { sse }
-  | local = LOCAL                                    { Local local }
+lst_expr:
+    l = lst                                      { Lst l }
+  | lel = lst_expr PLUS ler = lst_expr           { BinOp(Plus, lel, ler) }
+  | lel = lst_expr BACKSLASH ler = lst_expr      { BinOp(Minus, lel, ler) }
+  | LPAREN le = lst_expr RPAREN                  { le }
+  | local = LOCAL                                { Local local }
 ;
 
 

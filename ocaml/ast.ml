@@ -23,17 +23,17 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type sset = StringSet.t
+type lst = string list
 
-type sset_expr =
-  | SSet of sset
-  | BinOp of operator * sset_expr * sset_expr
+type lst_expr =
+  | Lst of lst
+  | BinOp of operator * lst_expr * lst_expr
   | Local of string
 
 type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr
-  | AssignSSet of expr * sset_expr
+  | AssignLst of expr * lst_expr
 
 
 let heap = Hashtbl.create 10000
@@ -45,17 +45,17 @@ let string_of_expr = function
   | Local id -> id
   | _ -> "Not a local variable"
 
-let rec compile_sset_expr = function
-    SSet ss -> ss
-  | BinOp(Plus, sel, ser) -> compile_sset_expr sel
-  | BinOp(Minus, sel, ser) -> compile_sset_expr sel
+let rec compile_lst_expr = function
+    Lst l -> l
+  | BinOp(Plus, lel, ler) -> compile_lst_expr lel
+  | BinOp(Minus, lel, ler) -> compile_lst_expr lel
   | Local l -> Hashtbl.find heap l
 
-let sset_of_lst a_lst =
+let set_of_lst a_lst =
     List.fold_right StringSet.add a_lst StringSet.empty
 
 let apply_assignments stmts =
   List.iter (fun s -> match s with
-		      | AssignSSet (lhs, rhs) -> Hashtbl.add heap (string_of_expr lhs) (compile_sset_expr rhs)
+		      | AssignLst (lhs, rhs) -> Hashtbl.add heap (string_of_expr lhs) (compile_lst_expr rhs)
 		      | _ -> print_endline "Not an assignment"
 	    ) stmts
