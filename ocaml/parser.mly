@@ -19,7 +19,6 @@ open Ast
 
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
-%left BACKSLASH
 %nonassoc UMINUS        /* highest precedence */
 
 %start main             /* the entry point */
