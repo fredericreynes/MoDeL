@@ -47,8 +47,8 @@ let string_of_expr = function
 
 let rec compile_sset_expr = function
     SSet ss -> ss
-  | BinOp(Plus, sel, ser) -> compile_sset_expr sel
-  | BinOp(Minus, sel, ser) -> compile_sset_expr sel
+  | BinOp(Plus, sel, ser) -> StringSet.union (compile_sset_expr sel) (compile_sset_expr ser)
+  | BinOp(Minus, sel, ser) -> StringSet.diff (compile_sset_expr sel) (compile_sset_expr ser)
   | Local l -> Hashtbl.find heap l
 
 let sset_of_lst a_lst =
