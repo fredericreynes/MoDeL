@@ -17,7 +17,7 @@ open Ast
 %token WS
 %token EOL EOF
 
-%left PLUS MINUS        /* lowest precedence */
+%left PLUS MINUS BACKSLASH        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
 
@@ -77,7 +77,7 @@ lst:
    LCURLY
    l = separated_nonempty_list(COMMA, str_or_int)
    RCURLY
-   { l }
+   { IndexedList.of_list l }
 ;
 lst_expr:
     l = lst                                      { Lst l }

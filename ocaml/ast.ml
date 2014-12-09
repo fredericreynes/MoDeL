@@ -1,5 +1,3 @@
-module StringSet = Set.Make(String)
-
 type id_part =
   | Id of string
   | Placeholder of string
@@ -23,10 +21,8 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type lst = string list
-
 type lst_expr =
-  | Lst of lst
+  | Lst of IndexedList.t
   | BinOp of operator * lst_expr * lst_expr
   | Local of string
 
@@ -45,10 +41,11 @@ let string_of_expr = function
   | Local id -> id
   | _ -> "Not a local variable"
 
+
 let rec compile_lst_expr = function
     Lst l -> l
-  | BinOp(Plus, lel, ler) -> compile_lst_expr lel
-  | BinOp(Minus, lel, ler) -> compile_lst_expr lel
+  | BinOp(Plus, lel, ler) -> IndexedList.join (compile_lst_expr lel) (compile_lst_expr ler)
+  | BinOp(Minus, lel, ler) -> IndexedList.diff (compile_lst_expr lel) (compile_lst_expr ler)
   | Local l -> Hashtbl.find heap l
 
 let apply_assignments stmts =

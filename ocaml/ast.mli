@@ -21,10 +21,8 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type lst = string list
-
 type lst_expr =
-  | Lst of lst
+  | Lst of IndexedList.t
   | BinOp of operator * lst_expr * lst_expr
   | Local of string
 
@@ -37,8 +35,6 @@ val apply_assignments : statement list -> unit
 
 val string_of_expr : expr -> string
 
-val compile_lst_expr : lst_expr -> lst
+val compile_lst_expr : lst_expr -> IndexedList.t
 
-val set_of_lst : StringSet.elt list -> StringSet.t
-
-val heap : (string, lst) Hashtbl.t
+val heap : (string, IndexedList.t) Hashtbl.t
