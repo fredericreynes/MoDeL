@@ -51,9 +51,6 @@ let rec compile_lst_expr = function
   | BinOp(Minus, lel, ler) -> compile_lst_expr lel
   | Local l -> Hashtbl.find heap l
 
-let set_of_lst a_lst =
-    List.fold_right StringSet.add a_lst StringSet.empty
-
 let apply_assignments stmts =
   List.iter (fun s -> match s with
 		      | AssignLst (lhs, rhs) -> Hashtbl.add heap (string_of_expr lhs) (compile_lst_expr rhs)
