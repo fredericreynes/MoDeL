@@ -16,7 +16,7 @@ open Ast
 %token COMMA
 %token EOL EOF
 
-%left PLUS MINUS        /* lowest precedence */
+%left PLUS MINUS BACKSLASH        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
 
@@ -64,7 +64,7 @@ assign_expr:
     rhs = expr ASSIGN lhs = expr  { AssignExpr(rhs, lhs) }
 ;
 assign_list:
-    rhs = expr ASSIGN lhs = lst  { AssignLst(rhs, lhs) }
+    rhs = expr ASSIGN lhs = lst_expr  { AssignLst(rhs, lhs) }
 ;
 
 
@@ -72,17 +72,18 @@ str_or_int:
     str = STRING                { str }
   | int = INT                   { int }
 ;
-base_lst:
-   LCURLY
-   lst = separated_nonempty_list(COMMA, str_or_int)
-   RCURLY
-   { lst }
-;
-exclude_lst:
-  BACKSLASH exclude_lst = base_lst  { exclude_lst }
-;
 lst:
-  main_lst = base_lst exclude_lst = option(exclude_lst) { Lst(main_lst, exclude_lst) }
+   LCURLY
+   l = separated_nonempty_list(COMMA, str_or_int)
+   RCURLY
+   { IndexedList.of_list l }
+;
+lst_expr:
+    l = lst                                      { Lst l }
+  | lel = lst_expr PLUS ler = lst_expr           { BinOp(Plus, lel, ler) }
+  | lel = lst_expr BACKSLASH ler = lst_expr      { BinOp(Minus, lel, ler) }
+  | LPAREN le = lst_expr RPAREN                  { le }
+  | local = LOCAL                                { Local local }
 ;
 
 

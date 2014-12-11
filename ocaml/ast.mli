@@ -2,15 +2,15 @@ type id_part =
   | Id of string
   | Placeholder of string
 
+type str_or_int =
+  | Str of string
+  | Intg of int
+
 type operator =
   | Plus
   | Minus
   | Times
   | Div
-
-type str_or_int =
-  | Str of string
-  | Intg of int
 
 type expr =
   | None
@@ -21,13 +21,20 @@ type expr =
   | Variable of id_part list * expr list * expr option
   | Local of string
 
-type lst = Lst of string list * string list option
+type lst_expr =
+  | Lst of IndexedList.t
+  | BinOp of operator * lst_expr * lst_expr
+  | Local of string
 
 type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr
-  | AssignLst of expr * lst
+  | AssignLst of expr * lst_expr
 
 val apply_assignments : statement list -> unit
 
-val heap : (string, lst) Hashtbl.t
+val string_of_expr : expr -> string
+
+val compile_lst_expr : lst_expr -> IndexedList.t
+
+val heap : (string, IndexedList.t) Hashtbl.t
