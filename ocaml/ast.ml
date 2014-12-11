@@ -31,7 +31,7 @@ type iterator = Iterator of string * lst_expr option
 type full_expr = FullExpr of expr * iterator option
 
 type statement =
-  | Equation of expr * expr
+  | Equation of expr * full_expr
   | AssignExpr of expr * expr
   | AssignLst of expr * lst_expr
 

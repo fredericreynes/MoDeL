@@ -77,7 +77,7 @@ full_expr:
   { FullExpr(e, iter) }
 ;
 equation:
-  lhs = expr EQUAL rhs = expr { Equation(lhs, rhs) }
+  lhs = expr EQUAL rhs = full_expr { Equation(lhs, rhs) }
 ;
 
 
