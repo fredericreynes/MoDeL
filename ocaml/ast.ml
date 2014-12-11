@@ -26,6 +26,10 @@ type lst_expr =
   | BinOp of operator * lst_expr * lst_expr
   | Local of string
 
+type iterator = Iterator of string * lst_expr option
+
+type full_expr = FullExpr of expr * iterator option
+
 type statement =
   | Equation of expr * expr
   | AssignExpr of expr * expr

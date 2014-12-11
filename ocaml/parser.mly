@@ -6,6 +6,7 @@ open Ast
 %token <string> ID
 %token <string> LOCAL
 %token <string> STRING
+%token WHERE IN IF
 %token PLUS MINUS TIMES DIV
 %token EQUAL ASSIGN
 %token LPAREN RPAREN
@@ -32,8 +33,7 @@ main:
 statement:
     s = assign_expr                 { s }
   | s = assign_list                 { s }
-  (* | rhs = expr ASSIGN lhs = lst   { AssignLst(rhs, lhs) } *)
-  (* | rhs = expr EQUAL lhs = expr   { Equation(rhs, lhs) } *)
+  | s = equation                    { s }
 ;
 number:
   i = INT                       { i }
@@ -61,10 +61,23 @@ variable:
   { Variable(ident, index, time) }
 ;
 assign_expr:
-    rhs = expr ASSIGN lhs = expr  { AssignExpr(rhs, lhs) }
+  lhs = expr ASSIGN rhs = expr  { AssignExpr(lhs, rhs) }
 ;
 assign_list:
-    rhs = expr ASSIGN lhs = lst_expr  { AssignLst(rhs, lhs) }
+  lhs = expr ASSIGN rhs = lst_expr  { AssignLst(lhs, rhs) }
+;
+
+
+iterator:
+  WHERE id = ID le = option(in_lst_expr) { Iterator(id, le) }
+;
+full_expr:
+  e = expr
+  iter = option(iterator)
+  { FullExpr(e, iter) }
+;
+equation:
+  lhs = expr EQUAL rhs = expr { Equation(lhs, rhs) }
 ;
 
 
@@ -85,7 +98,9 @@ lst_expr:
   | LPAREN le = lst_expr RPAREN                  { le }
   | local = LOCAL                                { Local local }
 ;
-
+in_lst_expr:
+  IN le = lst_expr                   { le }
+;
 
 func:
   id = ID params = delimited(LPAREN, separated_nonempty_list(COMMA, expr), RPAREN)       { Function(id, params) }

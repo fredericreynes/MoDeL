@@ -30,6 +30,9 @@ rule token = parse
 | ','                                  { COMMA }
 | '='                                  { EQUAL }
 | ":="                                 { ASSIGN }
+| "where" | "on"                       { WHERE }
+| "in"                                 { IN }
+| "if"                                 { IF }
 | [' ' '\t']+                          { token lexbuf }
 | '\n' | '\r' | "\r\n"                 { next_line lexbuf; EOL }
 | eof                                  { EOF }
