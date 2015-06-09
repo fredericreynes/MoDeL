@@ -8,7 +8,7 @@ reserved = (
 
 tokens = reserved + (
     # Literals (identifier, local identifier, integer constant, float constant, string constant)
-    'ID', 'LOCALID', 'ICONST', 'FCONST', 'SCONST',
+    'ID', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
 
     # Operators (+, -, *, /, |, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
@@ -84,13 +84,13 @@ t_ID               = r'[a-zA-Z]([_a-zA-Z0-9]+)?'
 t_LOCALID          = r'%[_a-zA-Z0-9]+'
 
 # Integer literal
-t_ICONST           = r'[0-9]+'
+t_INTEGER           = r'[0-9]+'
 
 # Float literal
-t_FCONST           = r'( (\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+) )'
+t_FLOAT           = r'( (\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+) )'
 
 # String literal
-t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
+t_STRING = r'\"([^\\\n]|(\\.))*?\"'
 
 # Comments
 def t_comment(t):

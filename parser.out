@@ -1,0 +1,119 @@
+Created by PLY version 3.6 (http://www.dabeaz.com/ply)
+
+Unused terminals:
+
+    LNOT
+    LBRACKET
+    MINUS
+    LOCALID
+    LE
+    RPAREN
+    SEMI
+    WHERE
+    NE
+    LT
+    PLUS
+    STRING
+    PERIOD
+    GT
+    XOR
+    DIVIDE
+    EQUALS
+    RBRACE
+    TIMES
+    GE
+    LPAREN
+    ELLIPSIS
+    SERIESEQUALS
+    EQ
+    ID
+    IF
+    AND
+    ON
+    LBRACE
+    NOT
+    RBRACKET
+    COMMA
+    OR
+
+Grammar
+
+Rule 0     S' -> expr
+Rule 1     expr -> INTEGER
+Rule 2     expr -> FLOAT
+
+Terminals, with rules where they appear
+
+AND                  : 
+COMMA                : 
+DIVIDE               : 
+ELLIPSIS             : 
+EQ                   : 
+EQUALS               : 
+FLOAT                : 2
+GE                   : 
+GT                   : 
+ID                   : 
+IF                   : 
+INTEGER              : 1
+LBRACE               : 
+LBRACKET             : 
+LE                   : 
+LNOT                 : 
+LOCALID              : 
+LPAREN               : 
+LT                   : 
+MINUS                : 
+NE                   : 
+NOT                  : 
+ON                   : 
+OR                   : 
+PERIOD               : 
+PLUS                 : 
+RBRACE               : 
+RBRACKET             : 
+RPAREN               : 
+SEMI                 : 
+SERIESEQUALS         : 
+STRING               : 
+TIMES                : 
+WHERE                : 
+XOR                  : 
+error                : 
+
+Nonterminals, with rules where they appear
+
+expr                 : 0
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . expr
+    (1) expr -> . INTEGER
+    (2) expr -> . FLOAT
+
+    INTEGER         shift and go to state 3
+    FLOAT           shift and go to state 2
+
+    expr                           shift and go to state 1
+
+state 1
+
+    (0) S' -> expr .
+
+
+
+state 2
+
+    (2) expr -> FLOAT .
+
+    $end            reduce using rule 2 (expr -> FLOAT .)
+
+
+state 3
+
+    (1) expr -> INTEGER .
+
+    $end            reduce using rule 1 (expr -> INTEGER .)
+
