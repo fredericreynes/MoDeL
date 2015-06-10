@@ -10,19 +10,19 @@ tokens = reserved + (
     # Literals (identifier, local identifier, integer constant, float constant, string constant)
     'ID', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
 
-    # Operators (+, -, *, /, |, &, ~, ^, !, <, <=, >, >=, ==, !=)
+    # Operators (+, -, *, /, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
-    'OR', 'AND', 'NOT', 'XOR', 'LNOT',
+    'AND', 'NOT', 'XOR', 'LNOT',
     'LT', 'GT', 'LE', 'GE', 'EQ', 'NE',
 
     # Assignment (=, :=)
     'EQUALS', 'SERIESEQUALS',
 
-    # Delimeters ( ) [ ] { } , . ;
+    # Delimeters ( ) [ ] { } , . | ;
     'LPAREN', 'RPAREN',
     'LBRACKET', 'RBRACKET',
     'LBRACE', 'RBRACE',
-    'COMMA', 'PERIOD', 'SEMI',
+    'COMMA', 'PERIOD', 'PIPE', 'SEMI',
 
     # Ellipsis (...)
     'ELLIPSIS',
@@ -42,7 +42,6 @@ t_PLUS             = r'\+'
 t_MINUS            = r'-'
 t_TIMES            = r'\*'
 t_DIVIDE           = r'/'
-t_OR               = r'\|'
 t_AND              = r'&'
 t_NOT              = r'~'
 t_XOR              = r'\^'
@@ -68,6 +67,7 @@ t_LBRACE           = r'\{'
 t_RBRACE           = r'\}'
 t_COMMA            = r','
 t_PERIOD           = r'\.'
+t_PIPE             = r'\|'
 t_SEMI             = r';'
 
 
