@@ -1,4 +1,5 @@
 import ply.lex as lex
+from ply.lex import TOKEN
 
 # Reserved words
 reserved = (
@@ -8,7 +9,7 @@ reserved = (
 
 tokens = reserved + (
     # Literals (identifier, local identifier, integer constant, float constant, string constant)
-    'ID', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
+    'ID', 'PLACEHOLDER', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
 
     # Operators (+, -, *, /, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
@@ -23,6 +24,7 @@ tokens = reserved + (
     'LBRACKET', 'RBRACKET',
     'LBRACE', 'RBRACE',
     'COMMA', 'PERIOD', 'PIPE', 'SEMI',
+    'NEWLINE',
 
     # Ellipsis (...)
     'ELLIPSIS',
@@ -36,6 +38,8 @@ t_ignore           = ' \t\x0c'
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
+    print t.lexer.lineno
+    return t
 
 # Operators
 t_PLUS             = r'\+'
@@ -79,6 +83,17 @@ for r in reserved:
 
 # Identifier
 t_ID               = r'[a-zA-Z]([_a-zA-Z0-9]+)?'
+
+# Placeholder
+placeholder        = r'\|(' + t_ID + ')\|'
+
+@TOKEN(placeholder)
+def t_PLACEHOLDER(t):
+    t.value = t.lexer.lexmatch.group(3)
+    return t
+
+# # Variable id
+# t_VARID            = r'pouet'
 
 # Local identifier
 t_LOCALID          = r'%[_a-zA-Z0-9]+'
