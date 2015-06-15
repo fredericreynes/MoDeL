@@ -12,6 +12,9 @@ out.txt
 *.graphml
 *.txt.prg
 
+parser.out
+parsetab.py
+
 
 *.annot
 *.cmo
