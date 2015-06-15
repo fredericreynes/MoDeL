@@ -3,7 +3,7 @@ from ply.lex import TOKEN
 
 # Reserved words
 reserved = (
-    'WHERE', 'ON', 'IF',
+    'WHERE', 'ON', 'IF', 'IN',
     )
 
 
@@ -82,10 +82,16 @@ for r in reserved:
     reserved_map[r.lower()] = r
 
 # Identifier
-t_ID               = r'[a-zA-Z]([_a-zA-Z0-9]+)?'
+id                = r'[A-Za-z_][\w_]*'
+
+@TOKEN(id)
+def t_ID(t):
+    t.type = reserved_map.get(t.value,"ID")
+    return t
+# t_ID               = r'[a-zA-Z]([_a-zA-Z0-9]+)?'
 
 # Placeholder
-placeholder        = r'\|(' + t_ID + ')\|'
+placeholder        = r'\|(' + id + ')\|'
 
 @TOKEN(placeholder)
 def t_PLACEHOLDER(t):
@@ -99,10 +105,16 @@ def t_PLACEHOLDER(t):
 t_LOCALID          = r'%[_a-zA-Z0-9]+'
 
 # Integer literal
-t_INTEGER           = r'[0-9]+'
+def t_INTEGER(t):
+    r'[0-9]+'
+    t.value = int(t.value)
+    return t
 
 # Float literal
-t_FLOAT           = r'( (\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+) )'
+def t_FLOAT(t):
+    r'( (\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+) )'
+    t.value = float(t.value)
+    return t
 
 # String literal
 t_STRING = r'\"([^\\\n]|(\\.))*?\"'
