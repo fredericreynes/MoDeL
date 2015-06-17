@@ -38,7 +38,6 @@ t_ignore           = ' \t\x0c'
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
-    print t.lexer.lineno
     return t
 
 # Operators
@@ -88,7 +87,6 @@ id                = r'[A-Za-z_][\w_]*'
 def t_ID(t):
     t.type = reserved_map.get(t.value,"ID")
     return t
-# t_ID               = r'[a-zA-Z]([_a-zA-Z0-9]+)?'
 
 # Placeholder
 placeholder        = r'\|(' + id + ')\|'
@@ -97,9 +95,6 @@ placeholder        = r'\|(' + id + ')\|'
 def t_PLACEHOLDER(t):
     t.value = t.lexer.lexmatch.group(3)
     return t
-
-# # Variable id
-# t_VARID            = r'pouet'
 
 # Local identifier
 t_LOCALID          = r'%[_a-zA-Z0-9]+'
@@ -117,7 +112,10 @@ def t_FLOAT(t):
     return t
 
 # String literal
-t_STRING = r'\"([^\\\n]|(\\.))*?\"'
+def t_STRING(t):
+    r'\"([^\\\n]|(\\.))*?\"'
+    t.value = t.value[1:-1]
+    return t
 
 # Comments
 def t_comment(t):

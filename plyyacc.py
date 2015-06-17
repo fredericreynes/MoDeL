@@ -23,11 +23,12 @@ def p_program_recursive(p):
     p[0] = ('Program', p[1][1] + (p[2], ))
 
 
-# Statements
+# Statement
 
 def p_statement(p):
-    '''statement : equation NEWLINE
-                 | series NEWLINE'''
+    '''statement : equationDef NEWLINE
+                 | seriesDef NEWLINE
+                 | localDef NEWLINE'''
     p[0] = ('Statement', p[1], p.lineno(2))
 
 
@@ -82,40 +83,20 @@ def p_variable_name_index_time(p):
     p[0] = ('VarName', (p[1], p[2], p[3]))
 
 
-# Definitions
+# List literals
 
-def p_where_clause(p):
-    '''whereClause : WHERE ID IN LOCALID
-                   | ON ID IN LOCALID'''
-    p[0] = ('Where', (p[2],), (p[4],))
+def p_string_list(p):
+    '''stringList : STRING'''
+    p[0] = ('StringList', (p[1], ))
 
-def p_if_clause(p):
-    '''ifClause : IF expr'''
-    p[0] = ('If', p[2])
+def p_string_list_recursive(p):
+    '''stringList : stringList COMMA STRING'''
+    p[0] =  ('StringList', p[1][1] + (p[3], ))
 
-def p_qualified_expression(p):
-    '''qualifiedExpr : expr'''
-    p[0] = ('Qualified', p[1], )
+def p_list(p):
+    '''list : LBRACE stringList RBRACE'''
+    p[0] = ('List', p[2][1])
 
-def p_qualified_expression_where(p):
-    '''qualifiedExpr : expr whereClause'''
-    p[0] = ('Qualified', p[1], p[2])
-
-def p_qualified_expression_if(p):
-    '''qualifiedExpr : expr ifClause'''
-    p[0] = ('Qualified', p[1], p[2])
-
-def p_qualified_expression_if_where(p):
-    '''qualifiedExpr : expr ifClause whereClause'''
-    p[0] = ('Qualified', p[1], p[2], p[3])
-
-def p_equation(p):
-    '''equation : expr EQUALS qualifiedExpr'''
-    p[0] = ('Equation', None, p[1], p[3])
-
-def p_series(p):
-    '''series : expr SERIESEQUALS qualifiedExpr'''
-    p[0] = ('Series', None, p[1], p[3])
 
 # Expressions
 
@@ -123,7 +104,8 @@ def p_expression_terminal(p):
     '''expr : INTEGER
             | FLOAT
             | LOCALID
-            | variableName'''
+            | variableName
+            | functionCall'''
     p[0] = p[1]
 
 def p_expression_binary(p):
@@ -139,17 +121,143 @@ def p_expression_binary(p):
 
 def p_expression_group(p):
     '''expr : LPAREN expr RPAREN'''
-    p[0] = ('ExprGroup', p[2], )
+    p[0] = ('ExprGroup', p[2])
 
 def p_expression_list(p):
     '''exprList : expr'''
-    p[0] = (p[1], )
+    p[0] = ('ExprList', (p[1], ))
 
 def p_expression_list_recursive(p):
     '''exprList : exprList COMMA expr'''
-    p[0] =  p[1] + (p[3], )
+    p[0] =  ('ExprList', p[1][1] + (p[3], ))
+
+
+# Lists of LocalID, ID, and Lists
+
+def p_localid_list(p):
+    '''localidList : LOCALID'''
+    p[0] = ('LocalIDList', (p[1], ))
+
+def p_localid_list_recursive(p):
+    '''localidList : localidList COMMA LOCALID'''
+    p[0] =  ('LocalIDList', p[1][1] + (p[3], ))
+
+def p_localid_group(p):
+    '''localidGroup : LPAREN localidList RPAREN'''
+    p[0] = ('LocalIDGroup', p[2][1])
+
+def p_id_list(p):
+    '''idList : ID'''
+    p[0] = ('IDList', (p[1], ))
+
+def p_id_list_recursive(p):
+    '''idList : idList COMMA ID'''
+    p[0] =  ('IDList', p[1][1] + (p[3], ))
+
+def p_id_group(p):
+    '''idGroup : LPAREN idList RPAREN'''
+    p[0] = ('IDGroup', p[2][1])
+
+def p_list_list(p):
+    '''listList : list'''
+    p[0] = ('ListList', (p[1], ))
+
+def p_list_list_recursive(p):
+    '''listList : listList COMMA list'''
+    p[0] =  ('ListList', p[1][1] + (p[3], ))
+
+def p_list_group(p):
+    '''listGroup : LPAREN listList RPAREN'''
+    p[0] = ('ListGroup', p[2][1])
+
+
+# Iterators
+
+def p_iterator_list(p):
+    '''iterator : ID IN list'''
+    p[0] = ('IteratorList', p[1], p[3])
+
+def p_iterator_local(p):
+    '''iterator : ID IN LOCALID'''
+    p[0] = ('IteratorLocal', p[1], p[3])
+
+def p_iterator_parallel_list(p):
+    '''iterator : idGroup IN listGroup'''
+    p[0] = ('IteratorParallelList', p[1], p[3])
+
+def p_iterator_parallel_local(p):
+    '''iterator : idGroup IN localidGroup'''
+    p[0] = ('IteratorParallelLocal', p[1], p[3])
+
+
+# Qualified expressions
+
+def p_where_clause(p):
+    '''whereClause : WHERE iterator
+                   | ON iterator'''
+    p[0] = ('Where', p[2])
+
+def p_if_clause(p):
+    '''ifClause : IF expr'''
+    p[0] = ('If', p[2])
+
+def p_qualified_expression(p):
+    '''qualifiedExpr : expr'''
+    p[0] = ('Qualified', p[1], )
+
+def p_qualified_expression_where(p):
+    '''qualifiedExpr : expr whereClause'''
+    p[0] = ('QualifiedWhere', p[1], p[2])
+
+def p_qualified_expression_if(p):
+    '''qualifiedExpr : expr ifClause'''
+    p[0] = ('QualifiedIf', p[1], p[2])
+
+def p_qualified_expression_if_where(p):
+    '''qualifiedExpr : expr ifClause whereClause'''
+    p[0] = ('QualifiedIfWhere', p[1], p[2], p[3])
+
+def p_qualified_expression_list(p):
+    '''qualifiedExprList : qualifiedExpr'''
+    p[0] = ('QualifiedExprList', (p[1], ))
+
+def p_qualified_expression_list_recursive(p):
+    '''qualifiedExprList : qualifiedExprList COMMA qualifiedExpr'''
+    p[0] =  ('QualifiedExprList', p[1][1] + (p[3], ))
+
+
+# Function
+
+def p_function(p):
+    '''functionCall : ID LPAREN RPAREN'''
+    p[0] = ('FunctionCallNoArgs', p[1])
+
+def p_function_with_arguments(p):
+    '''functionCall : ID LPAREN qualifiedExprList RPAREN'''
+    p[0] = ('FunctionCallArgs', p[1], p[3])
+
+
+# Definitions
+
+def p_equation_definition(p):
+    '''equationDef : expr EQUALS qualifiedExpr'''
+    p[0] = ('EquationDef', None, p[1], p[3])
+
+def p_series_definition(p):
+    '''seriesDef : expr SERIESEQUALS qualifiedExpr'''
+    p[0] = ('SeriesDef', None, p[1], p[3])
+
+def p_local_definition(p):
+    '''localDef : LOCALID SERIESEQUALS list'''
+    p[0] = ('LocalDef', p[1], p[3])
+
+
 
 parser = yacc.yacc()
 
 if __name__ == "__main__":
-    print parser.parse("t = X|O|[1, 2]{t-1} if pouet > 2 where i in %c\n")
+    print parser.parse("""t = X|O|[1, 2]{t-1} if test > 2 where i in %c
+                          %test := {"15", "05"}
+                          functionTest = function()
+                          functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)
+                          """)
