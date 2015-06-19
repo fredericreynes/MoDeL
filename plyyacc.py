@@ -68,15 +68,15 @@ def p_time(p):
 
 def p_variable_name(p):
     '''variableName : variableId'''
-    p[0] = ('VarName', (p[1], ))
+    p[0] = ('VarName', (p[1], None, None))
 
 def p_variable_name_index(p):
     '''variableName : variableId index'''
-    p[0] = ('VarName', (p[1], p[2]))
+    p[0] = ('VarName', (p[1], p[2], None))
 
 def p_variable_name_time(p):
     '''variableName : variableId time'''
-    p[0] = ('VarName', (p[1], p[2]))
+    p[0] = ('VarName', (p[1], None, p[2]))
 
 def p_variable_name_index_time(p):
     '''variableName : variableId index time'''
@@ -203,19 +203,19 @@ def p_if_clause(p):
 
 def p_qualified_expression(p):
     '''qualifiedExpr : expr'''
-    p[0] = ('Qualified', p[1], )
+    p[0] = ('Qualified', p[1], None, None)
 
 def p_qualified_expression_where(p):
     '''qualifiedExpr : expr whereClause'''
-    p[0] = ('QualifiedWhere', p[1], p[2])
+    p[0] = ('Qualified', p[1], p[2], None)
 
 def p_qualified_expression_if(p):
     '''qualifiedExpr : expr ifClause'''
-    p[0] = ('QualifiedIf', p[1], p[2])
+    p[0] = ('Qualified', p[1], None, p[2])
 
 def p_qualified_expression_if_where(p):
     '''qualifiedExpr : expr ifClause whereClause'''
-    p[0] = ('QualifiedIfWhere', p[1], p[2], p[3])
+    p[0] = ('Qualified', p[1], p[2], p[3])
 
 def p_qualified_expression_list(p):
     '''qualifiedExprList : qualifiedExpr'''
@@ -256,7 +256,7 @@ def p_local_definition(p):
 parser = yacc.yacc()
 
 if __name__ == "__main__":
-    print parser.parse("""t = X|O|[1, 2]{t-1} if test > 2 where i in %c
+    print parser.parse("""t = X|O|[s, 2]{t-1} if test > 2 where i in %c
                           %test := {"15", "05"}
                           functionTest = function()
                           functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)
