@@ -54,7 +54,7 @@ def p_variable_id_placeholder(p):
 
 def p_variable_id_recursive(p):
     '''variableId : variableId placeholder
-                    | variableId ID'''
+                  | variableId ID'''
     p[0] = ('VarId', p[1][1] + (p[2], ))
 
 
