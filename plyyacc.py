@@ -28,9 +28,15 @@ def p_program_recursive(p):
 def p_statement(p):
     '''statement : equationDef NEWLINE
                  | seriesDef NEWLINE
-                 | localDef NEWLINE'''
+                 | localDef NEWLINE
+                 | comment NEWLINE'''
     p[0] = ('Statement', p[1], p.lineno(2))
 
+# Comment
+
+def p_comment(p):
+    '''comment : COMMENT'''
+    p[0] = ('Comment', p[1])
 
 # Variable id
 
@@ -58,9 +64,9 @@ def p_index(p):
     '''index : LBRACKET exprList RBRACKET'''
     p[0] = ('Index', p[2])
 
-def p_index_single(p):
-    '''index : LBRACKET expr RBRACKET'''
-    p[0] = ('Index', (p[2], ))
+# def p_index_single(p):
+#     '''index : LBRACKET expr RBRACKET'''
+#     p[0] = ('Index', (p[2], ))
 
 def p_time(p):
     '''time : LBRACE expr RBRACE'''
@@ -68,19 +74,19 @@ def p_time(p):
 
 def p_variable_name(p):
     '''variableName : variableId'''
-    p[0] = ('VarName', (p[1], None, None))
+    p[0] = ('VarName', p[1], None, None)
 
 def p_variable_name_index(p):
     '''variableName : variableId index'''
-    p[0] = ('VarName', (p[1], p[2], None))
+    p[0] = ('VarName', p[1], p[2], None)
 
 def p_variable_name_time(p):
     '''variableName : variableId time'''
-    p[0] = ('VarName', (p[1], None, p[2]))
+    p[0] = ('VarName', p[1], None, p[2])
 
 def p_variable_name_index_time(p):
     '''variableName : variableId index time'''
-    p[0] = ('VarName', (p[1], p[2], p[3]))
+    p[0] = ('VarName', p[1], p[2], p[3])
 
 
 # List literals
@@ -256,8 +262,9 @@ def p_local_definition(p):
 parser = yacc.yacc()
 
 if __name__ == "__main__":
-    print parser.parse("""t = X|O|[s, 2]{t-1} if test > 2 where i in %c
-                          %test := {"15", "05"}
-                          functionTest = function()
-                          functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)
+    print parser.parse("""pouet[c] = 15
+    #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
+    #                      %test := {"15", "05"}
+    #                      functionTest = function()
+    #                      functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)
                           """)

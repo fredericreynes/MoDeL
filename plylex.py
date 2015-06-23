@@ -24,7 +24,7 @@ tokens = reserved + (
     'LBRACKET', 'RBRACKET',
     'LBRACE', 'RBRACE',
     'COMMA', 'PERIOD', 'PIPE', 'SEMI',
-    'NEWLINE',
+    'NEWLINE', 'COMMENT',
 
     # Ellipsis (...)
     'ELLIPSIS',
@@ -118,9 +118,10 @@ def t_STRING(t):
     return t
 
 # Comments
-def t_comment(t):
-    r'^\#.*'
-    t.lexer.lineno += 1
+def t_COMMENT(t):
+    r'\#.*'
+    #t.lexer.lineno += 1
+    return t
 
 def t_error(t):
     print("Illegal character %s" % repr(t.value[0]))
