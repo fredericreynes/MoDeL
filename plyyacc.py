@@ -181,7 +181,7 @@ def p_list_group(p):
 
 def p_iterator_list(p):
     '''iterator : ID IN list'''
-    p[0] = ('IteratorList', p[1], p[3])
+    p[0] = ('IteratorImmediateList', p[1], p[3])
 
 def p_iterator_local(p):
     '''iterator : ID IN LOCALID'''
@@ -262,8 +262,9 @@ def p_local_definition(p):
 parser = yacc.yacc()
 
 if __name__ == "__main__":
-    print parser.parse("""pouet[c] = 15
-    #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
+    print parser.parse("""pouet[c] = 15 where i in {"15", "10"}
+
+    t = X|O|[s, 2]{t-1} if test > 2 where i in %c
     #                      %test := {"15", "05"}
     #                      functionTest = function()
     #                      functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)

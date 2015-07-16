@@ -62,6 +62,78 @@ def extract_simple_varids(expr):
 def extract_iterators(expr):
     if expr[0] == 'Index':
         return extract_simple_varids(expr[1])
+    elif expr[0] == 'Placeholder':
+        return expr[1]
+
+class Compiler:
+    def error(self, msg):
+        print "Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line], msg)
+
+    def get_if_exists(self, key, hsh, msg):
+        if key in hsh:
+            return hsh[key]
+        else:
+            self.error("%s `%s` is not defined." % (msg, key))
+
+
+    # Compile expressions
+    #
+    def compile_expression(self, ast, iterators):
+        # Find iterators used in this expression
+        iterator_names = extract_iterators(ast)
+
+        # Get the corresponding lists
+        for i in iterator_names:
+            iterators.update({i: self.get_if_exists(i, iterators, "Iterator")})
+
+            print iterators
+
+    # Compile whereClause
+    # ('Where', iterator)
+    # iterator can be one of:
+    # - ('IteratorImmediateList', ID, list)
+    # - ('IteratorLocal', ID, localId)
+    # IteratorLocal, IteratorParallelList, IteratorParallelLocal
+    #
+    def compile_whereClause(self, ast):
+        iterator = ast[1]
+
+        if iterator[0] == 'IteratorLocal':
+            lst = self.get_if_exists(iterator[2], self.heap, "Local variable")
+            return { iterator[1]: iter(lst) }
+        elif iterator[0] == 'IteratorImmediateList':
+            return { iterator[1]: iter(iterator[2]) }
+
+    # Compile Qualified Expressions
+    # ('Qualified', expr, ifClause, whereClause)
+    #
+    def compile_qualified(self, ast, iterators):
+        # Compile whereClause to add explicit iterators, if any
+        if not ast[3] is None:
+            iterators.update( self.compile_whereClause(ast[3]) )
+
+        # Compile ifClause, if any
+
+        # Compile expr
+        print iterators
+        self.compile_expression(ast[1], iterators)
+
+    def compile(self, program):
+        self.heap = {}
+        self.iterators = {}
+        self.lines = program.split('\n')
+        self.current_line = 0
+
+        # Parse the program
+        ast = plyyacc.parser.parse(program)
+
+        # Go through each statement
+        for a in ast[1]:
+            s = a[1]
+
+            if s[0] == 'EquationDef':
+                self.compile_qualified(s[3], self.iterators)
+
 
 def compile(program, heap):
     print "Compiling:\n", program
@@ -70,7 +142,9 @@ def compile(program, heap):
 
     # Go through statements
     for a in ast[1]:
+        # Extract statement
         s = a[1]
+        self.current_line = a[2]
 
         # if s[0] == 'LocalDef':
         #     heap[s[1]] = s[2][1]
@@ -82,11 +156,12 @@ def compile(program, heap):
             print(extract_iterators(s))
 
 
-
 def test():
-    compile("""%test := {"15", "05"}
-    test = X|O|[42, c]{t-1}
-    """, {})
+    # compile("""%test := {"15", "05"}
+    # test = X|O|[42, c]{t-1}
+    # """, {})
+    compiler = Compiler()
+    compiler.compile("""test = X|O| where O in {"D", "M"}\n""")
 
 if __name__ == "__main__":
     test()
