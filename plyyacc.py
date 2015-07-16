@@ -42,7 +42,7 @@ def p_comment(p):
 
 def p_placeholder(p):
     '''placeholder : PLACEHOLDER'''
-    p[0] = ('Placeholder', p[1])
+    p[0] = ('Placeholder', p[1][1:-1])
 
 def p_variable_id_simple(p):
     '''variableId : ID'''
@@ -213,11 +213,11 @@ def p_qualified_expression(p):
 
 def p_qualified_expression_where(p):
     '''qualifiedExpr : expr whereClause'''
-    p[0] = ('Qualified', p[1], p[2], None)
+    p[0] = ('Qualified', p[1], None, p[2])
 
 def p_qualified_expression_if(p):
     '''qualifiedExpr : expr ifClause'''
-    p[0] = ('Qualified', p[1], None, p[2])
+    p[0] = ('Qualified', p[1], p[2], None)
 
 def p_qualified_expression_if_where(p):
     '''qualifiedExpr : expr ifClause whereClause'''
