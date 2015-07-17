@@ -190,7 +190,9 @@ def p_iterator_local(p):
 def p_iterator_parallel_list(p):
     '''iterator : idGroup IN listGroup'''
     if len(p[1][1]) == len(p[3][1]):
+        #add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
         p[0] = ('IteratorParallelList', p[1], p[3])
+    # Different number of ids and lists
     else:
         add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 
@@ -198,6 +200,7 @@ def p_iterator_parallel_local(p):
     '''iterator : idGroup IN localidGroup'''
     if len(p[1][1]) == len(p[3][1]):
         p[0] = ('IteratorParallelLocal', p[1], p[3])
+    # Different number of variables and local ids
     else:
         add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 

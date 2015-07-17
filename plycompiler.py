@@ -81,7 +81,7 @@ class Compiler:
     #
     def compile_list(self, ast):
         if ast[0] == 'ListLiteral':
-            return (iter(ast[1]), xrange(1, len(ast[1])))
+            return (ast[1], range(1, len(ast[1]) + 1))
 
 
     # Expressions
@@ -102,7 +102,8 @@ class Compiler:
     # iterator can be one of:
     # - ('IteratorImmediateList', ID, list)
     # - ('IteratorLocal', ID, localId)
-    # IteratorLocal, IteratorParallelList, IteratorParallelLocal
+    # - ('IteratorParallelList', idGroup, listGroup)
+    # - ('IteratorParallelLocal', idGroup, localGroup)
     #
     def compile_whereClause(self, ast):
         iterator = ast[1]
@@ -111,6 +112,9 @@ class Compiler:
             return { iterator[1]: self.get_if_exists(iterator[2], self.heap, "Local variable") }
         elif iterator[0] == 'IteratorListLiteral':
             return { iterator[1]: self.compile_list(iterator[2]) }
+        elif iterator[0] == 'IteratorParallelList':
+            print [l for l in iterator[2][1]]
+            return { iterator[1][1]: zip(self.compile_list(l) for l in iterator[2][1]) }
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -179,7 +183,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""test = X|O| where (O, test, V) in {'D', 'M'}\n""")
+    compiler.compile("""test = X|O| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
 
 if __name__ == "__main__":
     test()
