@@ -113,7 +113,8 @@ def t_FLOAT(t):
 
 # String literal
 def t_STRING(t):
-    r'\"([^\\\n]|(\\.))*?\"'
+    r'\"([^\\\n]|(\\.))*?\" | \'([^\\\n]|(\\.))*?\''
+    #r"'(''|[^'])*'"
     t.value = t.value[1:-1]
     return t
 
