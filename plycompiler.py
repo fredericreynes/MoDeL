@@ -179,7 +179,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""test = X|O| where O in ({'D', 'M'}, {'X', 'IA'})\n""")
+    compiler.compile("""test = X|O| where (O, test, V) in {'D', 'M'}\n""")
 
 if __name__ == "__main__":
     test()
