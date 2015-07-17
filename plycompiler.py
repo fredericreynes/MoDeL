@@ -67,7 +67,7 @@ def extract_iterators(expr):
 
 class Compiler:
     def error(self, msg):
-        print "Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line], msg)
+        print "Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line - 1], msg)
 
     def get_if_exists(self, key, hsh, msg):
         if key in hsh:
@@ -76,7 +76,15 @@ class Compiler:
             self.error("%s `%s` is not defined." % (msg, key))
 
 
-    # Compile expressions
+    # List
+    # ('ListLiteral', tuple)
+    #
+    def compile_list(self, ast):
+        if ast[0] == 'ListLiteral':
+            return (iter(ast[1]), xrange(1, len(ast[1])))
+
+
+    # Expressions
     #
     def compile_expression(self, ast, iterators):
         # Find iterators used in this expression
@@ -88,7 +96,8 @@ class Compiler:
 
             print iterators
 
-    # Compile whereClause
+
+    # whereClause
     # ('Where', iterator)
     # iterator can be one of:
     # - ('IteratorImmediateList', ID, list)
@@ -99,12 +108,11 @@ class Compiler:
         iterator = ast[1]
 
         if iterator[0] == 'IteratorLocal':
-            lst = self.get_if_exists(iterator[2], self.heap, "Local variable")
-            return { iterator[1]: iter(lst) }
-        elif iterator[0] == 'IteratorImmediateList':
-            return { iterator[1]: iter(iterator[2]) }
+            return { iterator[1]: self.get_if_exists(iterator[2], self.heap, "Local variable") }
+        elif iterator[0] == 'IteratorListLiteral':
+            return { iterator[1]: self.compile_list(iterator[2]) }
 
-    # Compile Qualified Expressions
+    # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
     #
     def compile_qualified(self, ast, iterators):
@@ -127,12 +135,22 @@ class Compiler:
         # Parse the program
         ast = plyyacc.parser.parse(program)
 
-        # Go through each statement
-        for a in ast[1]:
-            s = a[1]
+        # Check for errors
+        if len(plyyacc.errors) == 0:
+            print ast, "\n"
 
-            if s[0] == 'EquationDef':
-                self.compile_qualified(s[3], self.iterators)
+            # Go through each statement
+            for a in ast[1]:
+                s = a[1]
+                self.current_line = a[2]
+
+                if s[0] == 'EquationDef':
+                    self.compile_qualified(s[3], self.iterators)
+
+        else:
+            for e in plyyacc.errors:
+                self.current_line = e[1]
+                self.error(e[0])
 
 
 def compile(program, heap):
@@ -161,7 +179,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""test = X|O| where O in {"D", "M"}\n""")
+    compiler.compile("""test = X|O| where O in ({'D', 'M'}, {'X', 'IA'})\n""")
 
 if __name__ == "__main__":
     test()

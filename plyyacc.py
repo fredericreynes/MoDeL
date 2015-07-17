@@ -99,9 +99,9 @@ def p_string_list_recursive(p):
     '''stringList : stringList COMMA STRING'''
     p[0] =  ('StringList', p[1][1] + (p[3], ))
 
-def p_list(p):
-    '''list : LBRACE stringList RBRACE'''
-    p[0] = ('List', p[2][1])
+def p_list_literal(p):
+    '''listLiteral : LBRACE stringList RBRACE'''
+    p[0] = ('ListLiteral', p[2][1])
 
 
 # Expressions
@@ -165,11 +165,11 @@ def p_id_group(p):
     p[0] = ('IDGroup', p[2][1])
 
 def p_list_list(p):
-    '''listList : list'''
+    '''listList : listLiteral'''
     p[0] = ('ListList', (p[1], ))
 
 def p_list_list_recursive(p):
-    '''listList : listList COMMA list'''
+    '''listList : listList COMMA listLiteral'''
     p[0] =  ('ListList', p[1][1] + (p[3], ))
 
 def p_list_group(p):
@@ -179,9 +179,9 @@ def p_list_group(p):
 
 # Iterators
 
-def p_iterator_list(p):
-    '''iterator : ID IN list'''
-    p[0] = ('IteratorImmediateList', p[1], p[3])
+def p_iterator_list_literal(p):
+    '''iterator : ID IN listLiteral'''
+    p[0] = ('IteratorListLiteral', p[1], p[3])
 
 def p_iterator_local(p):
     '''iterator : ID IN LOCALID'''
@@ -189,12 +189,25 @@ def p_iterator_local(p):
 
 def p_iterator_parallel_list(p):
     '''iterator : idGroup IN listGroup'''
-    p[0] = ('IteratorParallelList', p[1], p[3])
+    if len(p[1][1]) == len(p[3][1]):
+        p[0] = ('IteratorParallelList', p[1], p[3])
+    else:
+        add_error("Syntax error in parallel list iterator. %i lists iterated for %i variables." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 
 def p_iterator_parallel_local(p):
     '''iterator : idGroup IN localidGroup'''
-    p[0] = ('IteratorParallelLocal', p[1], p[3])
+    if len(p[1][1]) == len(p[3][1]):
+        p[0] = ('IteratorParallelLocal', p[1], p[3])
+    else:
+        add_error("Syntax error in parallel list iterator. %i lists iterated for %i variables." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 
+def p_iterator_parallel_list_error(p):
+    '''iterator : ID IN listGroup'''
+    add_error("Syntax error in parallel list iterator. %i lists iterated for 1 variable." % len(p[3]), p.lineno(2))
+
+def p_iterator_parallel_local_error(p):
+    '''iterator : ID IN localidGroup'''
+    add_error("Syntax error in parallel list iterator. %i lists iterated for 1 variable." % len(p[3]), p.lineno(2))
 
 # Qualified expressions
 
@@ -254,12 +267,18 @@ def p_series_definition(p):
     p[0] = ('SeriesDef', None, p[1], p[3])
 
 def p_local_definition(p):
-    '''localDef : LOCALID SERIESEQUALS list'''
+    '''localDef : LOCALID SERIESEQUALS listLiteral'''
     p[0] = ('LocalDef', p[1], p[3])
 
 
+# Error
+def add_error(msg, line_nb):
+    errors.append((msg, line_nb))
+
 
 parser = yacc.yacc()
+
+errors = []
 
 if __name__ == "__main__":
     print parser.parse("""pouet[c] = 15 where i in {"15", "10"}
