@@ -65,9 +65,12 @@ def extract_iterators(expr):
     elif expr[0] == 'Placeholder':
         return expr[1]
 
+class CompilerError(Exception):
+    pass
+
 class Compiler:
     def error(self, msg):
-        print "Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line - 1], msg)
+        raise CompilerError("Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line - 1], msg))
 
     def get_if_exists(self, key, hsh, msg):
         if key in hsh:
@@ -81,7 +84,7 @@ class Compiler:
     #
     def compile_list(self, ast):
         if ast[0] == 'ListLiteral':
-            return (ast[1], range(1, len(ast[1]) + 1))
+            return zip(ast[1], range(1, len(ast[1]) + 1))
 
 
     # Expressions
@@ -114,7 +117,7 @@ class Compiler:
             return { iterator[1]: self.compile_list(iterator[2]) }
         elif iterator[0] == 'IteratorParallelList':
             print [l for l in iterator[2][1]]
-            return { iterator[1][1]: zip(self.compile_list(l) for l in iterator[2][1]) }
+            return { iterator[1][1]: [self.compile_list(l) for l in iterator[2][1]] }
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -143,13 +146,16 @@ class Compiler:
         if len(plyyacc.errors) == 0:
             print ast, "\n"
 
-            # Go through each statement
-            for a in ast[1]:
-                s = a[1]
-                self.current_line = a[2]
+            try:
+                # Go through each statement
+                for a in ast[1]:
+                    s = a[1]
+                    self.current_line = a[2]
 
-                if s[0] == 'EquationDef':
-                    self.compile_qualified(s[3], self.iterators)
+                    if s[0] == 'EquationDef':
+                        self.compile_qualified(s[3], self.iterators)
+            except CompilerError as e:
+                print e
 
         else:
             for e in plyyacc.errors:
@@ -183,7 +189,8 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""test = X|O| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
+    compiler.compile("""V = x[c] where c in {'01', '02'}
+    test = X|O| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
 
 if __name__ == "__main__":
     test()
