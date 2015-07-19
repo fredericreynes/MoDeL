@@ -79,11 +79,11 @@ class Compiler:
             self.error("%s `%s` is not defined." % (msg, key))
 
 
-    # List
-    # ('ListLiteral', tuple)
+    # Set
+    # ('SetLiteral', tuple)
     #
-    def compile_list(self, ast):
-        if ast[0] == 'ListLiteral':
+    def compile_set(self, ast):
+        if ast[0] == 'SetLiteral':
             return zip(ast[1], range(1, len(ast[1]) + 1))
 
 
@@ -95,6 +95,8 @@ class Compiler:
 
         # Get the corresponding lists
         for i in iterator_names:
+            # Must check if already defined locally, since local definitions replace
+            # global iterators by default
             iterators.update({i: self.get_if_exists(i, iterators, "Iterator")})
 
             print iterators
@@ -103,21 +105,21 @@ class Compiler:
     # whereClause
     # ('Where', iterator)
     # iterator can be one of:
-    # - ('IteratorImmediateList', ID, list)
+    # - ('IteratorSetLiteral', ID, set)
     # - ('IteratorLocal', ID, localId)
-    # - ('IteratorParallelList', idGroup, listGroup)
+    # - ('IteratorParallelSet', idGroup, setGroup)
     # - ('IteratorParallelLocal', idGroup, localGroup)
     #
     def compile_whereClause(self, ast):
-        iterator = ast[1]
+        iterator = ast[1][1][0]
 
         if iterator[0] == 'IteratorLocal':
-            return { iterator[1]: self.get_if_exists(iterator[2], self.heap, "Local variable") }
-        elif iterator[0] == 'IteratorListLiteral':
-            return { iterator[1]: self.compile_list(iterator[2]) }
-        elif iterator[0] == 'IteratorParallelList':
+            return ({ iterator[1]: self.get_if_exists(iterator[2], self.heap, "Local variable") }, None)
+        elif iterator[0] == 'IteratorSetLiteral':
+            return ({ iterator[1]: self.compile_set(iterator[2]) }, None)
+        elif iterator[0] == 'IteratorParallelSet':
             print [l for l in iterator[2][1]]
-            return { iterator[1][1]: [self.compile_list(l) for l in iterator[2][1]] }
+            return ({ iterator[1][1]: [self.compile_set(l) for l in iterator[2][1]] }, None)
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -125,7 +127,8 @@ class Compiler:
     def compile_qualified(self, ast, iterators):
         # Compile whereClause to add explicit iterators, if any
         if not ast[3] is None:
-            iterators.update( self.compile_whereClause(ast[3]) )
+            local_iterators, parallel_iterators = self.compile_whereClause(ast[3])
+            iterators.update( local_iterators )
 
         # Compile ifClause, if any
 

@@ -89,19 +89,19 @@ def p_variable_name_index_time(p):
     p[0] = ('VarName', p[1], p[2], p[3])
 
 
-# List literals
+# Set literals
 
-def p_string_list(p):
-    '''stringList : STRING'''
-    p[0] = ('StringList', (p[1], ))
+def p_string_set(p):
+    '''stringSet : STRING'''
+    p[0] = ('StringSet', (p[1], ))
 
-def p_string_list_recursive(p):
-    '''stringList : stringList COMMA STRING'''
-    p[0] =  ('StringList', p[1][1] + (p[3], ))
+def p_string_set_recursive(p):
+    '''stringSet : stringSet COMMA STRING'''
+    p[0] =  ('StringSet', p[1][1] + (p[3], ))
 
-def p_list_literal(p):
-    '''listLiteral : LBRACE stringList RBRACE'''
-    p[0] = ('ListLiteral', p[2][1])
+def p_set_literal(p):
+    '''setLiteral : LBRACE stringSet RBRACE'''
+    p[0] = ('SetLiteral', p[2][1])
 
 
 # Expressions
@@ -138,7 +138,7 @@ def p_expression_list_recursive(p):
     p[0] =  ('ExprList', p[1][1] + (p[3], ))
 
 
-# Lists of LocalID, ID, and Lists
+# Lists of LocalID, ID, and Sets
 
 def p_localid_list(p):
     '''localidList : LOCALID'''
@@ -164,37 +164,36 @@ def p_id_group(p):
     '''idGroup : LPAREN idList RPAREN'''
     p[0] = ('IDGroup', p[2][1])
 
-def p_list_list(p):
-    '''listList : listLiteral'''
-    p[0] = ('ListList', (p[1], ))
+def p_set_list(p):
+    '''setList : setLiteral'''
+    p[0] = ('SetList', (p[1], ))
 
-def p_list_list_recursive(p):
-    '''listList : listList COMMA listLiteral'''
-    p[0] =  ('ListList', p[1][1] + (p[3], ))
+def p_set_list_recursive(p):
+    '''setList : setList COMMA setLiteral'''
+    p[0] =  ('SetList', p[1][1] + (p[3], ))
 
-def p_list_group(p):
-    '''listGroup : LPAREN listList RPAREN'''
-    p[0] = ('ListGroup', p[2][1])
+def p_set_group(p):
+    '''setGroup : LPAREN setList RPAREN'''
+    p[0] = ('SetGroup', p[2][1])
 
 
 # Iterators
 
-def p_iterator_list_literal(p):
-    '''iterator : ID IN listLiteral'''
-    p[0] = ('IteratorListLiteral', p[1], p[3])
+def p_iterator_set_literal(p):
+    '''iterator : ID IN setLiteral'''
+    p[0] = ('IteratorSetLiteral', p[1], p[3])
 
 def p_iterator_local(p):
     '''iterator : ID IN LOCALID'''
     p[0] = ('IteratorLocal', p[1], p[3])
 
-def p_iterator_parallel_list(p):
-    '''iterator : idGroup IN listGroup'''
+def p_iterator_parallel_set(p):
+    '''iterator : idGroup IN setGroup'''
     if len(p[1][1]) == len(p[3][1]):
-        #add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
-        p[0] = ('IteratorParallelList', p[1], p[3])
-    # Different number of ids and lists
+        p[0] = ('IteratorParallelSet', p[1], p[3])
+    # Different number of ids and sets
     else:
-        add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
+        add_error("Syntax error in parallel set iterator. %i variables for %i sets." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 
 def p_iterator_parallel_local(p):
     '''iterator : idGroup IN localidGroup'''
@@ -202,23 +201,23 @@ def p_iterator_parallel_local(p):
         p[0] = ('IteratorParallelLocal', p[1], p[3])
     # Different number of variables and local ids
     else:
-        add_error("Syntax error in parallel list iterator. %i variables for %i lists." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
+        add_error("Syntax error in parallel iterator. %i variables for %i sets." % (len(p[1][1]), len(p[3][1])), p.lineno(2))
 
-def p_iterator_parallel_list_error(p):
-    '''iterator : ID IN listGroup'''
-    add_error("Syntax error in parallel list iterator. 1 variable for %i lists." % len(p[3][1]), p.lineno(2))
+def p_iterator_parallel_set_error(p):
+    '''iterator : ID IN setGroup'''
+    add_error("Syntax error in parallel iterator. 1 variable for %i sets." % len(p[3][1]), p.lineno(2))
 
 def p_iterator_parallel_local_error(p):
     '''iterator : ID IN localidGroup'''
-    add_error("Syntax error in parallel list iterator. 1 variable for %i lists." % len(p[3][1]), p.lineno(2))
+    add_error("Syntax error in parallel iterator. 1 variable for %i sets." % len(p[3][1]), p.lineno(2))
 
-def p_iterator_parallel_list_error(p):
-    '''iterator : idGroup IN listLiteral'''
-    add_error("Syntax error in parallel list iterator. %i variables for 1 list." % len(p[1][1]), p.lineno(2))
+def p_iterator_parallel_set_error_2(p):
+    '''iterator : idGroup IN setLiteral'''
+    add_error("Syntax error in parallel iterator. %i variables for 1 set." % len(p[1][1]), p.lineno(2))
 
-def p_iterator_parallel_local_error(p):
+def p_iterator_parallel_local_error_2(p):
     '''iterator : idGroup IN LOCALID'''
-    add_error("Syntax error in parallel list iterator. %i variables for 1 list." % len(p[1][1]), p.lineno(2))
+    add_error("Syntax error in parallel iterator. %i variables for 1 set." % len(p[1][1]), p.lineno(2))
 
 def p_iterator_list(p):
     '''iteratorList : iterator'''
@@ -287,7 +286,7 @@ def p_series_definition(p):
     p[0] = ('SeriesDef', None, p[1], p[3])
 
 def p_local_definition(p):
-    '''localDef : LOCALID SERIESEQUALS listLiteral'''
+    '''localDef : LOCALID SERIESEQUALS setLiteral'''
     p[0] = ('LocalDef', p[1], p[3])
 
 
