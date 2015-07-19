@@ -220,12 +220,20 @@ def p_iterator_parallel_local_error(p):
     '''iterator : idGroup IN LOCALID'''
     add_error("Syntax error in parallel list iterator. %i variables for 1 list." % len(p[1][1]), p.lineno(2))
 
+def p_iterator_list(p):
+    '''iteratorList : iterator'''
+    p[0] = ('IteratorList', (p[1], ))
+
+def p_iterator_list_recursive(p):
+    '''iteratorList : iteratorList COMMA iterator'''
+    p[0] =  ('IteratorList', p[1][1] + (p[3], ))
+
 
 # Qualified expressions
 
 def p_where_clause(p):
-    '''whereClause : WHERE iterator
-                   | ON iterator'''
+    '''whereClause : WHERE iteratorList
+                   | ON iteratorList'''
     p[0] = ('Where', p[2])
 
 def p_if_clause(p):
