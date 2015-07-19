@@ -104,6 +104,7 @@ class Compiler:
         # Only keep the iterators we need in this expression
 
         # First get all parallel iterators, if any
+        parallel_iterators = []
         if len(parallel_iterator_names) > 0:
             try:
                 parallel_iterators = [ iterators[k] for k in parallel_iterator_names ]
@@ -115,7 +116,13 @@ class Compiler:
                 self.error("Parallel iterators %s differ in length." % str(parallel_iterator_names))
             parallel_iterators = (merge_dicts(dicts) for dicts in itertools.izip(*parallel_iterators))
 
-
+        # Then, get the other, non-parallel, iterators we need
+        try:
+            other_iterators = [ iterators[k] for k in iterator_names.difference(parallel_iterator_names) ]
+        except KeyError as e:
+            self.error("Undefined iterator `%s` is used in expression." % e.args)
+        iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
+        print "Final iterators", list(iterators)
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
     # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
@@ -234,7 +241,7 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V = x[c] where c in {'01', '02'}
-    test = X|P| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
+    test = X|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'14', '15', '16'}\n""")
 
 if __name__ == "__main__":
     test()
