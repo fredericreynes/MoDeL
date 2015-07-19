@@ -103,23 +103,28 @@ class Compiler:
 
 
     # whereClause
-    # ('Where', iterator)
-    # iterator can be one of:
+    # ('Where', iteratorList)
+    # Each iterator in iteratorList can be one of:
     # - ('IteratorSetLiteral', ID, set)
     # - ('IteratorLocal', ID, localId)
     # - ('IteratorParallelSet', idGroup, setGroup)
     # - ('IteratorParallelLocal', idGroup, localGroup)
     #
     def compile_whereClause(self, ast):
-        iterator = ast[1][1][0]
+        iterator_list = ast[1][1]
+        local_iterators = {}
+        parallel_iterators = []
 
-        if iterator[0] == 'IteratorLocal':
-            return ({ iterator[1]: self.get_if_exists(iterator[2], self.heap, "Local variable") }, None)
-        elif iterator[0] == 'IteratorSetLiteral':
-            return ({ iterator[1]: self.compile_set(iterator[2]) }, None)
-        elif iterator[0] == 'IteratorParallelSet':
-            print [l for l in iterator[2][1]]
-            return ({ iterator[1][1]: [self.compile_set(l) for l in iterator[2][1]] }, None)
+        for iter in iterator_list:
+            if iter[0] == 'IteratorLocal':
+                local_iterators.update({ iter[1]: self.get_if_exists(iter[2], self.heap, "Local variable") })
+            elif iter[0] == 'IteratorSetLiteral':
+                local_iterators.update({ iter[1]: self.compile_set(iter[2]) })
+            elif iter[0] == 'IteratorParallelSet':
+                local_iterators.update( dict(zip(iter[1][1], (self.compile_set(l) for l in iter[2][1]))) )
+                parallel_iterators.append(iter[1][1])
+
+        return local_iterators, parallel_iterators
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -134,6 +139,7 @@ class Compiler:
 
         # Compile expr
         print iterators
+        print parallel_iterators
         self.compile_expression(ast[1], iterators)
 
     def compile(self, program):
