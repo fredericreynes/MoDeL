@@ -65,6 +65,14 @@ def extract_iterators(expr):
     elif expr[0] == 'Placeholder':
         return expr[1]
 
+
+# Given a tuple of dicts, returns a single merged dict
+def merge_dicts(dicts):
+    ret = {}
+    for d in dicts:
+        ret.update(d)
+    return ret
+
 class CompilerError(Exception):
     pass
 
@@ -94,17 +102,24 @@ class Compiler:
         iterator_names = set(extract_iterators(ast))
 
         # Only keep the iterators we need in this expression
-        try:
-            # First get all parallel iterators
-            parallel_iterators = { k:iterators[k] for k in parallel_iterator_names }
-        except KeyError as e:
-            self.error("Undefined iterator `%s` is used in expression." % e.args)
+
+        # First get all parallel iterators, if any
+        if len(parallel_iterator_names) > 0:
+            try:
+                parallel_iterators = [ iterators[k] for k in parallel_iterator_names ]
+            except KeyError as e:
+                self.error("Undefined iterator `%s` is used in expression." % e.args)
+            # Check that all parallel iterators have the same number of elements
+            ref_len = len(parallel_iterators[0])
+            if not all(len(iter) == ref_len for iter in parallel_iterators):
+                self.error("Parallel iterators %s differ in length." % str(parallel_iterator_names))
+            parallel_iterators = (merge_dicts(dicts) for dicts in itertools.izip(*parallel_iterators))
 
 
 
-        print iterators
-
-
+    # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
+    # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
+    #
     def build_iterator(self, name, elements):
         index_name = "$%s" % name
         return [ {name: e[0], index_name: e[1]} for e in elements ]
