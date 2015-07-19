@@ -89,42 +89,64 @@ class Compiler:
 
     # Expressions
     #
-    def compile_expression(self, ast, iterators):
+    def compile_expression(self, ast, iterators, parallel_iterator_names):
         # Find iterators used in this expression
-        iterator_names = extract_iterators(ast)
+        iterator_names = set(extract_iterators(ast))
 
-        # Get the corresponding lists
-        for i in iterator_names:
-            # Must check if already defined locally, since local definitions replace
-            # global iterators by default
-            iterators.update({i: self.get_if_exists(i, iterators, "Iterator")})
+        # Only keep the iterators we need in this expression
+        try:
+            # First get all parallel iterators
+            parallel_iterators = { k:iterators[k] for k in parallel_iterator_names }
+        except KeyError as e:
+            self.error("Undefined iterator `%s` is used in expression." % e.args)
 
-            print iterators
 
 
-    # whereClause
-    # ('Where', iteratorList)
-    # Each iterator in iteratorList can be one of:
+        print iterators
+
+
+    def build_iterator(self, name, elements):
+        index_name = "$%s" % name
+        return [ {name: e[0], index_name: e[1]} for e in elements ]
+
+    # Iterators
+    # Each iterator can be one of:
     # - ('IteratorSetLiteral', ID, set)
     # - ('IteratorLocal', ID, localId)
     # - ('IteratorParallelSet', idGroup, setGroup)
     # - ('IteratorParallelLocal', idGroup, localGroup)
     #
+    def compile_iterator(self, ast):
+        local_iterators = {}
+        parallel_iterator_names = []
+
+        if ast[0] == 'IteratorLocal':
+            local_iterators = { ast[1]: self.build_iterator(ast[1], self.get_if_exists(ast[2], self.heap, "Local variable")) }
+        elif ast[0] == 'IteratorSetLiteral':
+            local_iterators = { ast[1]: self.build_iterator(ast[1], self.compile_set(ast[2])) }
+        elif ast[0] == 'IteratorParallelSet':
+            local_iterators = { e[0]: self.build_iterator(e[0], e[1]) for e in zip(ast[1][1], (self.compile_set(l) for l in ast[2][1])) }
+            parallel_iterator_names = ast[1][1]
+
+        return local_iterators, parallel_iterator_names
+
+
+
+    # whereClause
+    # ('Where', iteratorList)
+    #
     def compile_whereClause(self, ast):
         iterator_list = ast[1][1]
         local_iterators = {}
-        parallel_iterators = []
+        parallel_iterator_names = []
 
         for iter in iterator_list:
-            if iter[0] == 'IteratorLocal':
-                local_iterators.update({ iter[1]: self.get_if_exists(iter[2], self.heap, "Local variable") })
-            elif iter[0] == 'IteratorSetLiteral':
-                local_iterators.update({ iter[1]: self.compile_set(iter[2]) })
-            elif iter[0] == 'IteratorParallelSet':
-                local_iterators.update( dict(zip(iter[1][1], (self.compile_set(l) for l in iter[2][1]))) )
-                parallel_iterators.append(iter[1][1])
+            ret = self.compile_iterator(iter)
+            local_iterators.update(ret[0])
+            parallel_iterator_names.extend(ret[1])
 
-        return local_iterators, parallel_iterators
+        print local_iterators, parallel_iterator_names
+        return local_iterators, set(parallel_iterator_names)
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -132,19 +154,17 @@ class Compiler:
     def compile_qualified(self, ast, iterators):
         # Compile whereClause to add explicit iterators, if any
         if not ast[3] is None:
-            local_iterators, parallel_iterators = self.compile_whereClause(ast[3])
+            local_iterators, parallel_iterator_names = self.compile_whereClause(ast[3])
             iterators.update( local_iterators )
 
         # Compile ifClause, if any
 
         # Compile expr
-        print iterators
-        print parallel_iterators
-        self.compile_expression(ast[1], iterators)
+        self.compile_expression(ast[1], iterators, parallel_iterator_names)
 
     def compile(self, program):
         self.heap = {}
-        self.iterators = {}
+        self.iterators = {'test': ['01', '02', '99']}
         self.lines = program.split('\n')
         self.current_line = 0
 
@@ -199,7 +219,7 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V = x[c] where c in {'01', '02'}
-    test = X|O| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
+    test = X|P| where (O, V) in ({'D', 'M'}, {'X', 'IA'})\n""")
 
 if __name__ == "__main__":
     test()
