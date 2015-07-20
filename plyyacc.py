@@ -16,11 +16,12 @@ precedence = (
 
 def p_program(p):
     '''program : statement'''
-    p[0] = ('Program', (p[1], ))
+    p[0] = ('Program', [p[1]])
 
 def p_program_recursive(p):
     '''program : program statement'''
-    p[0] = ('Program', p[1][1] + (p[2], ))
+    p[1][1].append(p[2])
+    p[0] = ('Program', p[1][1])
 
 
 # Statement
@@ -46,16 +47,17 @@ def p_placeholder(p):
 
 def p_variable_id_simple(p):
     '''variableId : ID'''
-    p[0] = ('VarId', (p[1], ))
+    p[0] = ('VarId', [p[1]])
 
 def p_variable_id_placeholder(p):
     '''variableId : placeholder'''
-    p[0] = ('VarId', (p[1], ))
+    p[0] = ('VarId', [p[1]])
 
 def p_variable_id_recursive(p):
     '''variableId : variableId placeholder
                   | variableId ID'''
-    p[0] = ('VarId', p[1][1] + (p[2], ))
+    p[1][1].append(p[2])
+    p[0] = ('VarId', p[1][1])
 
 
 # Variable name
@@ -93,11 +95,12 @@ def p_variable_name_index_time(p):
 
 def p_string_set(p):
     '''stringSet : STRING'''
-    p[0] = ('StringSet', (p[1], ))
+    p[0] = ('StringSet', [p[1]])
 
 def p_string_set_recursive(p):
     '''stringSet : stringSet COMMA STRING'''
-    p[0] =  ('StringSet', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('StringSet', p[1][1])
 
 def p_set_literal(p):
     '''setLiteral : LBRACE stringSet RBRACE'''
@@ -131,22 +134,24 @@ def p_expression_group(p):
 
 def p_expression_list(p):
     '''exprList : expr'''
-    p[0] = ('ExprList', (p[1], ))
+    p[0] = ('ExprList', [p[1]])
 
 def p_expression_list_recursive(p):
     '''exprList : exprList COMMA expr'''
-    p[0] =  ('ExprList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('ExprList', p[1][1])
 
 
 # Lists of LocalID, ID, and Sets
 
 def p_localid_list(p):
     '''localidList : LOCALID'''
-    p[0] = ('LocalIDList', (p[1], ))
+    p[0] = ('LocalIDList', [p[1]])
 
 def p_localid_list_recursive(p):
     '''localidList : localidList COMMA LOCALID'''
-    p[0] =  ('LocalIDList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('LocalIDList', p[1][1])
 
 def p_localid_group(p):
     '''localidGroup : LPAREN localidList RPAREN'''
@@ -154,11 +159,12 @@ def p_localid_group(p):
 
 def p_id_list(p):
     '''idList : ID'''
-    p[0] = ('IDList', (p[1], ))
+    p[0] = ('IDList', [p[1]])
 
 def p_id_list_recursive(p):
     '''idList : idList COMMA ID'''
-    p[0] =  ('IDList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('IDList', p[1][1])
 
 def p_id_group(p):
     '''idGroup : LPAREN idList RPAREN'''
@@ -166,11 +172,12 @@ def p_id_group(p):
 
 def p_set_list(p):
     '''setList : setLiteral'''
-    p[0] = ('SetList', (p[1], ))
+    p[0] = ('SetList', [p[1]])
 
 def p_set_list_recursive(p):
     '''setList : setList COMMA setLiteral'''
-    p[0] =  ('SetList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('SetList', p[1][1])
 
 def p_set_group(p):
     '''setGroup : LPAREN setList RPAREN'''
@@ -257,11 +264,12 @@ def p_qualified_expression_if_where(p):
 
 def p_qualified_expression_list(p):
     '''qualifiedExprList : qualifiedExpr'''
-    p[0] = ('QualifiedExprList', (p[1], ))
+    p[0] = ('QualifiedExprList', [p[1]])
 
 def p_qualified_expression_list_recursive(p):
     '''qualifiedExprList : qualifiedExprList COMMA qualifiedExpr'''
-    p[0] =  ('QualifiedExprList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('QualifiedExprList', p[1][1])
 
 
 # Function
