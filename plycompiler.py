@@ -11,7 +11,7 @@ def traverse(func):
             ret = func(ast)
         except TypeError:
              # func doesn't take care of terminals
-            return ()
+            return iter([])
         else:
             if ret is not None:
                 return ret
@@ -21,29 +21,29 @@ def traverse(func):
     @wraps(func)
     def traverse_with_wrapped_func(ast):
         if ast[0] == 'VarName':
-            return wrapped_func(ast[1]) + wrapped_func(ast[2]) + wrapped_func(ast[3])
+            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
         elif ast[0] == 'VarId':
-            return tuple(itertools.chain.from_iterable(wrapped_func(a) for a in ast[1]))
+            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
         elif ast[0] == 'Placeholder':
             return wrapped_func(ast[1])
         elif ast[0] == 'Index':
             return wrapped_func(ast[1])
         elif ast[0] == 'ExprList':
-            return tuple(itertools.chain.from_iterable(wrapped_func(a) for a in ast[1]))
+            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
         elif ast[0] == 'ExprBinary':
-            return wrapped_func(ast[2]) + wrapped_func(ast[3])
+            return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
         elif ast[0] == 'ExprGroup':
             return wrapped_func(ast[1])
         elif ast[0] == 'FunctionCallArgs':
             return wrapped_func(ast[2])
         elif ast[0] == 'QualifiedExprList':
-            return tuple(itertools.chain.from_iterable(wrapped_func(a) for a in ast[1]))
+            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
         elif ast[0] == 'Qualified':
-            return wrapped_func(ast[1]) + wrapped_func(ast[2]) + wrapped_func(ast[3])
+            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
         elif ast[0] == 'EquationDef':
-            return wrapped_func(ast[2]) + wrapped_func(ast[3])
+            return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
         else:
-            return ()
+            return iter([])
 
     return traverse_with_wrapped_func
 
@@ -56,13 +56,16 @@ def extract_varnames(expr):
 @traverse
 def extract_simple_varids(expr):
     if expr[0] == 'VarId' and len(expr[1]) == 1 and isinstance(expr[1][0], basestring):
+        print "Inside simple_varids"
         return expr[1]
 
 @traverse
 def extract_iterators(expr):
     if expr[0] == 'Index':
+        print "Inside extract_iterators, Index", extract_simple_varids(expr[1])
         return extract_simple_varids(expr[1])
     elif expr[0] == 'Placeholder':
+        print "Inside extract_iterators, Placeholder", extract_simple_varids(expr[1])
         return expr[1]
 
 
@@ -100,6 +103,7 @@ class Compiler:
     def compile_expression(self, ast, iterators, parallel_iterator_names):
         # Find iterators used in this expression
         iterator_names = set(extract_iterators(ast))
+        print "\nIterator names", iterator_names, '\n'
 
         # Only keep the iterators we need in this expression
 
