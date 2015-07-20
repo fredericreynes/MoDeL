@@ -303,11 +303,12 @@ class Compiler:
         # Compile ifClause, if any
 
         # Compile expression
-
         # First, we need to build the dicts of iterators
         iterator_dicts = self.compile_iterator_dicts(ast[1], iterators, parallel_iterator_names)
         # We can then output the expression
-        outputs= self.output_qualified(ast[1], iterator_dicts)
+        # Should probably moved out, output everything once compilation is complete
+        # Price-value then becomes an AST transform before output
+        outputs = self.output_qualified(ast[1], iterator_dicts)
 
         logger.log("Final iterators", iterator_dicts)
         logger.log("Output", outputs)
@@ -370,7 +371,7 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V = x[c] + v[$c] where c in {'01', '02'}
-    test = X|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'14', '15', '16'}\n""")
+    test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
