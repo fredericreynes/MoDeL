@@ -1,6 +1,8 @@
 from functools import wraps
 import itertools
+import plylex
 import plyyacc
+import re
 
 def build_variable(name):
     ('VarName', ('VarId', (name,)), None, None)
@@ -125,36 +127,36 @@ class Compiler:
     # VarName
     #
     def output_varname(self, output_variableId, output_indices, output_timeOffset):
-        return output_variableId + output_indices + output_timeOffset
+        return output_variableId + ('_' if len(output_indices) > 0 else '') + output_indices + output_timeOffset
 
     # Placeholder
     #
     def output_placeholder(self, placeholder):
         return '%(' + placeholder + ')s'
 
-    # # Counters
-    # def
-
-    # Varid parts
+    # CounterId
     #
-    def output_varid_parts(self, part):
-        # Straight strings pass through directly
-        if isinstance(part, basestring):
-            #...except if they are counters (e.g. $i)
-            if part[0] == '$':
-                return self.output_counter(part)
-            else
-                return part
+    def output_counterid(self, counterid):
+        return '%(' + counterid + ')s'
+
+    # VarId part
+    #
+    def output_varid_part(self, part):
         # Placeholders must be further treated
-        else
-            return self.output_placeholder(part)
+        if part[0] == 'Placeholder':
+            return self.output_placeholder(part[1])
+        # Straight strings pass through directly
+        else:
+            return part
 
     # VarId
     #
     def output_varid(self, output_varId_parts):
         return ''.join(output_varId_parts)
 
-    def output_expr(self, ast, compiled_iterators):
+    # Expression
+    #
+    def output_expr(self, ast):
         # ('ExprBinary', op, lhs, rhs)
         if ast[0] == 'ExprBinary':
             return self.output_expr_binary(ast[1], self.output_expr(ast[2]), self.output_expr(ast[3]))
@@ -163,7 +165,13 @@ class Compiler:
             return self.output_expr_group(self.output_expr(ast[1]))
         # ('VarName', variableId, index, time)
         elif ast[0] == 'VarName':
-            return self.output_varname(self.output_varid(ast[1]), self.output_indices(ast[2]), self.output_timeOffset(ast[3]))
+            indices = ast[2][1][1] if ast[2] else []
+            return self.output_varname(self.output_varid(self.output_varid_part(vid) for vid in ast[1][1]),
+                                       self.output_indices(self.output_index(self.output_expr(i)) for i in indices),
+                                       self.output_timeOffset(ast[3]) if ast[3] else '')
+        # ('CounterId', counterId)
+        elif ast[0] == 'CounterId':
+            return self.output_counterid(ast[1])
 
     #
     # Compiler internals
@@ -222,7 +230,9 @@ class Compiler:
             iterators = (merge_dicts(dicts) for dicts in itertools.product(*other_iterators))
         else:
             iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
+
         print "Final iterators", list(iterators)
+        print "Output", ''.join(self.output_expr(ast))
 
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
@@ -340,7 +350,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V = x[c] + v[c] where c in {'01', '02'}
+    compiler.compile("""V = x[c] + v[$c] where c in {'01', '02'}
     test = X|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'14', '15', '16'}\n""")
 
 if __name__ == "__main__":
