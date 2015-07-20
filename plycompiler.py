@@ -4,6 +4,9 @@ import plylex
 import plyyacc
 import re
 
+import sys
+import logger
+
 def build_variable(name):
     ('VarName', ('VarId', (name,)), None, None)
 
@@ -227,19 +230,25 @@ class Compiler:
 
         # Finally, take the cartesian product of all iterators
         if len(parallel_iterator_names) == 0:
-            iterators = (merge_dicts(dicts) for dicts in itertools.product(*other_iterators))
+            iterators = [merge_dicts(dicts) for dicts in itertools.product(*other_iterators)]
         else:
-            iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
+            iterators = [merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators)]
 
-        print "Final iterators", list(iterators)
-        print "Output", ''.join(self.output_expr(ast))
+        # Get the compiled output version of this expression
+        output = ''.join(self.output_expr(ast))
+
+        # This output is in turn just a template to be fed to the iterators
+        results = [output % iter_dict for iter_dict in iterators]
+
+        logger.log("Final iterators", iterators)
+        logger.log("Output", results)
 
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
     # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
     #
     def build_iterator(self, name, elements):
-        index_name = "$%s" % name
+        index_name = '$' + name
         return [ {name: e[0], index_name: e[1]} for e in elements ]
 
     # Iterators
@@ -305,7 +314,7 @@ class Compiler:
 
         # Check for errors
         if len(plyyacc.errors) == 0:
-            print ast, "\n"
+            logger.log(ast, "\n")
 
             try:
                 # Go through each statement
@@ -354,9 +363,13 @@ def test():
     test = X|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'14', '15', '16'}\n""")
 
 if __name__ == "__main__":
-    test()
-    # import timeit
-    # print(timeit.timeit('test()', setup="from __main__ import test", number=3000)/3000)
+    if len(sys.argv) == 1:
+        test()
+    else:
+        import timeit
+        logger.enabled = False
+        print(timeit.timeit('test()', setup="from __main__ import test", number=3000)/3000)
+
     # print plyyacc.parser.parse("""test = X|O|[1, 2]{t-1} if test > 2 where i in %c
     #                       %test := {"15", "05"}
     #                       functionTest = function()
