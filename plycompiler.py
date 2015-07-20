@@ -56,16 +56,13 @@ def extract_varnames(expr):
 @traverse
 def extract_simple_varids(expr):
     if expr[0] == 'VarId' and len(expr[1]) == 1 and isinstance(expr[1][0], basestring):
-        print "Inside simple_varids"
         return expr[1]
 
 @traverse
 def extract_iterators(expr):
     if expr[0] == 'Index':
-        print "Inside extract_iterators, Index", extract_simple_varids(expr[1])
         return extract_simple_varids(expr[1])
     elif expr[0] == 'Placeholder':
-        print "Inside extract_iterators, Placeholder", extract_simple_varids(expr[1])
         return expr[1]
 
 
@@ -103,7 +100,6 @@ class Compiler:
     def compile_expression(self, ast, iterators, parallel_iterator_names):
         # Find iterators used in this expression
         iterator_names = set(extract_iterators(ast))
-        print "\nIterator names", iterator_names, '\n'
 
         # Only keep the iterators we need in this expression
 
@@ -122,10 +118,15 @@ class Compiler:
 
         # Then, get the other, non-parallel, iterators we need
         try:
-            other_iterators = [ iterators[k] for k in iterator_names.difference(parallel_iterator_names) ]
+            other_iterators = ( iterators[k] for k in iterator_names.difference(parallel_iterator_names) )
         except KeyError as e:
             self.error("Undefined iterator `%s` is used in expression." % e.args)
-        iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
+
+        # Finally, take the cartesian product of all iterators
+        if len(parallel_iterator_names) == 0:
+            iterators = (merge_dicts(dicts) for dicts in itertools.product(*other_iterators))
+        else:
+            iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
         print "Final iterators", list(iterators)
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
@@ -171,7 +172,6 @@ class Compiler:
             local_iterators.update(ret[0])
             parallel_iterator_names.extend(ret[1])
 
-        print local_iterators, parallel_iterator_names
         return local_iterators, set(parallel_iterator_names)
 
     # Qualified Expressions
