@@ -176,6 +176,17 @@ class Compiler:
         elif ast[0] == 'CounterId':
             return self.output_counterid(ast[1])
 
+    # Qualified expression
+    #
+    def output_qualified(self, ast, iterator_dicts):
+        # Get the compiled output version of this expression
+        output = ''.join(self.output_expr(ast))
+
+        # This output is in turn just a template to be fed to the iterators
+        return [output % iter_dict for iter_dict in iterator_dicts]
+
+
+
     #
     # Compiler internals
     #
@@ -199,49 +210,6 @@ class Compiler:
     def compile_set(self, ast):
         if ast[0] == 'SetLiteral':
             return zip(ast[1], range(1, len(ast[1]) + 1))
-
-
-    # Expressions
-    #
-    def compile_expression(self, ast, iterators, parallel_iterator_names):
-        # Find iterators used in this expression
-        iterator_names = set(extract_iterators(ast))
-
-        # Compile the iterators we need in this expression
-
-        # First get all parallel iterators, if any
-        parallel_iterators = []
-        if len(parallel_iterator_names) > 0:
-            try:
-                parallel_iterators = [ iterators[k] for k in parallel_iterator_names ]
-            except KeyError as e:
-                self.error("Undefined iterator `%s` is used in expression." % e.args)
-            # Check that all parallel iterators have the same number of elements
-            ref_len = len(parallel_iterators[0])
-            if not all(len(iter) == ref_len for iter in parallel_iterators):
-                self.error("Parallel iterators %s differ in length." % str(parallel_iterator_names))
-            parallel_iterators = (merge_dicts(dicts) for dicts in itertools.izip(*parallel_iterators))
-
-        # Then, get the other, non-parallel, iterators we need
-        try:
-            other_iterators = ( iterators[k] for k in iterator_names.difference(parallel_iterator_names) )
-        except KeyError as e:
-            self.error("Undefined iterator `%s` is used in expression." % e.args)
-
-        # Finally, take the cartesian product of all iterators
-        if len(parallel_iterator_names) == 0:
-            iterators = [merge_dicts(dicts) for dicts in itertools.product(*other_iterators)]
-        else:
-            iterators = [merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators)]
-
-        # Get the compiled output version of this expression
-        output = ''.join(self.output_expr(ast))
-
-        # This output is in turn just a template to be fed to the iterators
-        results = [output % iter_dict for iter_dict in iterators]
-
-        logger.log("Final iterators", iterators)
-        logger.log("Output", results)
 
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
@@ -289,6 +257,40 @@ class Compiler:
         return local_iterators, set(parallel_iterator_names)
 
 
+    # Compile iterator dicts to use on expression templates
+    #
+    def compile_iterator_dicts(self, ast, iterators, parallel_iterator_names):
+        # Find iterators used in this expression
+        iterator_names = set(extract_iterators(ast))
+
+        # Compile the iterators we need in this expression
+
+        # First get all parallel iterators, if any
+        parallel_iterators = []
+        if len(parallel_iterator_names) > 0:
+            try:
+                parallel_iterators = [ iterators[k] for k in parallel_iterator_names ]
+            except KeyError as e:
+                self.error("Undefined iterator `%s` is used in expression." % e.args)
+            # Check that all parallel iterators have the same number of elements
+            ref_len = len(parallel_iterators[0])
+            if not all(len(iter) == ref_len for iter in parallel_iterators):
+                self.error("Parallel iterators %s differ in length." % str(parallel_iterator_names))
+            parallel_iterators = (merge_dicts(dicts) for dicts in itertools.izip(*parallel_iterators))
+
+        # Then, get the other, non-parallel, iterators we need
+        try:
+            other_iterators = ( iterators[k] for k in iterator_names.difference(parallel_iterator_names) )
+        except KeyError as e:
+            self.error("Undefined iterator `%s` is used in expression." % e.args)
+
+        # Finally, take the cartesian product of all iterators
+        if len(parallel_iterator_names) == 0:
+            return [merge_dicts(dicts) for dicts in itertools.product(*other_iterators)]
+        else:
+            return [merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators)]
+
+
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
     #
@@ -300,8 +302,16 @@ class Compiler:
 
         # Compile ifClause, if any
 
-        # Compile expr
-        self.compile_expression(ast[1], iterators, parallel_iterator_names)
+        # Compile expression
+
+        # First, we need to build the dicts of iterators
+        iterator_dicts = self.compile_iterator_dicts(ast[1], iterators, parallel_iterator_names)
+        # We can then output the expression
+        outputs= self.output_qualified(ast[1], iterator_dicts)
+
+        logger.log("Final iterators", iterator_dicts)
+        logger.log("Output", outputs)
+
 
     def compile(self, program):
         self.heap = {}
