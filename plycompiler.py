@@ -73,10 +73,105 @@ def merge_dicts(dicts):
         ret.update(d)
     return ret
 
+# Test if a string is an id
+id_pattern = re.compile('^' + plylex.id + '$')
+
+def is_id(str):
+    return bool(id_pattern.search(str))
+
 class CompilerError(Exception):
     pass
 
 class Compiler:
+
+    #
+    # External interface
+    #
+    # This is the interface that has to be modified
+    # for each implementation of the Compiler class
+    #
+
+    # ExprBinary
+    #
+    def output_expr_binary(self, op, output_lhs, output_rhs):
+        return output_lhs + ' ' + op + ' ' + output_rhs
+
+    # ExprGroup
+    #
+    def output_expr_group(self, output_expr):
+        return '(' + output_expr + ')'
+
+    # Index (single)
+    #
+    def output_index(self, output_expr):
+        # If the index is a single varid, then it is an iterator
+        if is_id(output_expr):
+            return '%(' + output_expr + ')s'
+        # Else it's an expression containing a counter of the form $i,
+        # which should have been already compiled correctly
+        else:
+            return output_expr
+
+    # Indices
+    #
+    def output_indices(self, output_indexList):
+        return '_'.join(output_indexList)
+
+    # Time offset
+    #
+    def output_timeOffset(self, output_timeExpr):
+        return '{' + output_timeExpr + '}'
+
+    # VarName
+    #
+    def output_varname(self, output_variableId, output_indices, output_timeOffset):
+        return output_variableId + output_indices + output_timeOffset
+
+    # Placeholder
+    #
+    def output_placeholder(self, placeholder):
+        return '%(' + placeholder + ')s'
+
+    # # Counters
+    # def
+
+    # Varid parts
+    #
+    def output_varid_parts(self, part):
+        # Straight strings pass through directly
+        if isinstance(part, basestring):
+            #...except if they are counters (e.g. $i)
+            if part[0] == '$':
+                return self.output_counter(part)
+            else
+                return part
+        # Placeholders must be further treated
+        else
+            return self.output_placeholder(part)
+
+    # VarId
+    #
+    def output_varid(self, output_varId_parts):
+        return ''.join(output_varId_parts)
+
+    def output_expr(self, ast, compiled_iterators):
+        # ('ExprBinary', op, lhs, rhs)
+        if ast[0] == 'ExprBinary':
+            return self.output_expr_binary(ast[1], self.output_expr(ast[2]), self.output_expr(ast[3]))
+        # ('ExprGroup', expr)
+        elif ast[0] == 'ExprGroup':
+            return self.output_expr_group(self.output_expr(ast[1]))
+        # ('VarName', variableId, index, time)
+        elif ast[0] == 'VarName':
+            return self.output_varname(self.output_varid(ast[1]), self.output_indices(ast[2]), self.output_timeOffset(ast[3]))
+
+    #
+    # Compiler internals
+    #
+    # This is common to all Compiler instances,
+    # and doesn't need to be modified by the external interface
+    #
+
     def error(self, msg):
         raise CompilerError("Error at line %s.\n\n%s\n\n%s\n" % (self.current_line, self.lines[self.current_line - 1], msg))
 
@@ -101,7 +196,7 @@ class Compiler:
         # Find iterators used in this expression
         iterator_names = set(extract_iterators(ast))
 
-        # Only keep the iterators we need in this expression
+        # Compile the iterators we need in this expression
 
         # First get all parallel iterators, if any
         parallel_iterators = []
@@ -128,6 +223,7 @@ class Compiler:
         else:
             iterators = (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
         print "Final iterators", list(iterators)
+
 
     # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
     # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
@@ -158,7 +254,6 @@ class Compiler:
         return local_iterators, parallel_iterator_names
 
 
-
     # whereClause
     # ('Where', iteratorList)
     #
@@ -173,6 +268,7 @@ class Compiler:
             parallel_iterator_names.extend(ret[1])
 
         return local_iterators, set(parallel_iterator_names)
+
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
@@ -244,7 +340,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V = x[c] where c in {'01', '02'}
+    compiler.compile("""V = x[c] + v[c] where c in {'01', '02'}
     test = X|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'14', '15', '16'}\n""")
 
 if __name__ == "__main__":
