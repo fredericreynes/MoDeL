@@ -9,7 +9,7 @@ reserved = (
 
 tokens = reserved + (
     # Literals (identifier, local identifier, integer constant, float constant, string constant)
-    'ID', 'PLACEHOLDER', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
+    'ID', 'COUNTERID', 'PLACEHOLDER', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
 
     # Operators (+, -, *, /, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
@@ -87,6 +87,9 @@ id                = r'[A-Za-z_][\w_]*'
 def t_ID(t):
     t.type = reserved_map.get(t.value,"ID")
     return t
+
+# Counter id
+t_COUNTERID        = r'\$[A-Za-z]\w*'
 
 # Placeholder
 placeholder        = r'\|(' + id + ')\|'

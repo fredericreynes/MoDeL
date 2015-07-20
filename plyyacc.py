@@ -66,6 +66,10 @@ def p_index(p):
     '''index : LBRACKET exprList RBRACKET'''
     p[0] = ('Index', p[2])
 
+def p_counterid(p):
+    '''counterId : COUNTERID'''
+    p[0] = ('CounterId', p[1])
+
 # def p_index_single(p):
 #     '''index : LBRACKET expr RBRACKET'''
 #     p[0] = ('Index', (p[2], ))
@@ -114,6 +118,7 @@ def p_expression_terminal(p):
             | FLOAT
             | LOCALID
             | variableName
+            | counterId
             | functionCall'''
     p[0] = p[1]
 
