@@ -1,4 +1,3 @@
-from functools import wraps
 import itertools
 import plylex
 import plyyacc
@@ -7,69 +6,7 @@ import re
 import sys
 import logger
 
-def build_variable(name):
-    ('VarName', ('VarId', (name,)), None, None)
-
-def traverse(func):
-    def wrapped_func(ast):
-        try:
-            ret = func(ast)
-        except TypeError:
-             # func doesn't take care of terminals
-            return iter([])
-        else:
-            if ret is not None:
-                return ret
-            else:
-                return traverse_with_wrapped_func(ast)
-
-    @wraps(func)
-    def traverse_with_wrapped_func(ast):
-        if ast[0] == 'VarName':
-            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'VarId':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'Placeholder':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'Index':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'ExprList':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'ExprBinary':
-            return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'ExprGroup':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'FunctionCallArgs':
-            return wrapped_func(ast[2])
-        elif ast[0] == 'QualifiedExprList':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'Qualified':
-            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'EquationDef':
-            return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
-        else:
-            return iter([])
-
-    return traverse_with_wrapped_func
-
-
-@traverse
-def extract_varnames(expr):
-    if expr[0] == 'VarName':
-        return (expr, )
-
-@traverse
-def extract_simple_varids(expr):
-    if expr[0] == 'VarId' and len(expr[1]) == 1 and isinstance(expr[1][0], basestring):
-        return expr[1]
-
-@traverse
-def extract_iterators(expr):
-    if expr[0] == 'Index':
-        return extract_simple_varids(expr[1])
-    elif expr[0] == 'Placeholder':
-        return expr[1]
-
+from ast import *
 
 # Given a tuple of dicts, returns a single merged dict
 def merge_dicts(dicts):
@@ -338,7 +275,8 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        self.compile_qualified(s[3], self.iterators)
+                        # self.compile_qualified(s[3], self.iterators)
+                        print list(ast_value(s))
             except CompilerError as e:
                 print e
 
