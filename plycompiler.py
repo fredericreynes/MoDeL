@@ -117,7 +117,7 @@ class Compiler:
     #
     def output_qualified(self, ast, iterator_dicts):
         # Get the compiled output version of this expression
-        output = ''.join(self.output_expr(ast))
+        output = ''.join(self.output_expr(ast[1]))
 
         # This output is in turn just a template to be fed to the iterators
         return [output % iter_dict for iter_dict in iterator_dicts]
@@ -275,8 +275,8 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        # self.compile_qualified(s[3], self.iterators)
-                        print list(ast_value(s))
+                        expr, iterator_dicts = self.compile_qualified(s[3], self.iterators)
+                        print self.output_qualified(ast_value(s[3]), iterator_dicts)
             except CompilerError as e:
                 print e
 

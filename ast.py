@@ -44,6 +44,49 @@ def traverse(func):
     return traverse_with_wrapped_func
 
 
+def transform(func):
+    def wrapped_func(ast):
+        try:
+            ret = func(ast)
+        except TypeError:
+             # func doesn't take care of terminals
+            return ast
+        else:
+            if ret is not None:
+                return ret
+            else:
+                return transform_with_wrapped_func(ast)
+
+    @wraps(func)
+    def transform_with_wrapped_func(ast):
+        if ast[0] == 'VarName':
+            return ('VarName', wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
+        elif ast[0] == 'VarId':
+            return ('VarId', [wrapped_func(a) for a in ast[1]])
+        elif ast[0] == 'Index':
+            return ('Index', wrapped_func(ast[1]))
+        elif ast[0] == 'ExprList':
+            return ('ExprList', [wrapped_func(a) for a in ast[1]])
+        elif ast[0] == 'ExprBinary':
+            return ('ExprBinary', ast[1], wrapped_func(ast[2]), wrapped_func(ast[3]))
+        elif ast[0] == 'ExprGroup':
+            return ('ExprGroup', wrapped_func(ast[1]))
+        elif ast[0] == 'FunctionCallArgs':
+            return ('FunctionCallArgs', ast[1], wrapped_func(ast[2]))
+        elif ast[0] == 'Placeholder':
+            return ('Placeholder', wrapped_func(ast[1]))
+        elif ast[0] == 'QualifiedExprList':
+            return ('QualifiedExprList', [wrapped_func(a) for a in ast[1]])
+        elif ast[0] == 'Qualified':
+            return ('Qualified', wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
+        elif ast[0] == 'EquationDef':
+            return ('EquationDef', wrapped_func(ast[2]), wrapped_func(ast[3]))
+        else:
+            return ast
+
+    return transform_with_wrapped_func
+
+
 @traverse
 def extract_varnames(expr):
     if expr[0] == 'VarName':
@@ -69,10 +112,10 @@ def extract_iterators(expr):
 # The value form of an expression is obtained
 # through an AST transform: every variable (Varname)
 # is turned into a product of PV * V
-@traverse
+@transform
 def ast_value(expr):
     if expr[0] == 'VarName':
-        return ('ExprBinary', '*', ('Varname', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr)
+        return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
 
 
 def build_variable(name):
