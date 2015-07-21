@@ -286,32 +286,36 @@ class Compiler:
 
         # Finally, take the cartesian product of all iterators
         if len(parallel_iterator_names) == 0:
-            return [merge_dicts(dicts) for dicts in itertools.product(*other_iterators)]
+            return (merge_dicts(dicts) for dicts in itertools.product(*other_iterators))
         else:
-            return [merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators)]
+            return (merge_dicts(dicts) for dicts in itertools.product(parallel_iterators, *other_iterators))
 
 
     # Qualified Expressions
     # ('Qualified', expr, ifClause, whereClause)
     #
+    # Compiled qualified expressions are a pair of the following form,
+    # which can then be consumed by output functions:
+    # (expression, iterator_dicts)
     def compile_qualified(self, ast, iterators):
         # Compile whereClause to add explicit iterators, if any
         if not ast[3] is None:
             local_iterators, parallel_iterator_names = self.compile_whereClause(ast[3])
             iterators.update( local_iterators )
 
-        # Compile ifClause, if any
-
         # Compile expression
         # First, we need to build the dicts of iterators
         iterator_dicts = self.compile_iterator_dicts(ast[1], iterators, parallel_iterator_names)
-        # We can then output the expression
-        # Should probably moved out, output everything once compilation is complete
-        # Price-value then becomes an AST transform before output
-        outputs = self.output_qualified(ast[1], iterator_dicts)
+
+        # Compile ifClause, if any
+        if_filter = []
+
+        # Apply if_filter to iterator_dicts
+        iterator_dicts = [i for i, cond in itertools.izip_longest(iterator_dicts, if_filter, fillvalue = True) if cond]
 
         logger.log("Final iterators", iterator_dicts)
-        logger.log("Output", outputs)
+
+        return (ast[1], iterator_dicts)
 
 
     def compile(self, program):
@@ -371,7 +375,8 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V = x[c] + v[$c] where c in {'01', '02'}
-    test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
+    test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '05'}\n
+    #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
