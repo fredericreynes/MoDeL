@@ -48,9 +48,20 @@ class Compiler:
             return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
 
 
-        # @transform
-        # def ast_functions(expr):
-        #     if expr[0] ==
+    # Function calls
+    # ('FunctionCall', name, args)
+    #
+    # Function calls are implement through as AST transformation:
+    # the function call node is replaced with a node containing
+    # the name of the function, and a list of compiled arguments
+    # (which are just qualified expressions in the first)
+    @transform
+    def ast_functions(self, ast, iterators, additional_iterator_names):
+        # Should be called at the very end of an equation compilation
+        # Regarding iterators, need to identify those iterators that are specific to the function arguments
+        # and isolate them. Should not be considered in the overall iterators (change extract_iterators)
+        if expr[0] == 'FunctionCall':
+            return ('FunctionCall', ast[1], (self.compile_qualified(arg, iterators, additional_iterator_names) for arg in ast[2]))
 
 
     # Set

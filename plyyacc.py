@@ -298,11 +298,11 @@ def p_qualified_expression_list_recursive(p):
 
 def p_function(p):
     '''functionCall : ID LPAREN RPAREN'''
-    p[0] = ('FunctionCallNoArgs', p[1])
+    p[0] = ('FunctionCall', p[1], [])
 
 def p_function_with_arguments(p):
     '''functionCall : ID LPAREN qualifiedExprList RPAREN'''
-    p[0] = ('FunctionCallArgs', p[1], p[3])
+    p[0] = ('FunctionCall', p[1], p[3])
 
 
 # Definitions

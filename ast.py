@@ -29,7 +29,7 @@ def traverse(func):
                 return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
             elif ast[0] == 'ExprGroup':
                 return wrapped_func(ast[1])
-            elif ast[0] == 'FunctionCallArgs':
+            elif ast[0] == 'FunctionCall':
                 return wrapped_func(ast[2])
             elif ast[0] == 'Placeholder':
                 return wrapped_func(ast[1])
@@ -75,8 +75,8 @@ def transform(func):
             return ('ExprBinary', ast[1], wrapped_func(ast[2]), wrapped_func(ast[3]))
         elif ast[0] == 'ExprGroup':
             return ('ExprGroup', wrapped_func(ast[1]))
-        elif ast[0] == 'FunctionCallArgs':
-            return ('FunctionCallArgs', ast[1], wrapped_func(ast[2]))
+        elif ast[0] == 'FunctionCall':
+            return ('FunctionCall', ast[1], wrapped_func(ast[2]))
         elif ast[0] == 'Placeholder':
             return ('Placeholder', wrapped_func(ast[1]))
         elif ast[0] == 'QualifiedExprList':
@@ -109,9 +109,6 @@ def extract_iterators(expr):
         return expr[1]
 
 
-#
-# AST transformations
-#
 
 def build_variable(name):
     ('VarName', ('VarId', (name,)), None, None)
