@@ -1,12 +1,11 @@
 import itertools
-import plylex
 import plyyacc
-import re
 
 import sys
 import logger
 
 from ast import *
+from outputter import *
 
 # Given a tuple of dicts, returns a single merged dict
 def merge_dicts(dicts):
@@ -15,126 +14,10 @@ def merge_dicts(dicts):
         ret.update(d)
     return ret
 
-# Test if a string is an id
-id_pattern = re.compile('^' + plylex.id + '$')
-
-def is_id(str):
-    return bool(id_pattern.search(str))
-
 class CompilerError(Exception):
     pass
 
 class Compiler:
-
-    #
-    # External interface
-    #
-    # This is the interface that has to be modified
-    # for each implementation of the Compiler class
-    #
-
-    # ExprBinary
-    #
-    def output_expr_binary(self, op, output_lhs, output_rhs):
-        return output_lhs + ' ' + op + ' ' + output_rhs
-
-    # ExprGroup
-    #
-    def output_expr_group(self, output_expr):
-        return '(' + output_expr + ')'
-
-    # Index (single)
-    #
-    def output_index(self, output_expr):
-        # If the index is a single varid, then it is an iterator
-        if is_id(output_expr):
-            return '%(' + output_expr + ')s'
-        # Else it's an expression containing a counter of the form $i,
-        # which should have been already compiled correctly
-        else:
-            return output_expr
-
-    # Indices
-    #
-    def output_indices(self, output_indexList):
-        return '_'.join(output_indexList)
-
-    # Time offset
-    #
-    def output_timeOffset(self, output_timeExpr):
-        return '{' + output_timeExpr + '}'
-
-    # VarName
-    #
-    def output_varname(self, output_variableId, output_indices, output_timeOffset):
-        return output_variableId + ('_' if len(output_indices) > 0 else '') + output_indices + output_timeOffset
-
-    # Placeholder
-    #
-    def output_placeholder(self, placeholder):
-        return '%(' + placeholder + ')s'
-
-    # CounterId
-    #
-    def output_counterid(self, counterid):
-        return '%(' + counterid + ')s'
-
-    # VarId part
-    #
-    def output_varid_part(self, part):
-        # Placeholders must be further treated
-        if part[0] == 'Placeholder':
-            return self.output_placeholder(part[1])
-        # Straight strings pass through directly
-        else:
-            return part
-
-    # VarId
-    #
-    def output_varid(self, output_varId_parts):
-        return ''.join(output_varId_parts)
-
-    # Expression
-    #
-    def output_expr(self, ast):
-        try:
-            # ('ExprBinary', op, lhs, rhs)
-            if ast[0] == 'ExprBinary':
-                return self.output_expr_binary(ast[1], self.output_expr(ast[2]), self.output_expr(ast[3]))
-            # ('ExprGroup', expr)
-            elif ast[0] == 'ExprGroup':
-                return self.output_expr_group(self.output_expr(ast[1]))
-            # ('VarName', variableId, index, time)
-            elif ast[0] == 'VarName':
-                indices = ast[2][1][1] if ast[2] else []
-                return self.output_varname(self.output_varid(self.output_varid_part(vid) for vid in ast[1][1]),
-                                           self.output_indices(self.output_index(self.output_expr(i)) for i in indices),
-                                           self.output_timeOffset(ast[3]) if ast[3] else '')
-            # ('CounterId', counterId)
-            elif ast[0] == 'CounterId':
-                return self.output_counterid(ast[1])
-        # Special case for terminals (ints, floats, etc.)
-        except TypeError:
-            return str(ast)
-
-    # Qualified expression
-    #
-    # This function is used when a qualified expression stands alone,
-    # in the parameters of a function
-    def output_qualified(self, ast, iterator_dicts):
-        # Get the compiled output version of this expression
-        output = ''.join(self.output_expr(ast[1]))
-
-        # This output is in turn just a template to be fed to the iterators
-        return [output % iter_dict for iter_dict in iterator_dicts]
-
-    # Equation
-    #
-    def output_equation(self, lhs, rhs, iterator_dicts):
-        # Get the compiled output version for both sides of the equation
-        output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
-
-        return [output % iter_dict for iter_dict in iterator_dicts]
 
     #
     # Compiler internals
@@ -206,6 +89,15 @@ class Compiler:
         return local_iterators, set(parallel_iterator_names)
 
 
+    # ifClause
+    # ('If', iteratorList)
+    #
+    def compile_ifClause(self, ast, iterator_dicts):
+        if_clauses = self.internal_outputter.output_qualified(ast, iterator_dicts)
+
+        return (eval(clause, globals(), self.heap) for clause in if_clauses)
+
+
     # Compile iterator dicts to use on expression templates
     #
     def compile_iterator_dicts(self, ast, iterators, parallel_iterator_names, additional_iterator_names):
@@ -261,7 +153,12 @@ class Compiler:
         iterator_dicts = self.compile_iterator_dicts(ast[1], iterators, parallel_iterator_names, additional_iterator_names)
 
         # Compile ifClause, if any
-        if_filter = []
+        if not ast[2] is None:
+            # Need to persist iterator_dicts
+            iterator_dicts = list(iterator_dicts)
+            if_filter = self.compile_ifClause(ast[2], iterator_dicts)
+        else:
+            if_filter = []
 
         # Apply if_filter to iterator_dicts
         iterator_dicts = [i for i, cond in itertools.izip_longest(iterator_dicts, if_filter, fillvalue = True) if cond]
@@ -291,10 +188,12 @@ class Compiler:
             self.heap[ast[1]] = ast[2]
 
     def compile(self, program):
-        self.heap = {}
+        self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
         self.iterators = {'s': self.build_iterator('s', zip(['01', '02', '99'], range(1,4)))}
         self.lines = program.split('\n')
         self.current_line = 0
+
+        self.internal_outputter = Outputter()
 
         # Parse the program
         ast = plyyacc.parser.parse(program)
@@ -310,13 +209,13 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        print self.output_equation(*self.compile_equation(s))
+                        logger.log(self.internal_outputter.output_equation(*self.compile_equation(s)))
 
                     elif s[0] == 'LocalDef':
                         self.compile_local_definition(s)
 
-                print self.heap
-                print self.iterators
+                logger.log(self.heap)
+                logger.log(self.iterators)
             except CompilerError as e:
                 print e
 
@@ -356,6 +255,7 @@ def test():
     test[s] = 42
     %sectors := {01, 02, 03} \ {02}
     %year := 2006
+    X[s] = 12 if V[s] <> 0 where s in {01, 02, 03}
     test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({D, M}, {X, IA}), s in {01, 02, 03, 05}\n
     #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
