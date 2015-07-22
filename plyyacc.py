@@ -70,10 +70,6 @@ def p_counterid(p):
     '''counterId : COUNTERID'''
     p[0] = ('CounterId', p[1])
 
-# def p_index_single(p):
-#     '''index : LBRACKET expr RBRACKET'''
-#     p[0] = ('Index', (p[2], ))
-
 def p_time(p):
     '''time : LBRACE expr RBRACE'''
     p[0] = ('Time', p[2])
@@ -97,15 +93,6 @@ def p_variable_name_index_time(p):
 
 # Set literals
 
-# def p_string_set(p):
-#     '''stringSet : STRING'''
-#     p[0] = ('StringSet', [p[1]])
-
-# def p_string_set_recursive(p):
-#     '''stringSet : stringSet COMMA STRING'''
-#     p[1][1].append(p[3])
-#     p[0] =  ('StringSet', p[1][1])
-
 def p_set_element_str(p):
     '''setElement : ID'''
     p[0] = p[1]
@@ -118,16 +105,20 @@ def p_set_element_int(p):
 
 def p_set(p):
     '''set : setElement'''
-    p[0] = ('Set', [p[1]])
+    p[0] = [p[1]]
 
 def p_set_recursive(p):
     '''set : set COMMA setElement'''
-    p[1][1].append(p[3])
-    p[0] =  ('Set', p[1][1])
+    p[1].append(p[3])
+    p[0] = p[1]
 
-def p_set_literal(p):
+def p_base_set_literal(p):
     '''setLiteral : LBRACE set RBRACE'''
-    p[0] = ('SetLiteral', p[2][1])
+    p[0] = ('SetLiteral', p[2][1], None)
+
+def p_base_set_literal_2(p):
+    '''setLiteral : LBRACE set RBRACE BACKLASH LBRACE set RBRACE'''
+    p[0] = ('SetLiteral', p[2][1], p[6][1])
 
 
 # Expressions
@@ -254,10 +245,6 @@ def p_iterator_parallel_set_error_2(p):
 def p_iterator_parallel_local_error_2(p):
     '''iterator : idGroup IN LOCALID'''
     add_error("Syntax error in parallel iterator. %i variables for 1 set." % len(p[1][1]), p.lineno(2))
-
-# def p_iterator_definition_error(p):
-#     '''iterator : ID IN setList'''
-#     add_error("Syntax error in iterator definition: a list of sets was specified for a single variable. \nTo define multiple iterators, use: `%s in {%s ...}, x in {%s ...}, ... `.\nTo define parallel iterators, use: `(%s, x) in ({%s ...}, {%s ...})`" % (p[1], p[3][1][0][1][0], p[3][1][1][1][0], p[1], p[3][1][0][1][0], p[3][1][1][1][0]), p.lineno(2))
 
 def p_iterator_list(p):
     '''iteratorList : iterator'''

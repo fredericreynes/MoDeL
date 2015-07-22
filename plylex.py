@@ -23,7 +23,8 @@ tokens = reserved + (
     'LPAREN', 'RPAREN',
     'LBRACKET', 'RBRACKET',
     'LBRACE', 'RBRACE',
-    'COMMA', 'PERIOD', 'PIPE', 'SEMI',
+    'COMMA', 'PERIOD',
+    'PIPE', 'BACKLASH', 'SEMI',
     'NEWLINE', 'COMMENT',
 
     # Ellipsis (...)
@@ -71,6 +72,7 @@ t_RBRACE           = r'\}'
 t_COMMA            = r','
 t_PERIOD           = r'\.'
 t_PIPE             = r'\|'
+t_BACKLASH         = r'\\'
 t_SEMI             = r';'
 
 
