@@ -97,21 +97,25 @@ class Compiler:
     # Expression
     #
     def output_expr(self, ast):
-        # ('ExprBinary', op, lhs, rhs)
-        if ast[0] == 'ExprBinary':
-            return self.output_expr_binary(ast[1], self.output_expr(ast[2]), self.output_expr(ast[3]))
-        # ('ExprGroup', expr)
-        elif ast[0] == 'ExprGroup':
-            return self.output_expr_group(self.output_expr(ast[1]))
-        # ('VarName', variableId, index, time)
-        elif ast[0] == 'VarName':
-            indices = ast[2][1][1] if ast[2] else []
-            return self.output_varname(self.output_varid(self.output_varid_part(vid) for vid in ast[1][1]),
-                                       self.output_indices(self.output_index(self.output_expr(i)) for i in indices),
-                                       self.output_timeOffset(ast[3]) if ast[3] else '')
-        # ('CounterId', counterId)
-        elif ast[0] == 'CounterId':
-            return self.output_counterid(ast[1])
+        try:
+            # ('ExprBinary', op, lhs, rhs)
+            if ast[0] == 'ExprBinary':
+                return self.output_expr_binary(ast[1], self.output_expr(ast[2]), self.output_expr(ast[3]))
+            # ('ExprGroup', expr)
+            elif ast[0] == 'ExprGroup':
+                return self.output_expr_group(self.output_expr(ast[1]))
+            # ('VarName', variableId, index, time)
+            elif ast[0] == 'VarName':
+                indices = ast[2][1][1] if ast[2] else []
+                return self.output_varname(self.output_varid(self.output_varid_part(vid) for vid in ast[1][1]),
+                                           self.output_indices(self.output_index(self.output_expr(i)) for i in indices),
+                                           self.output_timeOffset(ast[3]) if ast[3] else '')
+            # ('CounterId', counterId)
+            elif ast[0] == 'CounterId':
+                return self.output_counterid(ast[1])
+        # Special case for terminals (ints, floats, etc.)
+        except TypeError:
+            return str(ast)
 
     # Qualified expression
     #
@@ -157,7 +161,7 @@ class Compiler:
             return zip(ast[1], range(1, len(ast[1]) + 1))
 
 
-    # From an iterator name `i` and its elements [i1, i2, ...], builds a list of dicts:
+    # From an iterator name `i` and its elements [(i1, 1), (i2, 2), ...], builds a list of dicts:
     # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
     #
     def build_iterator(self, name, elements):
@@ -249,6 +253,8 @@ class Compiler:
         if not ast[3] is None:
             local_iterators, parallel_iterator_names = self.compile_whereClause(ast[3])
             iterators.update( local_iterators )
+        else:
+            parallel_iterator_names = set()
 
         # Compile expression
         # First, we need to build the dicts of iterators
@@ -274,13 +280,12 @@ class Compiler:
 
         _, iterator_dicts = self.compile_qualified(ast[3], self.iterators, lhs_iterator_names)
 
-        print self.output_equation(ast[2], ast[3][1], iterator_dicts)
         return (ast[2], ast[3][1], iterator_dicts)
 
 
     def compile(self, program):
         self.heap = {}
-        self.iterators = {'test': ['01', '02', '99']}
+        self.iterators = {'s': self.build_iterator('s', zip(['01', '02', '99'], range(1,4)))}
         self.lines = program.split('\n')
         self.current_line = 0
 
@@ -298,7 +303,7 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        self.compile_equation(s)
+                        print self.output_equation(*self.compile_equation(s))
             except CompilerError as e:
                 print e
 
@@ -335,6 +340,7 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V[c] = x[c] + v[$c] where c in {'01', '02'}
+    test[s] = 42
     test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '05'}\n
     #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 

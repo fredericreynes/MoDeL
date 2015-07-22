@@ -16,29 +16,33 @@ def traverse(func):
 
     @wraps(func)
     def traverse_with_wrapped_func(ast):
-        if ast[0] == 'VarName':
-            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'VarId':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'Index':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'ExprList':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'ExprBinary':
-            return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'ExprGroup':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'FunctionCallArgs':
-            return wrapped_func(ast[2])
-        elif ast[0] == 'Placeholder':
-            return wrapped_func(ast[1])
-        elif ast[0] == 'QualifiedExprList':
-            return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
-        elif ast[0] == 'Qualified':
-            return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'EquationDef':
-            return (wrapped_func(ast[2]), wrapped_func(ast[3]))
-        else:
+        try:
+            if ast[0] == 'VarName':
+                return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
+            elif ast[0] == 'VarId':
+                return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
+            elif ast[0] == 'Index':
+                return wrapped_func(ast[1])
+            elif ast[0] == 'ExprList':
+                return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
+            elif ast[0] == 'ExprBinary':
+                return itertools.chain(wrapped_func(ast[2]), wrapped_func(ast[3]))
+            elif ast[0] == 'ExprGroup':
+                return wrapped_func(ast[1])
+            elif ast[0] == 'FunctionCallArgs':
+                return wrapped_func(ast[2])
+            elif ast[0] == 'Placeholder':
+                return wrapped_func(ast[1])
+            elif ast[0] == 'QualifiedExprList':
+                return itertools.chain.from_iterable(wrapped_func(a) for a in ast[1])
+            elif ast[0] == 'Qualified':
+                return itertools.chain(wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
+            elif ast[0] == 'EquationDef':
+                return (wrapped_func(ast[2]), wrapped_func(ast[3]))
+            else:
+                return iter([])
+        # Terminals (ints, floats, etc.) are not iterable
+        except TypeError:
             return iter([])
 
     return traverse_with_wrapped_func
