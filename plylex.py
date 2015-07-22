@@ -105,7 +105,9 @@ t_LOCALID          = r'%[_a-zA-Z0-9]+'
 # Integer literal
 def t_INTEGER(t):
     r'[0-9]+'
-    t.value = int(t.value)
+    # Hackish: also preserve the original int as a string
+    # for use in set definitions
+    t.value = (int(t.value), t.value)
     return t
 
 # Float literal

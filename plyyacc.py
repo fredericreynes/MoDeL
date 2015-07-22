@@ -97,30 +97,54 @@ def p_variable_name_index_time(p):
 
 # Set literals
 
-def p_string_set(p):
-    '''stringSet : STRING'''
-    p[0] = ('StringSet', [p[1]])
+# def p_string_set(p):
+#     '''stringSet : STRING'''
+#     p[0] = ('StringSet', [p[1]])
 
-def p_string_set_recursive(p):
-    '''stringSet : stringSet COMMA STRING'''
-    p[1][1].append(p[3])
-    p[0] =  ('StringSet', p[1][1])
+# def p_string_set_recursive(p):
+#     '''stringSet : stringSet COMMA STRING'''
+#     p[1][1].append(p[3])
+#     p[0] =  ('StringSet', p[1][1])
+
+def p_set_element_str(p):
+    '''setElement : ID'''
+    p[0] = p[1]
+
+def p_set_element_int(p):
+    '''setElement : INTEGER'''
+    # Get the string representation of the integer,
+    # as stored by the lexer
+    p[0] = p[1][1]
+
+def p_set(p):
+    '''set : setElement'''
+    p[0] = ('Set', [p[1]])
+
+def p_set_recursive(p):
+    '''set : set setElement'''
+    p[1][1].append(p[2])
+    p[0] =  ('Set', p[1][1])
 
 def p_set_literal(p):
-    '''setLiteral : LBRACE stringSet RBRACE'''
+    '''setLiteral : LBRACE set RBRACE'''
     p[0] = ('SetLiteral', p[2][1])
 
 
 # Expressions
 
 def p_expression_terminal(p):
-    '''expr : INTEGER
-            | FLOAT
+    '''expr : FLOAT
             | LOCALID
             | variableName
             | counterId
             | functionCall'''
     p[0] = p[1]
+
+# Special case for integers, which are stored as a pair
+# (int_val, str_representation) by the lexer
+def p_expression_terminal_int(p):
+    '''expr : INTEGER'''
+    p[0] = p[1][0]
 
 def p_expression_binary(p):
     '''expr : expr PLUS expr
@@ -313,10 +337,11 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""pouet[c] = 15 where i in {"15", "10"}
+    print parser.parse("""pouet[c] = 15 where i in {V X O 05 15 10}
 
     t = X|O|[s, 2]{t-1} if test > 2 where i in %c
-    #                      %test := {"15", "05"}
-    #                      functionTest = function()
-    #                      functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)
                           """)
+
+    # """    #                      %test := {"15", "05"}
+    # #                      functionTest = function()
+    # #                      functionTest2 = function(hello[c] where (c, s) in ({"01"}, {"05"}), world)"""
