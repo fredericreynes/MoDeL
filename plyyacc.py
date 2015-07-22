@@ -114,11 +114,11 @@ def p_set_recursive(p):
 
 def p_base_set_literal(p):
     '''setLiteral : LBRACE set RBRACE'''
-    p[0] = ('SetLiteral', p[2][1], None)
+    p[0] = ('SetLiteral', p[2], [])
 
 def p_base_set_literal_2(p):
     '''setLiteral : LBRACE set RBRACE BACKLASH LBRACE set RBRACE'''
-    p[0] = ('SetLiteral', p[2][1], p[6][1])
+    p[0] = ('SetLiteral', p[2], p[6])
 
 
 # Expressions
@@ -314,9 +314,13 @@ def p_series_definition(p):
     '''seriesDef : expr SERIESEQUALS qualifiedExpr'''
     p[0] = ('SeriesDef', None, p[1], p[3])
 
-def p_local_definition(p):
+def p_local_definition_series(p):
     '''localDef : LOCALID SERIESEQUALS setLiteral'''
     p[0] = ('LocalDef', p[1], p[3])
+
+def p_local_definition_integer(p):
+    '''localDef : LOCALID SERIESEQUALS INTEGER'''
+    p[0] = ('LocalDef', p[1], p[3][0])
 
 
 # Error
@@ -329,7 +333,7 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10}, {V, X, O})
+    print parser.parse("""pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
                           """)

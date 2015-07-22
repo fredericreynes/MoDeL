@@ -154,11 +154,11 @@ class Compiler:
 
 
     # Set
-    # ('SetLiteral', tuple)
+    # ('SetLiteral', list, list)
     #
-    def compile_set(self, ast):
+    def compile_set_literal(self, ast):
         if ast[0] == 'SetLiteral':
-            return zip(ast[1], range(1, len(ast[1]) + 1))
+            return [e for e in zip(ast[1], range(1, len(ast[1]) + 1)) if e[0] not in ast[2] ]
 
 
     # From an iterator name `i` and its elements [(i1, 1), (i2, 2), ...], builds a list of dicts:
@@ -182,9 +182,9 @@ class Compiler:
         if ast[0] == 'IteratorLocal':
             local_iterators = { ast[1]: self.build_iterator(ast[1], self.get_if_exists(ast[2], self.heap, "Local variable")) }
         elif ast[0] == 'IteratorSetLiteral':
-            local_iterators = { ast[1]: self.build_iterator(ast[1], self.compile_set(ast[2])) }
+            local_iterators = { ast[1]: self.build_iterator(ast[1], self.compile_set_literal(ast[2])) }
         elif ast[0] == 'IteratorParallelSet':
-            local_iterators = { e[0]: self.build_iterator(e[0], e[1]) for e in zip(ast[1][1], (self.compile_set(l) for l in ast[2][1])) }
+            local_iterators = { e[0]: self.build_iterator(e[0], e[1]) for e in zip(ast[1][1], (self.compile_set_literal(l) for l in ast[2][1])) }
             parallel_iterator_names = ast[1][1]
 
         return local_iterators, parallel_iterator_names
@@ -283,6 +283,13 @@ class Compiler:
         return (ast[2], ast[3][1], iterator_dicts)
 
 
+    def compile_local_definition(self, ast):
+        try:
+            self.heap[ast[1]] = self.compile_set_literal(ast[2])
+        # If we're assigning an integer directly
+        except TypeError:
+            self.heap[ast[1]] = ast[2]
+
     def compile(self, program):
         self.heap = {}
         self.iterators = {'s': self.build_iterator('s', zip(['01', '02', '99'], range(1,4)))}
@@ -304,6 +311,12 @@ class Compiler:
 
                     if s[0] == 'EquationDef':
                         print self.output_equation(*self.compile_equation(s))
+
+                    elif s[0] == 'LocalDef':
+                        self.compile_local_definition(s)
+
+                print self.heap
+                print self.iterators
             except CompilerError as e:
                 print e
 
@@ -339,9 +352,11 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V[c] = x[c] + v[$c] where c in {'01', '02'}
+    compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     test[s] = 42
-    test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '05'}\n
+    %sectors := {01, 02, 03} \ {02}
+    %year := 2006
+    test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({D, M}, {X, IA}), s in {01, 02, 03, 05}\n
     #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
 if __name__ == "__main__":
