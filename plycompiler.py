@@ -115,6 +115,8 @@ class Compiler:
 
     # Qualified expression
     #
+    # This function is used when a qualified expression stands alone,
+    # in the parameters of a function
     def output_qualified(self, ast, iterator_dicts):
         # Get the compiled output version of this expression
         output = ''.join(self.output_expr(ast[1]))
@@ -125,7 +127,10 @@ class Compiler:
     # Equation
     #
     def output_equation(self, lhs, rhs, iterator_dicts):
+        # Get the compiled output version for both sides of the equation
+        output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
 
+        return [output % iter_dict for iter_dict in iterator_dicts]
 
     #
     # Compiler internals
@@ -263,14 +268,14 @@ class Compiler:
     # Equation definition
     # ('EquationDef', option, expr, qualifiedExpr)
     #
-    def compile_equation(self, ast)
+    def compile_equation(self, ast):
         # Find iterators used in left-hand side expression
         lhs_iterator_names = set(extract_iterators(ast[2]))
 
-        _, iterator_dicts = self.compile_qualified_iterators(ast[3], self.iterators, lhs_iterator_names)
+        _, iterator_dicts = self.compile_qualified(ast[3], self.iterators, lhs_iterator_names)
 
-        return (ast[2], ast[3], iterator_dicts)
-        print self.output_qualified(ast_value(ast[3]), iterator_dicts)
+        print self.output_equation(ast[2], ast[3][1], iterator_dicts)
+        return (ast[2], ast[3][1], iterator_dicts)
 
 
     def compile(self, program):
@@ -329,7 +334,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V = x[c] + v[$c] where c in {'01', '02'}
+    compiler.compile("""V[c] = x[c] + v[$c] where c in {'01', '02'}
     test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '05'}\n
     #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
