@@ -145,7 +145,8 @@ def p_expression_binary(p):
             | expr LT expr
             | expr GT expr
             | expr LE expr
-            | expr GE expr'''
+            | expr GE expr
+            | expr NELG expr '''
     p[0] = ('ExprBinary', p[2], p[1], p[3])
 
 def p_expression_group(p):

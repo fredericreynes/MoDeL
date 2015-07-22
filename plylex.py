@@ -14,7 +14,7 @@ tokens = reserved + (
     # Operators (+, -, *, /, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
     'AND', 'NOT', 'XOR', 'LNOT',
-    'LT', 'GT', 'LE', 'GE', 'EQ', 'NE',
+    'LT', 'GT', 'LE', 'GE', 'EQ', 'NE', 'NELG',
 
     # Assignment (=, :=)
     'EQUALS', 'SERIESEQUALS',
@@ -56,6 +56,7 @@ t_LE               = r'<='
 t_GE               = r'>='
 t_EQ               = r'=='
 t_NE               = r'!='
+t_NELG             = r'<>'
 
 # Assignment operators
 
