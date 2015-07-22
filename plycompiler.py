@@ -22,7 +22,7 @@ class Compiler:
     #
     # Compiler internals
     #
-    # This is common to all Compiler instances,
+    # This is common to all Compiler versions,
     # and doesn't need to be modified by the external interface
     #
 
@@ -34,6 +34,23 @@ class Compiler:
             return hsh[key]
         else:
             self.error("%s `%s` is not defined." % (msg, key))
+
+    #
+    # AST transformations
+    #
+
+    # The value form of an expression is obtained
+    # through an AST transform: every variable (Varname)
+    # is turned into a product of PV * V
+    @transform
+    def ast_value(self, expr):
+        if expr[0] == 'VarName':
+            return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
+
+
+        # @transform
+        # def ast_functions(expr):
+        #     if expr[0] ==
 
 
     # Set

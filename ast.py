@@ -62,7 +62,7 @@ def transform(func):
                 return transform_with_wrapped_func(ast)
 
     @wraps(func)
-    def transform_with_wrapped_func(ast):
+    def transform_with_wrapped_func(self, ast):
         if ast[0] == 'VarName':
             return ('VarName', wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
         elif ast[0] == 'VarId':
@@ -112,15 +112,6 @@ def extract_iterators(expr):
 #
 # AST transformations
 #
-
-# The value form of an expression is obtained
-# through an AST transform: every variable (Varname)
-# is turned into a product of PV * V
-@transform
-def ast_value(expr):
-    if expr[0] == 'VarName':
-        return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
-
 
 def build_variable(name):
     ('VarName', ('VarId', (name,)), None, None)
