@@ -121,8 +121,8 @@ def p_set(p):
     p[0] = ('Set', [p[1]])
 
 def p_set_recursive(p):
-    '''set : set setElement'''
-    p[1][1].append(p[2])
+    '''set : set COMMA setElement'''
+    p[1][1].append(p[3])
     p[0] =  ('Set', p[1][1])
 
 def p_set_literal(p):
@@ -255,13 +255,18 @@ def p_iterator_parallel_local_error_2(p):
     '''iterator : idGroup IN LOCALID'''
     add_error("Syntax error in parallel iterator. %i variables for 1 set." % len(p[1][1]), p.lineno(2))
 
+# def p_iterator_definition_error(p):
+#     '''iterator : ID IN setList'''
+#     add_error("Syntax error in iterator definition: a list of sets was specified for a single variable. \nTo define multiple iterators, use: `%s in {%s ...}, x in {%s ...}, ... `.\nTo define parallel iterators, use: `(%s, x) in ({%s ...}, {%s ...})`" % (p[1], p[3][1][0][1][0], p[3][1][1][1][0], p[1], p[3][1][0][1][0], p[3][1][1][1][0]), p.lineno(2))
+
 def p_iterator_list(p):
     '''iteratorList : iterator'''
-    p[0] = ('IteratorList', (p[1], ))
+    p[0] = ('IteratorList', [p[1]])
 
 def p_iterator_list_recursive(p):
     '''iteratorList : iteratorList COMMA iterator'''
-    p[0] =  ('IteratorList', p[1][1] + (p[3], ))
+    p[1][1].append(p[3])
+    p[0] =  ('IteratorList', p[1][1])
 
 
 # Qualified expressions
@@ -337,10 +342,12 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""pouet[c] = 15 where i in {V X O 05 15 10}
+    print parser.parse("""pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10}, {V, X, O})
 
-    t = X|O|[s, 2]{t-1} if test > 2 where i in %c
+    #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
                           """)
+
+    print errors
 
     # """    #                      %test := {"15", "05"}
     # #                      functionTest = function()
