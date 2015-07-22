@@ -278,7 +278,7 @@ class Compiler:
         # Find iterators used in left-hand side expression
         lhs_iterator_names = set(extract_iterators(ast[2]))
 
-        _, iterator_dicts = self.compile_qualified(ast[3], self.iterators, lhs_iterator_names)
+        _, iterator_dicts = self.compile_qualified(ast[3], self.iterators.copy(), lhs_iterator_names)
 
         return (ast[2], ast[3][1], iterator_dicts)
 
