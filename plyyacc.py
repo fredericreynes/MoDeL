@@ -267,6 +267,26 @@ def p_where_clause(p):
                    | ON iteratorList'''
     p[0] = ('Where', p[2])
 
+def p_where_clause_id_list(p):
+    '''whereClause : WHERE ID
+                   | ON ID'''
+    p[0] = ('WhereIdList', [p[2]])
+
+def p_where_clause_id_list_2(p):
+    '''whereClause : WHERE ID COMMA ID
+                   | ON ID COMMA ID'''
+    p[0] = ('WhereIdList', [p[2], p[4]])
+
+def p_where_clause_id_list_3(p):
+    '''whereClause : WHERE ID COMMA ID COMMA ID
+                   | ON ID COMMA ID COMMA ID'''
+    p[0] = ('WhereIdList', [p[2], p[4], p[6]])
+
+def p_where_clause_id_list_4(p):
+    '''whereClause : WHERE ID COMMA ID COMMA ID COMMA ID
+                   | ON ID COMMA ID COMMA ID COMMA ID'''
+    p[0] = ('WhereIdList', [p[2], p[4], p[6], p[8]])
+
 def p_if_clause(p):
     '''ifClause : IF expr'''
     p[0] = ('If', p[2])
@@ -337,7 +357,7 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""test = sum(v[c])
+    print parser.parse("""test = sum(v[c] on c, V)
     pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
