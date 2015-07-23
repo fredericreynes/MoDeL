@@ -118,3 +118,10 @@ class Outputter:
         output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
 
         return [output % iter_dict for iter_dict in iterator_dicts]
+
+    #
+    # Functions
+    #
+
+    def sum(self, args):
+        pass

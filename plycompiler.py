@@ -61,7 +61,7 @@ class Compiler:
         # Regarding iterators, need to identify those iterators that are specific to the function arguments
         # and isolate them. Should not be considered in the overall iterators (change extract_iterators)
         if expr[0] == 'FunctionCall':
-            return ('FunctionCall', ast[1], (self.compile_qualified(arg, iterators, additional_iterator_names) for arg in ast[2]))
+            return ('CompiledFunctionCall', ast[1], (self.compile_qualified(arg, iterators, additional_iterator_names) for arg in ast[2]))
 
 
     # Set
@@ -279,13 +279,14 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
-    test[s] = 42
-    %sectors := {01, 02, 03} \ {02}
-    %year := 2006
-    X[s] = 12 if V[s] <> 0 where s in {01, 02, 03}
-    test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({D, M}, {X, IA}), s in {01, 02, 03, 05}\n
-    #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
+    compiler.compile("V[c] = sum(X[s] on s) where c in {01, 02}\n")
+    # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
+    # test[s] = 42
+    # %sectors := {01, 02, 03} \ {02}
+    # %year := 2006
+    # X[s] = 12 if V[s] <> 0 where s in {01, 02, 03}
+    # test = (X|O|[s] + v[$s]) / A|O|[s] where (O, V) in ({D, M}, {X, IA}), s in {01, 02, 03, 05}\n
+    # #test = (X|O|[s] + v[$s]) / A|O|[s, s] + B[s] * (C[$s] / D[s]) where (O, V) in ({'D', 'M'}, {'X', 'IA'}), s in {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'}\n""")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

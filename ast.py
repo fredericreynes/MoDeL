@@ -103,7 +103,12 @@ def extract_simple_varids(expr):
 
 @traverse
 def extract_iterators(expr):
-    if expr[0] == 'Index':
+    # Inside functions, only explicit iterators must be considered
+    if expr[0] == 'FunctionCall':
+        # Extract the whereClauses of the function's arguments, if any
+        whereClauses = (qualifiedExpr[3] for qualifiedExpr in expr[2])
+        return itertools.chain.from_iterable(extract_iterators(w) for w in whereClauses)
+    elif expr[0] == 'Index':
         return extract_simple_varids(expr[1])
     elif expr[0] == 'Placeholder':
         return expr[1]
