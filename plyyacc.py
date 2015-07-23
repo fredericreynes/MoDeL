@@ -5,6 +5,9 @@ import ply.yacc as yacc
 tokens = plylex.tokens
 
 precedence = (
+               ('left', 'COMMA'),
+               ('left', 'LT', 'GT', 'LE', 'GE'),
+               ('left', 'NELG'),
                ('left', 'PLUS','MINUS'),
                ('left', 'TIMES','DIVIDE'),
                # ('left', 'POWER'),
@@ -334,7 +337,8 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
+    print parser.parse("""test = sum(v[c])
+    pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
                           """)
