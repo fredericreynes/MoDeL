@@ -99,10 +99,6 @@ class Outputter:
                 return self.output_counterid(ast[1])
 
             elif ast[0] == 'CompiledFunctionCall':
-                print 'Output function call', ast[2]
-                test = list(ast[2])
-                print "tet"
-                print 'Output function call', test
                 return getattr(self, ast[1])(ast[2])
 
         # Special case for terminals (ints, floats, etc.)
@@ -115,7 +111,7 @@ class Outputter:
     # in the parameters of a function
     def output_qualified(self, ast, iterator_dicts):
         # Get the compiled output version of this expression
-        output = ''.join(self.output_expr(ast[1]))
+        output = ''.join(self.output_expr(ast))
 
         # This output is in turn just a template to be fed to the iterators
         return [output % iter_dict for iter_dict in iterator_dicts]
@@ -123,7 +119,6 @@ class Outputter:
     # Equation
     #
     def output_equation(self, lhs, rhs, iterator_dicts):
-        print "Output_equation", rhs
         # Get the compiled output version for both sides of the equation
         output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
 
@@ -134,4 +129,4 @@ class Outputter:
     #
 
     def sum(self, args):
-        return '(' + ' + '.join(self.output_qualified(a) for a in args) + ')'
+        return '(' + ' + '.join(self.output_qualified(args[0][0], args[0][1])) + ')'
