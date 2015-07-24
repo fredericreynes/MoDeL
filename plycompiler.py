@@ -135,12 +135,7 @@ class Compiler:
 
     # Compile iterator dicts to use on expression templates
     #
-    def compile_iterator_dicts(self, ast, iterators, parallel_iterator_names, additional_iterator_names):
-        # Find iterators used in this expression
-        iterator_names = set(extract_iterators(ast)).union(additional_iterator_names)
-
-        # Compile the iterators we need in this expression
-
+    def compile_iterator_dicts(self, iterators, iterator_names, parallel_iterator_names):
         # First get all parallel iterators, if any
         parallel_iterators = []
         if len(parallel_iterator_names) > 0:
@@ -175,23 +170,24 @@ class Compiler:
     # 'where' and 'if' clauses
     # NB: can take into account additional implicit iterators,
     # passed in the additional_iterator_names argument
-    def compile_qualified(self, ast, iterators, additional_iterator_names):
+    def compile_qualified(self, qualified_expr, iterators, iterator_names):
+
         # Compile whereClause to add explicit iterators, if any
-        if not ast[3] is None:
-            local_iterators, parallel_iterator_names = self.compile_whereClause(ast[3])
+        if not qualified_expr[3] is None:
+            local_iterators, parallel_iterator_names = self.compile_whereClause(qualified_expr[3], iterators)
             iterators.update( local_iterators )
         else:
             parallel_iterator_names = set()
 
         # Compile expression
         # First, we need to build the dicts of iterators
-        iterator_dicts = self.compile_iterator_dicts(ast[1], iterators, parallel_iterator_names, additional_iterator_names)
+        iterator_dicts = self.compile_iterator_dicts(iterators, iterator_names, parallel_iterator_names)
 
         # Compile ifClause, if any
-        if not ast[2] is None:
+        if not qualified_expr[2] is None:
             # Need to persist iterator_dicts
             iterator_dicts = list(iterator_dicts)
-            if_filter = self.compile_ifClause(ast[2], iterator_dicts)
+            if_filter = self.compile_ifClause(qualified_expr[2], iterator_dicts)
         else:
             if_filter = []
 
@@ -200,19 +196,23 @@ class Compiler:
 
         logger.log("Final iterators", iterator_dicts)
 
-        return (ast[1], iterator_dicts)
+        return (qualified_expr[1], iterator_dicts, iterators)
 
 
     # Equation definition
     # ('EquationDef', option, expr, qualifiedExpr)
     #
     def compile_equation(self, ast):
-        # Find iterators used in left-hand side expression
-        lhs_iterator_names = set(extract_iterators(ast[2]))
+        # Find iterators used in this qualified expression
+        iterator_names = set(extract_iterators(ast[2])).union(extract_iterators(ast[3][1]))
 
-        _, iterator_dicts = self.compile_qualified(ast[3], self.iterators.copy(), lhs_iterator_names)
+        _, iterator_dicts, all_iterators = self.compile_qualified(ast[3], self.iterators.copy(), iterator_names)
 
-        return (ast[2], ast[3][1], iterator_dicts)
+        # Compile function calls
+        lhs = ast[2] #, self.iterators.copy(), lhs_iterator_names)
+        rhs = self.ast_functions(ast[3][1], all_iterators.copy())
+
+        return (lhs, rhs, iterator_dicts)
 
 
     def compile_local_definition(self, ast):
@@ -286,7 +286,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("V[c] = sum(X[s] on s) where c in {01, 02}\n")
+    compiler.compile("V[c] = sum(X[c, s] on s) where c in {01, 02}\n")
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42
     # %sectors := {01, 02, 03} \ {02}
