@@ -14,6 +14,7 @@ def merge_dicts(dicts):
         ret.update(d)
     return ret
 
+
 class CompilerError(Exception):
     pass
 
@@ -104,15 +105,24 @@ class Compiler:
     # whereClause
     # ('Where', iteratorList)
     #
-    def compile_whereClause(self, ast):
-        iterator_list = ast[1][1]
+    def compile_whereClause(self, ast, iterators):
         local_iterators = {}
         parallel_iterator_names = []
+        if ast[0] == 'Where':
+            iterator_list = ast[1][1]
 
-        for iter in iterator_list:
-            ret = self.compile_iterator(iter)
-            local_iterators.update(ret[0])
-            parallel_iterator_names.extend(ret[1])
+            for iter in iterator_list:
+                ret = self.compile_iterator(iter)
+                local_iterators.update(ret[0])
+                parallel_iterator_names.extend(ret[1])
+
+        # WhereIdList
+        else:
+            try:
+                for iter_name in ast[1]:
+                    local_iterators.update({iter_name: iterators[iter_name]})
+            except KeyError as e:
+                self.error("Undefined iterator `%s` is used in expression." % e.args)
 
         return local_iterators, set(parallel_iterator_names)
 
