@@ -77,6 +77,7 @@ class Outputter:
     def output_varid(self, output_varId_parts):
         return ''.join(output_varId_parts)
 
+
     # Expression
     #
     def output_expr(self, ast):
@@ -96,6 +97,14 @@ class Outputter:
             # ('CounterId', counterId)
             elif ast[0] == 'CounterId':
                 return self.output_counterid(ast[1])
+
+            elif ast[0] == 'CompiledFunctionCall':
+                print 'Output function call', ast[2]
+                test = list(ast[2])
+                print "tet"
+                print 'Output function call', test
+                return getattr(self, ast[1])(ast[2])
+
         # Special case for terminals (ints, floats, etc.)
         except TypeError:
             return str(ast)
@@ -114,6 +123,7 @@ class Outputter:
     # Equation
     #
     def output_equation(self, lhs, rhs, iterator_dicts):
+        print "Output_equation", rhs
         # Get the compiled output version for both sides of the equation
         output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
 
@@ -124,4 +134,4 @@ class Outputter:
     #
 
     def sum(self, args):
-        pass
+        return '(' + ' + '.join(self.output_qualified(a) for a in args) + ')'
