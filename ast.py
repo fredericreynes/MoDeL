@@ -120,7 +120,7 @@ def extract_iterators(expr):
     elif expr[0] == 'Placeholder':
         return expr[1]
     # Shortcut for qualified expressions: only look within the expression
-    elif expr[0] = 'Qualified':
+    elif expr[0] == 'Qualified':
         return extract_iterators(expr[1])
     # Don't consider iterators that are inside functions from the outside
     elif expr[0] == 'FunctionCall':
