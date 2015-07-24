@@ -49,9 +49,9 @@ def traverse(func):
 
 
 def transform(func):
-    def wrapped_func(ast):
+    def wrapped_func(self, ast, *args):
         try:
-            ret = func(ast)
+            ret = func(self, ast, *args)
         except TypeError:
              # func doesn't take care of terminals
             return ast
@@ -59,34 +59,39 @@ def transform(func):
             if ret is not None:
                 return ret
             else:
-                return transform_with_wrapped_func(ast)
+                return transform_with_wrapped_func(self, ast, *args)
 
     @wraps(func)
-    def transform_with_wrapped_func(self, ast):
-        if ast[0] == 'VarName':
-            return ('VarName', wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'VarId':
-            return ('VarId', [wrapped_func(a) for a in ast[1]])
-        elif ast[0] == 'Index':
-            return ('Index', wrapped_func(ast[1]))
-        elif ast[0] == 'ExprList':
-            return ('ExprList', [wrapped_func(a) for a in ast[1]])
-        elif ast[0] == 'ExprBinary':
-            return ('ExprBinary', ast[1], wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'ExprGroup':
-            return ('ExprGroup', wrapped_func(ast[1]))
-        elif ast[0] == 'FunctionCall':
-            return ('FunctionCall', ast[1], wrapped_func(ast[2]))
-        elif ast[0] == 'Placeholder':
-            return ('Placeholder', wrapped_func(ast[1]))
-        elif ast[0] == 'QualifiedExprList':
-            return ('QualifiedExprList', [wrapped_func(a) for a in ast[1]])
-        elif ast[0] == 'Qualified':
-            return ('Qualified', wrapped_func(ast[1]), wrapped_func(ast[2]), wrapped_func(ast[3]))
-        elif ast[0] == 'EquationDef':
-            return ('EquationDef', wrapped_func(ast[2]), wrapped_func(ast[3]))
+    def transform_with_wrapped_func(self, ast, *args):
+        # The func may return directly on the node
+        ret = func(self, ast, *args)
+        if ret:
+            return ret
         else:
-            return ast
+            if ast[0] == 'VarName':
+                return ('VarName', wrapped_func(self, ast[1], *args), wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+            elif ast[0] == 'VarId':
+                return ('VarId', [wrapped_func(self, a, *args) for a in ast[1]])
+            elif ast[0] == 'Index':
+                return ('Index', wrapped_func(self, ast[1], *args))
+            elif ast[0] == 'ExprList':
+                return ('ExprList', [wrapped_func(self, a, *args) for a in ast[1]])
+            elif ast[0] == 'ExprBinary':
+                return ('ExprBinary', ast[1], wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+            elif ast[0] == 'ExprGroup':
+                return ('ExprGroup', wrapped_func(self, ast[1], *args))
+            elif ast[0] == 'FunctionCall':
+                return ('FunctionCall', ast[1], wrapped_func(self, ast[2], *args))
+            elif ast[0] == 'Placeholder':
+                return ('Placeholder', wrapped_func(self, ast[1], *args))
+            elif ast[0] == 'QualifiedExprList':
+                return ('QualifiedExprList', [wrapped_func(self, a, *args) for a in ast[1]])
+            elif ast[0] == 'Qualified':
+                return ('Qualified', wrapped_func(self, ast[1], *args), wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+            elif ast[0] == 'EquationDef':
+                return ('EquationDef', wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+            else:
+                return ast
 
     return transform_with_wrapped_func
 
@@ -106,7 +111,7 @@ def extract_iterators(expr):
     # Inside functions, only explicit iterators must be considered
     if expr[0] == 'FunctionCall':
         # Extract the whereClauses of the function's arguments, if any
-        whereClauses = (qualifiedExpr[3] for qualifiedExpr in expr[2])
+        whereClauses = (qualifiedExpr[3] for qualifiedExpr in expr[2] if qualifiedExpr[3])
         return itertools.chain.from_iterable(extract_iterators(w) for w in whereClauses)
     elif expr[0] == 'Index':
         return extract_simple_varids(expr[1])
