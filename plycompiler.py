@@ -48,21 +48,18 @@ class Compiler:
         if expr[0] == 'VarName':
             return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
 
-
-    # Function calls
-    # ('FunctionCall', name, args)
-    #
     # Function calls are implement through as AST transformation:
     # the function call node is replaced with a node containing
     # the name of the function, and a list of compiled arguments
     # (which are just qualified expressions in the first)
     @transform
-    def ast_functions(self, ast, iterators, additional_iterator_names):
-        # Should be called at the very end of an equation compilation
-        # Regarding iterators, need to identify those iterators that are specific to the function arguments
-        # and isolate them. Should not be considered in the overall iterators (change extract_iterators)
+    def ast_functions(self, expr, iterators):
+        # ('FunctionCall', name, qualifiedExprList)
+        # For functions, only the iterators explicitly specified in the where clauses of the args are considered
         if expr[0] == 'FunctionCall':
-            return ('CompiledFunctionCall', ast[1], (self.compile_qualified(arg, iterators, additional_iterator_names) for arg in ast[2]))
+            whereClauses = (arg[3] for arg in expr[2][1])
+            explicit_iterator_names = set(itertools.chain(*(extract_iterators(w) for w in whereClauses)))
+            return ('CompiledFunctionCall', expr[1], [self.compile_qualified(arg, iterators, explicit_iterator_names) for arg in expr[2][1]])
 
 
     # Set
