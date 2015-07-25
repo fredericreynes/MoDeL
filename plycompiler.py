@@ -48,6 +48,17 @@ class Compiler:
         if expr[0] == 'VarName':
             return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
 
+    def compile_function_argument(self, qualifiedExpr, iterators):
+        explicit_iterator_names = set(extract_iterators(qualifiedExpr[3]))
+        # Python doesn't support partial string interpolation.
+        # To fix this, we identify iterators which appear inside the expression
+        # but which aren't made explicit.
+        all_iterator_names = set(extract_iterators(qualifiedExpr[1]))
+        for i in all_iterator_names.difference(explicit_iterator_names):
+            iterators.update({i: [{i: '%(' + i + ')s', ('$' + i): '%($' + i + ')s'}]})
+        return self.compile_qualified(qualifiedExpr, iterators, all_iterator_names)
+
+
     # Function calls are implement through as AST transformation:
     # the function call node is replaced with a node containing
     # the name of the function, and a list of compiled arguments
@@ -57,9 +68,7 @@ class Compiler:
         # ('FunctionCall', name, qualifiedExprList)
         # For functions, only the iterators explicitly specified in the where clauses of the args are considered
         if expr[0] == 'FunctionCall':
-            whereClauses = (arg[3] for arg in expr[2][1])
-            explicit_iterator_names = set(itertools.chain(*(extract_iterators(w) for w in whereClauses)))
-            return ('CompiledFunctionCall', expr[1], [self.compile_qualified(arg, iterators, explicit_iterator_names) for arg in expr[2][1]])
+            return ('CompiledFunctionCall', expr[1], [self.compile_function_argument(arg, iterators) for arg in expr[2][1]])
 
 
     # Set
@@ -222,9 +231,12 @@ class Compiler:
         except TypeError:
             self.heap[ast[1]] = ast[2]
 
+    def raw_iterator(self, name, lst):
+        return self.build_iterator(name, zip(lst, range(1,len(lst) + 1)))
+
     def compile(self, program):
         self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
-        self.iterators = {'s': self.build_iterator('s', zip(['01', '02', '99'], range(1,4)))}
+        self.iterators = {'s': self.raw_iterator('s', ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '99'])}
         self.lines = program.split('\n')
         self.current_line = 0
 
@@ -281,12 +293,15 @@ def compile(program, heap):
             print(extract_iterators(s))
 
 
+
 def test():
     # compile("""%test := {"15", "05"}
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("V[c] = sum(X[c, s] on s) where c in {01, 02}\n")
+    compiler.compile("""V[c] = sum(X[c, s] on s) where c in {01, 02}
+    #V[s] = sum(X[c, s] on s) where c in {01, 02}
+    """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42
     # %sectors := {01, 02, 03} \ {02}
