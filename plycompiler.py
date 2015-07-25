@@ -300,7 +300,8 @@ def test():
     # """, {})
     compiler = Compiler()
     compiler.compile("""V[c] = sum(X[c, s] on s) where c in {01, 02}
-    #V[s] = sum(X[c, s] on s) where c in {01, 02}
+    V[s] = sum(X[c, s] on s) where c in {01, 02}
+    V[s] = sum(X[s, s] on s) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42

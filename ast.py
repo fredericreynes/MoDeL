@@ -124,10 +124,11 @@ def extract_iterators(expr):
         return extract_iterators(expr[1])
     # Don't consider iterators that are inside functions from the outside
     elif expr[0] == 'FunctionCall':
-        return iter([])
-        # # Extract the whereClauses of the function's arguments, if any
-        # whereClauses = (qualifiedExpr[3] for qualifiedExpr in expr[2] if qualifiedExpr[3])
-        # return itertools.chain.from_iterable(extract_iterators(w) for w in whereClauses)
+        all_iterators = set(itertools.chain.from_iterable(extract_iterators(qualifiedExpr[1]) for qualifiedExpr in expr[2][1]))
+        # Extract iterators from the whereClauses of the function's arguments, if any
+        explicit_iterator_names = set(itertools.chain.from_iterable(extract_iterators(qualifiedExpr[3]) for qualifiedExpr in expr[2][1] if qualifiedExpr[3]))
+        # Only return non-explicit iterators
+        return all_iterators.difference(explicit_iterator_names)
     elif expr[0] == 'WhereIdList':
         return expr[1]
     elif expr[0] == 'IteratorSetLiteral':
@@ -138,7 +139,6 @@ def extract_iterators(expr):
         return expr[1][1]
     elif expr[0] == 'IteratorParallelSetLocal':
         return expr[1][1]
-
 
 def build_variable(name):
     ('VarName', ('VarId', (name,)), None, None)
