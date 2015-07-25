@@ -56,7 +56,7 @@ class Compiler:
         all_iterator_names = set(extract_iterators(qualifiedExpr[1]))
         for i in all_iterator_names.difference(explicit_iterator_names):
             iterators.update({i: [{i: '%(' + i + ')s', ('$' + i): '%($' + i + ')s'}]})
-        return self.compile_qualified(qualifiedExpr, iterators, all_iterator_names)
+        return self.compile_qualified(self.ast_functions(qualifiedExpr, iterators.copy()), iterators, all_iterator_names)
 
 
     # Function calls are implement through as AST transformation:
@@ -299,9 +299,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V[c] = sum(X[c, s] on s) where c in {01, 02}
-    V[s] = sum(X[c, s] on s) where c in {01, 02}
-    V[s] = sum(X[s, s] on s) where c in {01, 02}
+    compiler.compile("""V[c] = d(log(X[c])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42

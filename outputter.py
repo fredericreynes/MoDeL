@@ -16,6 +16,8 @@ class Outputter:
     # for each implementation of the Compiler class
     #
 
+    accepted_functions = ['d', 'log']
+
     # ExprBinary
     #
     def output_expr_binary(self, op, output_lhs, output_rhs):
@@ -99,7 +101,13 @@ class Outputter:
                 return self.output_counterid(ast[1])
 
             elif ast[0] == 'CompiledFunctionCall':
-                return getattr(self, ast[1])(ast[2])
+                try:
+                    return getattr(self, ast[1])(ast[2])
+                except AttributeError:
+                    if ast[1] in self.__class__.accepted_functions:
+                        out = ast[1] + '(' + ', '.join(self.output_expr(compiledQualifiedExpr[0]) for compiledQualifiedExpr in ast[2]) + ')'
+                        print "Out", out
+                        return out
 
         # Special case for terminals (ints, floats, etc.)
         except TypeError:
