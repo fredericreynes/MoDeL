@@ -1,6 +1,8 @@
 import plylex
 import re
 
+from ast import *
+
 # Test if a string is an id
 id_pattern = re.compile('^' + plylex.id + '$')
 
@@ -126,11 +128,18 @@ class Outputter:
 
     # Equation
     #
-    def output_equation(self, lhs, rhs, iterator_dicts):
+    def output_equation(self, options, lhs, rhs, iterator_dicts):
         # Get the compiled output version for both sides of the equation
         output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
 
-        return [output % iter_dict for iter_dict in iterator_dicts]
+        equations = [output % iter_dict for iter_dict in iterator_dicts]
+
+        if '!pv' in options:
+            print rhs
+            output_value = ''.join(self.output_expr(self.ast_value(lhs))) + ' = ' + ''.join(self.output_expr(self.ast_value(rhs)))
+            equations.extend([output_value % iter_dict for iter_dict in iterator_dicts])
+
+        return equations
 
     #
     # Functions
@@ -138,3 +147,20 @@ class Outputter:
 
     def sum(self, args):
         return '(' + ' + '.join(self.output_qualified(args[0][0], args[0][1])) + ')'
+
+
+    #
+    # Options
+    #
+
+    def apply_option(self, name, equation):
+        if name == '!pv':
+            [equation, ast_value(equation)]
+
+    # The value form of an expression is obtained
+    # through an AST transform: every variable (Varname)
+    # is turned into a product of PV * V
+    @transform
+    def ast_value(self, expr):
+        if expr[0] == 'VarName':
+            return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))

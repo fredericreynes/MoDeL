@@ -40,14 +40,6 @@ class Compiler:
     # AST transformations
     #
 
-    # The value form of an expression is obtained
-    # through an AST transform: every variable (Varname)
-    # is turned into a product of PV * V
-    @transform
-    def ast_value(self, expr):
-        if expr[0] == 'VarName':
-            return ('ExprGroup', ('ExprBinary', '*', ('VarName', ('VarId', ['P'] + expr[1][1]), expr[2], expr[3]), expr))
-
     def compile_function_argument(self, qualifiedExpr, iterators):
         explicit_iterator_names = set(extract_iterators(qualifiedExpr[3]))
         # Python doesn't support partial string interpolation.
@@ -221,7 +213,7 @@ class Compiler:
         lhs = ast[2] #, self.iterators.copy(), lhs_iterator_names)
         rhs = self.ast_functions(ast[3][1], all_iterators.copy())
 
-        return (lhs, rhs, iterator_dicts)
+        return (ast[1], lhs, rhs, iterator_dicts)
 
 
     def compile_local_definition(self, ast):
@@ -299,7 +291,7 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler()
-    compiler.compile("""V[c] = d(log(X[c])) where c in {01, 02}
+    compiler.compile("""!pv V[c] = d(log(X[c])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42

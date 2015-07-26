@@ -89,6 +89,8 @@ def transform(func):
                 return ('ExprGroup', wrapped_func(self, ast[1], *args))
             elif ast[0] == 'FunctionCall':
                 return ('FunctionCall', ast[1], wrapped_func(self, ast[2], *args))
+            elif ast[0] == 'CompiledFunctionCall':
+                return ('CompiledFunctionCall', ast[1], [(wrapped_func(self, a[0], *args), a[1], a[2]) for a in ast[2]])
             elif ast[0] == 'Placeholder':
                 return ('Placeholder', wrapped_func(self, ast[1], *args))
             elif ast[0] == 'QualifiedExprList':
@@ -96,7 +98,9 @@ def transform(func):
             elif ast[0] == 'Qualified':
                 return ('Qualified', wrapped_func(self, ast[1], *args), wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
             elif ast[0] == 'EquationDef':
-                return ('EquationDef', wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+                return ('EquationDef', wrapped_func(self, ast[1], *args), wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
+            elif ast[0] == 'SeriesDef':
+                return ('SeriesDef', wrapped_func(self, ast[1], *args), wrapped_func(self, ast[2], *args), wrapped_func(self, ast[3], *args))
             else:
                 return ast
 

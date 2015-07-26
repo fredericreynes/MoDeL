@@ -375,7 +375,7 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""!over test = sum(v[c] on c, V)
+    print parser.parse("""!over, !pv test = sum(v[c] on c, V)
     pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
