@@ -9,7 +9,7 @@ id_pattern = re.compile('^' + plylex.id + '$')
 def is_id(str):
     return bool(id_pattern.search(str))
 
-class Outputter:
+class DefaultOutputter:
 
     #
     # External interface
@@ -108,7 +108,6 @@ class Outputter:
                 except AttributeError:
                     if ast[1] in self.__class__.accepted_functions:
                         out = ast[1] + '(' + ', '.join(self.output_expr(compiledQualifiedExpr[0]) for compiledQualifiedExpr in ast[2]) + ')'
-                        print "Out", out
                         return out
 
         # Special case for terminals (ints, floats, etc.)
@@ -128,17 +127,22 @@ class Outputter:
 
     # Equation
     #
-    def output_equation(self, options, lhs, rhs, iterator_dicts):
+    def output_equation_base(self, options, lhs, rhs, iterator_dicts, first_varname):
         # Get the compiled output version for both sides of the equation
         output = ''.join(self.output_expr(lhs)) + ' = ' + ''.join(self.output_expr(rhs))
+        first_varname_output = self.output_expr(first_varname)
 
-        equations = [output % iter_dict for iter_dict in iterator_dicts]
+        return dict((first_varname_output % iter_dict, output % iter_dict) for iter_dict in iterator_dicts)
+
+
+    # Equation
+    #
+    def output_equation(self, options, lhs, rhs, iterator_dicts, first_varname):
+        equations = self.output_equation_base(options, lhs, rhs, iterator_dicts, first_varname)
 
         if '!pv' in options:
-            print rhs
-            output_value = ''.join(self.output_expr(self.ast_value(lhs))) + ' = ' + ''.join(self.output_expr(self.ast_value(rhs)))
-            equations.extend([output_value % iter_dict for iter_dict in iterator_dicts])
-
+            equations.update(self.output_equation_base(options, self.ast_value(lhs), self.ast_value(rhs),
+                                                       iterator_dicts, extract_first_varname(self.ast_value(first_varname))))
         return equations
 
     #
@@ -148,14 +152,6 @@ class Outputter:
     def sum(self, args):
         return '(' + ' + '.join(self.output_qualified(args[0][0], args[0][1])) + ')'
 
-
-    #
-    # Options
-    #
-
-    def apply_option(self, name, equation):
-        if name == '!pv':
-            [equation, ast_value(equation)]
 
     # The value form of an expression is obtained
     # through an AST transform: every variable (Varname)

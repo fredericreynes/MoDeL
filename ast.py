@@ -110,7 +110,10 @@ def transform(func):
 @traverse
 def extract_varnames(expr):
     if expr[0] == 'VarName':
-        return (expr, )
+        return [expr]
+
+def extract_first_varname(expr):
+    return extract_varnames(expr).next()
 
 @traverse
 def extract_simple_varids(expr):

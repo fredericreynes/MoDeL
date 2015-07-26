@@ -210,10 +210,10 @@ class Compiler:
         _, iterator_dicts, all_iterators = self.compile_qualified(ast[3], self.iterators.copy(), iterator_names)
 
         # Compile function calls
-        lhs = ast[2] #, self.iterators.copy(), lhs_iterator_names)
+        lhs = self.ast_functions(ast[2], all_iterators.copy())
         rhs = self.ast_functions(ast[3][1], all_iterators.copy())
 
-        return (ast[1], lhs, rhs, iterator_dicts)
+        return (ast[1], lhs, rhs, iterator_dicts, extract_first_varname(ast[2]))
 
 
     def compile_local_definition(self, ast):
@@ -227,12 +227,8 @@ class Compiler:
         return self.build_iterator(name, zip(lst, range(1,len(lst) + 1)))
 
     def compile(self, program):
-        self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
-        self.iterators = {'s': self.raw_iterator('s', ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '99'])}
         self.lines = program.split('\n')
         self.current_line = 0
-
-        self.internal_outputter = Outputter()
 
         # Parse the program
         ast = plyyacc.parser.parse(program)
@@ -241,6 +237,8 @@ class Compiler:
         if len(plyyacc.errors) == 0:
             logger.log(ast, "\n")
 
+            equations = {}
+
             try:
                 # Go through each statement
                 for a in ast[1]:
@@ -248,13 +246,14 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        logger.log(self.internal_outputter.output_equation(*self.compile_equation(s)))
+                        equations.update(self.outputter.output_equation(*self.compile_equation(s)))
 
                     elif s[0] == 'LocalDef':
                         self.compile_local_definition(s)
 
                 logger.log(self.heap)
                 logger.log(self.iterators)
+                logger.log(equations)
             except CompilerError as e:
                 print e
 
@@ -262,6 +261,15 @@ class Compiler:
             for e in plyyacc.errors:
                 self.current_line = e[1]
                 self.error(e[0])
+
+    def __init__(self, outputter):
+        self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
+        self.iterators = {'s': self.raw_iterator('s', ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '99'])}
+
+        self.internal_outputter = DefaultOutputter()
+
+        self.outputter = outputter()
+
 
 
 def compile(program, heap):
@@ -290,8 +298,8 @@ def test():
     # compile("""%test := {"15", "05"}
     # test = X|O|[42, c]{t-1}
     # """, {})
-    compiler = Compiler()
-    compiler.compile("""!pv V[c] = d(log(X[c])) where c in {01, 02}
+    compiler = Compiler(DefaultOutputter)
+    compiler.compile("""!pv d(V[c]) = d(log(X[c])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42
