@@ -266,6 +266,13 @@ class Compiler:
         self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
         self.iterators = {'s': self.raw_iterator('s', ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '99'])}
 
+        with open('_tmp_all_vars.csv', 'rb') as csvfile:
+            rows = list(csv.reader(csvfile))
+            self.heap = dict(zip(rows[0],
+                                 [float(e) if e != 'NA' else
+                                  None for e in rows[2]]))
+
+
         self.internal_outputter = DefaultOutputter()
 
         self.outputter = outputter()
