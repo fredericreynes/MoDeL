@@ -327,16 +327,34 @@ def p_function_with_arguments(p):
     '''functionCall : ID LPAREN qualifiedExprList RPAREN'''
     p[0] = ('FunctionCall', p[1], p[3])
 
+# Options
+
+def p_option_list(p):
+    '''optionList : OPTION'''
+    p[0] = [p[1]]
+
+def p_option_list_recursive(p):
+    '''optionList : optionList COMMA OPTION'''
+    p[1].append(p[3])
+    p[0] = p[1]
 
 # Definitions
 
 def p_equation_definition(p):
     '''equationDef : expr EQUALS qualifiedExpr'''
-    p[0] = ('EquationDef', None, p[1], p[3])
+    p[0] = ('EquationDef', [], p[1], p[3])
+
+def p_equation_definition_options(p):
+    '''equationDef : optionList expr EQUALS qualifiedExpr'''
+    p[0] = ('EquationDef', p[1], p[2], p[4])
 
 def p_series_definition(p):
     '''seriesDef : expr SERIESEQUALS qualifiedExpr'''
-    p[0] = ('SeriesDef', None, p[1], p[3])
+    p[0] = ('SeriesDef', [], p[1], p[3])
+
+def p_series_definition_options(p):
+    '''seriesDef : optionList expr SERIESEQUALS qualifiedExpr'''
+    p[0] = ('SeriesDef', p[1], p[1], p[3])
 
 def p_local_definition_series(p):
     '''localDef : LOCALID SERIESEQUALS setLiteral'''
@@ -357,7 +375,7 @@ parser = yacc.yacc()
 errors = []
 
 if __name__ == "__main__":
-    print parser.parse("""test = sum(v[c] on c, V)
+    print parser.parse("""!over test = sum(v[c] on c, V)
     pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c

@@ -9,7 +9,7 @@ reserved = (
 
 tokens = reserved + (
     # Literals (identifier, local identifier, integer constant, float constant, string constant)
-    'ID', 'COUNTERID', 'PLACEHOLDER', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING',
+    'ID', 'COUNTERID', 'PLACEHOLDER', 'LOCALID', 'INTEGER', 'FLOAT', 'STRING', 'OPTION',
 
     # Operators (+, -, *, /, &, ~, ^, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
@@ -34,6 +34,8 @@ tokens = reserved + (
 # Completely ignored characters
 t_ignore           = ' \t\x0c'
 
+# Options
+t_OPTION            = r'\![a-z]+'
 
 # Newlines
 def t_NEWLINE(t):
@@ -55,7 +57,7 @@ t_GT               = r'>'
 t_LE               = r'<='
 t_GE               = r'>='
 t_EQ               = r'=='
-t_NE               = r'!='
+#t_NE               = r'!='
 t_NELG             = r'<>'
 
 # Assignment operators
