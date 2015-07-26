@@ -188,7 +188,7 @@ class Compiler:
         if not qualified_expr[2] is None:
             # Need to persist iterator_dicts
             iterator_dicts = list(iterator_dicts)
-            if_filter = self.compile_ifClause(qualified_expr[2], iterator_dicts)
+            if_filter = self.compile_ifClause(qualified_expr[2][1], iterator_dicts)
         else:
             if_filter = []
 
@@ -229,16 +229,22 @@ class Compiler:
         except KeyError:
             self.error('Local variable %s is not defined' % local)
 
+    def iterator_definition_literal(self, name, set_literal):
+        self.iterators[name] = self.build_iterator(name, self.compile_set_literal(set_literal))
+
 
     def raw_iterator(self, name, lst):
         return self.build_iterator(name, zip(lst, range(1,len(lst) + 1)))
 
     def compile(self, program):
         self.lines = program.split('\n')
+        with open('input_output.mdl', "r") as f:
+            self.lines = f.readlines()
+
         self.current_line = 0
 
         # Parse the program
-        ast = plyyacc.parser.parse(program)
+        ast = plyyacc.parser.parse(''.join(self.lines))
 
         # Check for errors
         if len(plyyacc.errors) == 0:
@@ -253,7 +259,9 @@ class Compiler:
                     self.current_line = a[2]
 
                     if s[0] == 'EquationDef':
-                        equations.update(self.outputter.output_equation(*self.compile_equation(s)))
+                        latest = self.outputter.output_equation(*self.compile_equation(s))
+                        equations.update(latest)
+                        logger.log('Line ', self.current_line, latest)
 
                     elif s[0] == 'LocalDef':
                         self.compile_local_definition(s)
@@ -261,9 +269,11 @@ class Compiler:
                     elif s[0] == 'IteratorDefLocal':
                         self.iterator_definition_local(s[1], s[2])
 
+                    elif s[0] == 'IteratorDefLiteral':
+                        self.iterator_definition_literal(s[1], s[2])
+
                 logger.log(self.heap)
                 logger.log(self.iterators)
-                logger.log(equations)
             except CompilerError as e:
                 print e
 
