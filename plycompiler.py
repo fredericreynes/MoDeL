@@ -1,7 +1,7 @@
 import itertools
 import plyyacc
 
-import sys
+import sys, csv
 import logger
 
 from ast import *
@@ -223,6 +223,13 @@ class Compiler:
         except TypeError:
             self.heap[ast[1]] = ast[2]
 
+    def iterator_definition_local(self, name, local):
+        try:
+            self.iterators[name] = self.build_iterator(name, self.heap[local])
+        except KeyError:
+            self.error('Local variable %s is not defined' % local)
+
+
     def raw_iterator(self, name, lst):
         return self.build_iterator(name, zip(lst, range(1,len(lst) + 1)))
 
@@ -250,6 +257,9 @@ class Compiler:
 
                     elif s[0] == 'LocalDef':
                         self.compile_local_definition(s)
+
+                    elif s[0] == 'IteratorDefLocal':
+                        self.iterator_definition_local(s[1], s[2])
 
                 logger.log(self.heap)
                 logger.log(self.iterators)
@@ -306,7 +316,9 @@ def test():
     # test = X|O|[42, c]{t-1}
     # """, {})
     compiler = Compiler(DefaultOutputter)
-    compiler.compile("""!pv d(V[c]) = d(log(X[c])) where c in {01, 02}
+    compiler.compile("""%test := {01, 02, 03}
+    s in %test
+    !pv d(V[c]) = d(log(X[s])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42
