@@ -33,6 +33,7 @@ def p_statement(p):
     '''statement : equationDef NEWLINE
                  | seriesDef NEWLINE
                  | localDef NEWLINE
+                 | iteratorDef NEWLINE
                  | comment NEWLINE'''
     p[0] = ('Statement', p[1], p.lineno(2))
 
@@ -364,6 +365,14 @@ def p_local_definition_integer(p):
     '''localDef : LOCALID SERIESEQUALS INTEGER'''
     p[0] = ('LocalDef', p[1], p[3][0])
 
+def p_iterator_definition_literal(p):
+    '''iteratorDef : ID IN setLiteral'''
+    p[0] = ('IteratorDefLiteral', p[1], p[3])
+
+def p_iterator_definition_local(p):
+    '''iteratorDef : ID IN LOCALID'''
+    p[0] = ('IteratorDefLocal', p[1], p[3])
+
 
 # Error
 def add_error(msg, line_nb):
@@ -376,6 +385,7 @@ errors = []
 
 if __name__ == "__main__":
     print parser.parse("""!over, !pv test = sum(v[c] on c, V)
+    c in %test
     pouet[c]{x-1} = 15 where (i, j) in ({05, 15, 10} \ {10}, {V, X, O} \ {V})
 
     #t = X|O|[s, 2]{t-1} if test > 2 where i in %c
