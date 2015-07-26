@@ -34,7 +34,12 @@ def p_statement(p):
                  | seriesDef NEWLINE
                  | localDef NEWLINE
                  | iteratorDef NEWLINE
-                 | comment NEWLINE'''
+                 | comment NEWLINE
+                 | equationDef comment NEWLINE
+                 | seriesDef comment NEWLINE
+                 | localDef comment NEWLINE
+                 | iteratorDef comment NEWLINE
+                 | comment comment NEWLINE'''
     p[0] = ('Statement', p[1], p.lineno(2))
 
 # Comment
