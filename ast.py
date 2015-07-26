@@ -113,7 +113,7 @@ def extract_varnames(expr):
         return [expr]
 
 def extract_first_varname(expr):
-    return extract_varnames(expr).next()
+    return list(extract_varnames(expr))[0]
 
 @traverse
 def extract_simple_varids(expr):
