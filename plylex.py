@@ -86,7 +86,7 @@ for r in reserved:
     reserved_map[r.lower()] = r
 
 # Identifier
-id                = r'[A-Za-z_][\w_]*'
+id                = r'[A-Za-z_@][\w_]*'
 
 @TOKEN(id)
 def t_ID(t):

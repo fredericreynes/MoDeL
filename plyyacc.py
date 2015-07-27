@@ -224,6 +224,10 @@ def p_iterator_local(p):
     '''iterator : ID IN LOCALID'''
     p[0] = ('IteratorLocal', p[1], p[3])
 
+def p_iterator_local_2(p):
+    '''iterator : ID IN LOCALID BACKLASH LOCALID'''
+    p[0] = ('IteratorLocal', p[1], p[3])
+
 def p_iterator_parallel_set(p):
     '''iterator : idGroup IN setGroup'''
     if len(p[1][1]) == len(p[3][1]):
