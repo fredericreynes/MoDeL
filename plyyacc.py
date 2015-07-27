@@ -11,7 +11,7 @@ precedence = (
                ('left', 'PLUS','MINUS'),
                ('left', 'TIMES','DIVIDE'),
                # ('left', 'POWER'),
-               # ('right','UMINUS')
+               ('right','UMINUS')
 )
 
 
@@ -139,6 +139,10 @@ def p_expression_terminal(p):
             | counterId
             | functionCall'''
     p[0] = p[1]
+
+def p_expr_uminus(p):
+    '''expr : MINUS expr %prec UMINUS'''
+    p[0] = ('ExprGroup', ('ExprBinary', '-', 0, p[2]))
 
 # Special case for integers, which are stored as a pair
 # (int_val, str_representation) by the lexer
