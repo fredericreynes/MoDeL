@@ -48,6 +48,8 @@ class Compiler:
         all_iterator_names = set(extract_iterators(qualifiedExpr[1]))
         for i in all_iterator_names.difference(explicit_iterator_names):
             iterators.update({i: [{i: '%(' + i + ')s', ('$' + i): '%($' + i + ')s'}]})
+        # Disable if clauses inside functions
+        qualifiedExpr = ('Qualified', qualifiedExpr[1], None, qualifiedExpr[3])
         return self.compile_qualified(self.ast_functions(qualifiedExpr, iterators.copy()), iterators, all_iterator_names)
 
 
@@ -272,8 +274,8 @@ class Compiler:
                     elif s[0] == 'IteratorDefLiteral':
                         self.iterator_definition_literal(s[1], s[2])
 
-                logger.log(self.heap)
-                logger.log(self.iterators)
+                #logger.log(self.heap)
+                #logger.log(self.iterators)
             except CompilerError as e:
                 print e
 
@@ -285,6 +287,7 @@ class Compiler:
     def __init__(self, outputter):
         self.heap = {'V_01': 15, 'V_02': 0, 'V_03': 45, 'dV': 45}
         self.iterators = {'s': self.raw_iterator('s', ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '99'])}
+        self.iterators = {'s': self.raw_iterator('s', ['01', '02', '99'])}
 
         with open('_tmp_all_vars.csv', 'rb') as csvfile:
             rows = list(csv.reader(csvfile))
@@ -327,8 +330,9 @@ def test():
     # """, {})
     compiler = Compiler(DefaultOutputter)
     compiler.compile("""%test := {01, 02, 03}
-    s in %test
-    !pv d(V[c]) = d(log(X[s])) where c in {01, 02}
+    c in %test
+    X[c] = sum(V[s] if Z[c, s] on s)
+    #!pv d(V[c]) = d(log(X[s])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}
     # test[s] = 42
