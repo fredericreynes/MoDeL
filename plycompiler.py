@@ -72,6 +72,10 @@ class Compiler:
         if ast[0] == 'SetLiteral':
             return [e for e in zip(ast[1], range(1, len(ast[1]) + 1)) if e[0] not in ast[2] ]
 
+    def compile_iterator_local_difference(self, main_set, diff_set):
+        main_set = [e[0] for e in main_set]
+        diff_set = [e[0] for e in diff_set]
+        return [e for e in zip(main_set, range(1, len(main_set) + 1)) if e[0] not in diff_set]
 
     # From an iterator name `i` and its elements [(i1, 1), (i2, 2), ...], builds a list of dicts:
     # [ {'i': i1, '$i': 1}, {'i': i2, '$i': 2}, ... ]
@@ -93,6 +97,10 @@ class Compiler:
 
         if ast[0] == 'IteratorLocal':
             local_iterators = { ast[1]: self.build_iterator(ast[1], self.get_if_exists(ast[2], self.heap, "Local variable")) }
+        elif ast[0] == 'IteratorLocalDifference':
+            local_iterators = { ast[1]: self.build_iterator(ast[1],
+                                                            self.compile_iterator_local_difference(self.get_if_exists(ast[2], self.heap, "Local variable"),
+                                                                                                   self.get_if_exists(ast[3], self.heap, "Local variable"))) }
         elif ast[0] == 'IteratorSetLiteral':
             local_iterators = { ast[1]: self.build_iterator(ast[1], self.compile_set_literal(ast[2])) }
         elif ast[0] == 'IteratorParallelSet':
@@ -192,7 +200,7 @@ class Compiler:
             iterator_dicts = list(iterator_dicts)
             if_filter = self.compile_ifClause(qualified_expr[2][1], iterator_dicts)
         else:
-            if_filter = []
+           if_filter = []
 
         # Apply if_filter to iterator_dicts
         iterator_dicts = [i for i, cond in itertools.izip_longest(iterator_dicts, if_filter, fillvalue = True) if cond]
@@ -240,13 +248,13 @@ class Compiler:
 
     def compile(self, program):
         self.lines = program.split('\n')
-        with open('input_output.mdl', "r") as f:
-            self.lines = f.readlines()
+        # with open('input_output.mdl', "r") as f:
+        #     self.lines = [s.strip() for s in f.readlines()] + ['\n']
 
         self.current_line = 0
 
         # Parse the program
-        ast = plyyacc.parser.parse(''.join(self.lines))
+        ast = plyyacc.parser.parse('\n'.join(self.lines))
 
         # Check for errors
         if len(plyyacc.errors) == 0:
@@ -330,8 +338,10 @@ def test():
     # """, {})
     compiler = Compiler(DefaultOutputter)
     compiler.compile("""%test := {01, 02, 03}
+    %diff := {02}
     c in %test
-    X[c] = sum(V[s] if Z[c, s] on s)
+    V[s] = $s * X[s] where s in %test \ %diff
+    #X[c] = sum(V[s] if Z[c, s] on s)
     #!pv d(V[c]) = d(log(X[s])) where c in {01, 02}
     """)
     # compiler.compile("""V[c] = x[c] + v[$c] where c in {01, 02} \ {01}

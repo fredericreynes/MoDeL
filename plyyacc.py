@@ -230,7 +230,7 @@ def p_iterator_local(p):
 
 def p_iterator_local_2(p):
     '''iterator : ID IN LOCALID BACKLASH LOCALID'''
-    p[0] = ('IteratorLocal', p[1], p[3])
+    p[0] = ('IteratorLocalDifference', p[1], p[3], p[5])
 
 def p_iterator_parallel_set(p):
     '''iterator : idGroup IN setGroup'''
