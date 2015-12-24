@@ -49,7 +49,7 @@ class DefaultOutputter:
     # Time offset
     #
     def output_timeOffset(self, output_timeExpr):
-        return '{' + output_timeExpr + '}'
+        return '(' + output_timeExpr + ')'
 
     # VarName
     #
