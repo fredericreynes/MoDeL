@@ -1,0 +1,66 @@
+main            := line+
+
+<commas>        := (ts?, ',', ts?)?
+
+# Keywords
+<keywords>      := 'where'/'on'/'in'
+
+# Sets
+symbol          := [0-9_a-zA-Z]+
+set_literal     := '{', (symbol, commas)+, '}'!"Missing closing brace in set definition"
+
+# Identifiers
+id              := [_a-zA-Z], [_a-zA-Z0-9]*
+placeholder     := '|', id, '|'
+identifier      := (id/placeholder)+
+
+# Local variables
+local           := '%', [_a-zA-Z], [_a-zA-Z]*
+
+# Series
+index           := '[', (expr, commas)+, ']'!"Missing closing bracket in index"
+time            := '{', int, '}'!"Missing closing brace in time index"
+series          := identifier, index?, time?
+
+# Variable
+>variable<      := series
+
+# Functions
+function        := id, '(', (qualified, commas)+,')'
+
+# Expressions
+expr            := inner_expr / paren_expr
+>inner_expr<    := unary_neg?, term, ((ts?, op, ts?, term)+)?
+>term<          := ( (function / variable / number / paren_expr), ts, ?keywords ) /
+                   ( (function / variable / number / paren_expr), ?-(ts, variable / paren_expr)!"Missing operator between two operands" )
+paren_expr      := '(', ts?, inner_expr, ts?, ')'!"Missing closing parenthesis"
+op              := [-+/*<>]
+unary_neg       := '-'
+
+# Qualified expressions
+idList          := id / ( '(', (id, commas)+, ')' )
+whereLocation   := ( '(', (local / set_literal, commas)+, ')' ) / local / set_literal
+whereClause     := 'where'/'on', ts, idList, !"Missing iterator in where clause", (ts, 'in', ts, local)?
+ifClause        := 'if', ts, expr
+qualified       := expr, whereClause?, ifClause?
+
+# Equation
+equation        := expr, ts?, '=', ts?, qualified
+
+# Series definition
+series_def      := expr, ts?, ':=', ts?, qualified
+local_def       := local, ts?, ':=', ts?, set_literal
+
+# Lines
+line            := (((equation, comment?) /
+                     (local_def, comment?) /
+                     (series_def, comment?) /
+										 comment), nl) /
+									 nl
+
+# Whitespace
+<ts>            := [ \011]+
+<nl>            := '\n'
+
+# Comments
+comment         := "#", -'\n'*
