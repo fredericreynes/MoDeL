@@ -44,7 +44,7 @@ class ExtractIterator(BaseExpressionProcessor):
 
         # If there is an index
         if len(subtags) > 1:
-            
+            pass
 
     def identifier(self, (tag,start,stop,subtags), buffer):
         parts = multiMap(subtags)
