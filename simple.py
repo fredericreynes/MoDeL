@@ -35,16 +35,26 @@ class BaseExpressionProcessor(DispatchProcessor):
     paren_expr = recursive
     function = recursive
 
+class ExtractSimpleIdentifier(BaseExpressionProcessor):
+    index = recursive
+
+    def series(self, (tag,start,stop,subtags), buffer):
+        return raw(self, subtags[0][3][0], buffer)
+
+
 class ExtractIterator(BaseExpressionProcessor):
-    def expr(self, (tag,start,stop,subtags), buffer):
-        print multiMap(subtags).keys()
+    index = process(ExtractSimpleIdentifier)
+
+    # def expr(self, (tag,start,stop,subtags), buffer):
+    #     print multiMap(subtags).keys()
 
     def series(self, (tag,start,stop,subtags), buffer):
         # If there is one or more placeholders in the identifier
 
         # If there is an index
         if len(subtags) > 1:
-            
+            return self.index(subtags[1], buffer)
+
 
     def identifier(self, (tag,start,stop,subtags), buffer):
         parts = multiMap(subtags)
@@ -89,11 +99,14 @@ class TopProcessor(DispatchProcessor):
 
 
 
+
 class TestParser(Parser):
     def buildProcessor(self):
-        return #TopProcessor()
+        return TopProcessor()
 
-parser = TestParser(declaration, "main")
+class SimpleParser(Parser):
+    pass
+
 # success, ast, nextchar = parser.parse("test|g|[c, d]{1} > ( c)\n")
 # success, ast, nextchar = parser.parse("test(t on f)\n")
 #success, ast, nextchar = parser.parse("%test := {01, 02, 03}\n")
@@ -107,8 +120,12 @@ test = (pouet + 2.0) - log(g[c, s])
 #%sectors := {01, 02, 03}
 #%commodities := {coal, oil, elec, gas}
 '''
-success, ast, nextchar = parser.parse(test)
-#success, ast, nextchar = TestParser(declaration, "main").parse("# a test")
-
+success, ast, nextchar = TestParser(declaration, "main").parse(test)
 import pprint
 pprint.pprint(ast)
+
+success, ast, nextchar = SimpleParser(declaration, "main").parse(test)
+
+print "\nSimple parse\n"
+
+#pprint.pprint(ast)
