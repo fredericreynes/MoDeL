@@ -55,7 +55,6 @@ class ExtractIterator(BaseExpressionProcessor):
         if len(subtags) > 1:
             return self.index(subtags[1], buffer)
 
-
     def identifier(self, (tag,start,stop,subtags), buffer):
         parts = multiMap(subtags)
         if 'placeholder' in parts.keys():
