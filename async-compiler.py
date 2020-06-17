@@ -34,7 +34,7 @@ ensure_directory(compiler_in)
 ensure_directory(compiler_out)
 
 def shutdown():
-    print "Shutting down"
+    print ("Shutting down")
     safe_delete(compiler_in)
     safe_delete(compiler_out)
 
@@ -49,28 +49,28 @@ class CompilerHandler(FileSystemEventHandler):
             os._exit(0)
 
         else:
-            print "Compiling " + filename
+            print ("Compiling " + filename)
             try:
                 code = open(event.src_path, 'r').readline().strip()
                 if code[0] == '"':
                     code = code[1:-1]
                 compiled = grammar.formula.parseString(code)[0].compile(heap)
-                print "Compilation successful"
-                print compiled
+                print ("Compilation successful")
+                print (compiled)
                 with open(compiler_out + "\\" + filename, 'w') as f:
                     f.write(compiled)
 
             except pyparsing.ParseException as e:
-                print str(e)
+                print (str(e))
             except:
-                print str(sys.exc_info()[0])
+                print (str(sys.exc_info()[0]))
                 print
 
 observer = Observer()
 observer.schedule(CompilerHandler(), path = compiler_in)
 observer.start()
 
-print "Ready to compile\n"
+print ("Ready to compile\n")
 
 try:
     while True:
